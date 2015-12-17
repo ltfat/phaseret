@@ -1,6 +1,10 @@
 #!/bin/bash
 # The script downloads, extracts converts databases used in the paper
 # such that the Matlab scripts can find the files.
+if ! type "flac" > /dev/null; then
+echo "Install flac decoder"
+exit
+fi
 
 SQAMARCHIVE=SQAM_FLAC.zip
 MOCHAARCHIVE1=fsew0_v1.1.tar.gz
