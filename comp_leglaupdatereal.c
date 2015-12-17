@@ -49,7 +49,7 @@ mexFunction(int nlhs, mxArray *plhs[],
     couti = mxGetPi(plhs[0]);
 
     leglaupdate_plan* plan = leglaupdate_init(s,a,M,N,kernr,kerni,kernh,kernw,
-                                              do_onthefly?MOD_COEFFICIENTWISE,0);
+                                              do_onthefly?MOD_COEFFICIENTWISE:0);
 
     leglaupdatereal_execute(plan,cr,ci,coutr,couti);
 
