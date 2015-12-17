@@ -3,6 +3,13 @@ function repr_fig1
 % the step size in time
 
 % 
+basepath = fileparts(which(mfilename));
+exportdir = [basepath,filesep,'texexport'];
+
+if ~exist(exportdir,'dir')
+    mkdir(exportdir);
+end
+
 
 [f,fs] = greasy; Ls= numel(f); f = postpad(f,ceil(Ls/256)*256);
 Ls= numel(f);
@@ -30,11 +37,11 @@ for ii=1:numel(Marr)
 
     C = magnitudeerrdb(s,nextprojc)
 
-    fileID = fopen(sprintf('../img/phasediffC_%i.tex',ii),'w');
+    fileID = fopen(sprintf([exportdir,filesep,'phasediffC_%i.tex'],ii),'w');
     fprintf(fileID,'%.2f\n',C);
     fclose(fileID);
 
-    fileID = fopen(sprintf('../img/phasediffa_%i.tex',ii),'w');
+    fileID = fopen(sprintf([exportdir,filesep,'phasediffa_%i.tex'],ii),'w');
     fprintf(fileID,'%d\n',a);
     fclose(fileID);
 
@@ -46,13 +53,13 @@ for ii=1:numel(Marr)
     plotdgtreal(d,a,M,'linabs','clim',[0,1],'fs',fs);
     colormap(cm);
 
-    saveas(gcf,sprintf('../img/phasediff_%i.png',ii));
+    saveas(gcf,sprintf([exportdir,filesep,'phasediff_%i.png'],ii));
 
     figure(2);
     plotdgtreal(c,a,M,'dynrange',db,'fs',fs);
     colormap(cm);
 
-    saveas(gcf,sprintf('../img/greasy_%i.png',ii));
+    saveas(gcf,sprintf([exportdir,filesep,'greasy_%i.png'],ii));
     
 end
 

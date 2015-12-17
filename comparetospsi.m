@@ -39,7 +39,7 @@ for jj = 1:numel(speakers)
         
         wavfile = allwavs(ii).name;
         name = wavfile(1:strfind(wavfile,'.')-1);
-        outputdir = [basepath,filesep,mfilename,'_',kv.expname,'_',flags.winmod];
+        outputdir = [kv.exportdir,filesep,mfilename,'_',kv.expname,'_',flags.winmod];
         nameoutdir = [outputdir,filesep,name,filesep];
         
         if ~exist(outputdir, 'dir')

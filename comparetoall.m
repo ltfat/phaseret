@@ -206,8 +206,7 @@ end
 Ls= numel(f);
 
 if flags.do_storewavs
-    basepath = fileparts(which(mfilename));
-    outputdir = [basepath,filesep,mfilename,'_',kv.expname,'_',flags.winmod];
+    outputdir = [kv.exportdir,filesep,mfilename,'_',kv.expname,'_',flags.winmod];
     nameoutdir = [outputdir,filesep,name,filesep];
     
     if ~exist(outputdir, 'dir')
