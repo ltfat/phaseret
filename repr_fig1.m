@@ -45,12 +45,10 @@ for ii=1:numel(Marr)
     fprintf(fileID,'%d\n',a);
     fclose(fileID);
 
-    d = gabphasediff(angle(chatint),oldphase,s,tol);
-
     cm = flipud(gray);
 
     figure(1);
-    plotdgtreal(d,a,M,'linabs','clim',[0,1],'fs',fs);
+    plotdgtrealphasediff(angle(chatint),oldphase,s,tol,a,M,'fs',fs);
     colormap(cm);
 
     saveas(gcf,sprintf([exportdir,filesep,'phasediff_%i.png'],ii));

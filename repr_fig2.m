@@ -28,9 +28,9 @@ s = abs(c);
 [chat] = spsireal(abs(c),a,M,'timeinv');
 fhatSpsi = idgtreal(chat,{'dual',g},a,M,numel(f),'timeinv');
 Espsi = magnitudeerrdb(s,dgtreal(fhatSpsi,g,a,M,'timeinv'))
-d = gabphasediff(angle(c),angle(chat),abs(c),thr);
+
 figure(2);
-plotdgtreal(d,a,M,fs,'linabs');
+plotdgtrealphasediff(angle(c),angle(chat),abs(c),thr,a,M,'fs',fs);
 colormap(graycm);
 ylim([0,10e3]);
 shg
@@ -40,9 +40,9 @@ saveas(gcf,[exportdir,filesep,'gspi_phasediffspsi.png']);
 [chat,onset] = phaserecunwrapreal(c,g,a,M,'timeinv');
 fhatMagron = idgtreal(chat,{'dual',g},a,M,numel(f),'timeinv');
 Emagron = magnitudeerrdb(s,dgtreal(fhatMagron,g,a,M,'timeinv'))
-d = gabphasediff(angle(c),angle(chat),abs(c),thr);
+
 figure(1);clf;
-plotdgtreal(d,a,M,fs,'linabs');
+plotdgtrealphasediff(angle(c),angle(chat),abs(c),thr,a,M,'fs',fs);
 colormap(graycm);
 ylim([0,10e3]);
 shg
@@ -53,9 +53,9 @@ saveas(gcf,[exportdir,filesep,'gspi_phasediffunwrap.png']);
 chat = constructphasereal(abs(c),g,a,M,thr,'timeinv');
 fhatHeapint = idgtreal(chat,{'dual',g},a,M,numel(f),'timeinv');
 Eheapint = magnitudeerrdb(s,dgtreal(fhatHeapint,g,a,M,'timeinv'))
-d = gabphasediff(angle(c),angle(chat),s,thr);
+
 figure(3);clf;
-plotdgtreal(d,a,M,fs,'linabs');
+plotdgtrealphasediff(angle(c),angle(chat),s,thr,a,M,'fs',fs);
 colormap(graycm);
 ylim([0,10e3]);
 shg
