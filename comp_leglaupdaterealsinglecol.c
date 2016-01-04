@@ -23,12 +23,13 @@ mexFunction(int nlhs, mxArray *plhs[],
     double *cr,*ci,*coutr,*couti,*s,*kernr,*kerni;
     mwSignedIndex M,M2,N,kernh,kernw;
     M = (mwSignedIndex) mxGetScalar(prhs[3]);
-    M2 = M/2 + 1;
-    N  = mxGetN(prhs[0]);
+    M2 = M/2 + 1;  N  = mxGetN(prhs[0]);
     cr = mxGetPr(prhs[0]);
     ci = mxGetPi(prhs[0]);
 
-    if(ci == NULL)
+    int isreal = !mxIsComplex(prhs[0]);
+
+    if(isreal)
     {
         /* This is real only input. Create an empty array so that the code does not
          * explode */
@@ -45,7 +46,7 @@ mexFunction(int nlhs, mxArray *plhs[],
     coutr = mxGetPr(plhs[0]);
     couti = mxGetPi(plhs[0]);
 
-    leglaupdate_plan_col plan = leglaupdate_init_col(s, M, kernh, kernw, EXT_UPDOWN | MOD_FRAMEWISE );
+    leglaupdate_plan_col plan = leglaupdate_init_col( M, kernh, kernw, EXT_UPDOWN | MOD_FRAMEWISE );
 
     double* kr = aligned_alloc(ALIGNBYTES,plan.kernw*plan.kernwskip);
     double* ki = aligned_alloc(ALIGNBYTES,plan.kernw*plan.kernwskip);
@@ -56,12 +57,12 @@ mexFunction(int nlhs, mxArray *plhs[],
 
     formatkernel(kernr,kerni,kernh, kernw, plan.kernwskip, kr, ki);
 
-    leglaupdatereal_execute_col(&plan,0,bufr,bufi,kr,ki,coutr,couti);
+    leglaupdatereal_execute_col(&plan,bufr,bufi,kr,ki,s,coutr,couti);
 
     free(kr);
     free(ki);
     free(bufr);
     free(bufi);
 
-    if(ci) mxFree(ci);
+    if(isreal) mxFree(ci);
 }

@@ -30,8 +30,9 @@ mexFunction(int nlhs, mxArray *plhs[],
         do_onthefly = (int) mxGetScalar(prhs[5]);
     }
 
+    int isreal = !mxIsComplex(prhs[0]);
 
-    if(ci == NULL)
+    if(isreal)
     {
         /* This is real only input. Create an empty array so that the code does not
          * explode */
@@ -56,5 +57,5 @@ mexFunction(int nlhs, mxArray *plhs[],
     leglaupdate_done(plan);
 
 
-    if(ci) mxFree(ci);
+    if(isreal) mxFree(ci);
 }

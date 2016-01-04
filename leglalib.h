@@ -42,7 +42,6 @@ typedef struct
     mwSignedIndex kernh2;
     mwSignedIndex kernw2;
     mwSignedIndex M;
-    double*  s;
     int flags;
 } leglaupdate_plan_col;
 
@@ -52,6 +51,7 @@ typedef struct
     double** ki;
     double* bufr;
     double* bufi;
+    double*  s;
     mwSignedIndex a;
     mwSignedIndex N;
     mwSignedIndex kernelNo;
@@ -60,17 +60,7 @@ typedef struct
 
 
 
-void
-kernphasefi(double* kernr, double* kerni, mwSignedIndex kernh, mwSignedIndex kernw,
-        mwSignedIndex kernwskip,
-        mwSignedIndex n, mwSignedIndex a, mwSignedIndex M,
-        double* kernmodr, double* kernmodi);
-
-void
-formatkernel(double* kernr, double* kerni,
-        mwSignedIndex kernh, mwSignedIndex kernw,
-        mwSignedIndex kernwskip, double* kernmodr, double* kernmodi);
-
+/* Planning */
 leglaupdate_plan*
 leglaupdate_init(double* s,mwSignedIndex a, mwSignedIndex M,
         mwSignedIndex N, double* kernr, double* kerni,
@@ -78,28 +68,43 @@ leglaupdate_init(double* s,mwSignedIndex a, mwSignedIndex M,
         int flags);
 
 leglaupdate_plan_col
-leglaupdate_init_col(double* s, mwSignedIndex M,
+leglaupdate_init_col(mwSignedIndex M,
         mwSignedIndex kernh, mwSignedIndex kernw,
         int flags);
 
-
+/* Executing */
 void
 leglaupdatereal_execute(leglaupdate_plan* plan,  double* cr, double* ci, double* coutr, double* couti);
 
 void
-leglaupdatereal_execute_col(leglaupdate_plan_col* plan, mwSignedIndex nfirst,
+leglaupdatereal_execute_col(leglaupdate_plan_col* plan,
         double* crColFirst, double* ciColFirst,
         double* actKr, double* actKi,
+        double* sCol,
         double* coutrCol, double* coutiCol);
 
+/* Cleanup */
 void
 leglaupdate_done(leglaupdate_plan* plan);
 
+/*  */
 void
 extendborders(leglaupdate_plan_col* plan, const double* cr, const double* ci, mwSignedIndex N, double* bufr, double* bufi);
 
+/* Modulate kernel */
+void
+kernphasefi(double* kernr, double* kerni, mwSignedIndex kernh, mwSignedIndex kernw,
+        mwSignedIndex kernwskip,
+        mwSignedIndex n, mwSignedIndex a, mwSignedIndex M,
+        double* kernmodr, double* kernmodi);
 
+/* Format kernel */
+void
+formatkernel(double* kernr, double* kerni,
+        mwSignedIndex kernh, mwSignedIndex kernw,
+        mwSignedIndex kernwskip, double* kernmodr, double* kernmodi);
 
+/* Util */
 mwSignedIndex gcd(mwSignedIndex m, mwSignedIndex n);
 mwSignedIndex lcm(mwSignedIndex m, mwSignedIndex n);
 

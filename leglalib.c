@@ -1,15 +1,15 @@
 #include "leglalib.h"
 
 leglaupdate_plan_col
-leglaupdate_init_col(double* s, mwSignedIndex M,
+leglaupdate_init_col( mwSignedIndex M,
         mwSignedIndex kernh, mwSignedIndex kernw,
         int flags)
 {
     leglaupdate_plan_col retval = (leglaupdate_plan_col){.kernh = kernh, .kernw = kernw,
-                     .s = s, .M = M, .flags = flags,
+                     .M = M, .flags = flags,
                      .kernh2 = kernh/2 + 1, .kernw2 = kernw/2 + 1 };
 
-    retval.kernwskip = ((retval.kernh2*sizeof*s)/ALIGNBYTES + 1)*ALIGNBYTES;
+    retval.kernwskip = ((retval.kernh2*sizeof(double))/ALIGNBYTES + 1)*ALIGNBYTES;
 
     // Sanitize flags (set defaults)
     if (retval.flags & (MOD_FRAMEWISE | MOD_COEFFICIENTWISE))
@@ -45,7 +45,8 @@ leglaupdate_init(double* s, mwSignedIndex a, mwSignedIndex M,
         int flags)
 {
     leglaupdate_plan* plan = aligned_alloc(ALIGNBYTES,sizeof(leglaupdate_plan));
-    plan->plan_col = leglaupdate_init_col(s,M,kernh, kernw, flags);
+    plan->plan_col = leglaupdate_init_col( M,kernh, kernw, flags);
+    plan->s = s;
 
     // N
     plan->N = (plan->plan_col.flags & EXT_UPDOWN)? N - (kernw -1) : N;
@@ -192,9 +193,10 @@ extendborders(leglaupdate_plan_col* plan, const double* cr, const double* ci,
 
 
     void
-leglaupdatereal_execute_col(leglaupdate_plan_col* plan, mwSignedIndex nfirst,
+leglaupdatereal_execute_col(leglaupdate_plan_col* plan,
         double* crColFirst, double* ciColFirst,
         double* actKr, double* actKi,
+        double* sCol,
         double* coutrCol, double* coutiCol)
 {
     mwSignedIndex m,mfirst,mlast;
@@ -205,10 +207,8 @@ leglaupdatereal_execute_col(leglaupdate_plan_col* plan, mwSignedIndex nfirst,
     mwSignedIndex kernh2 = plan->kernh2;
     mwSignedIndex kernskipd = plan->kernwskip/(sizeof*crColFirst);
     mwSignedIndex M2buf = M2 + kernh -1;
-    /* mwSignedIndex n = nfirst + kernw2-1; */
     mwSignedIndex kernhMidId = kernh2-1;
     mwSignedIndex kernwMidId = kernw2-1;
-    double* s = plan->s;
     /* double* bufr = plan->bufr; */
     /* double* bufi = plan->bufi; */
 
@@ -219,7 +219,7 @@ leglaupdatereal_execute_col(leglaupdate_plan_col* plan, mwSignedIndex nfirst,
     /* Outside loop over rows */
     for(m=kernh2-1,mfirst= 0,mlast = kernh -1; mfirst<M2; m++,mfirst++,mlast++)
     {
-
+        double accumr = 0.0, accumi = 0.0;
         /* mexPrintf("m-loop: %d,%d,%d\n",mfirst,m,mlast); */
         /* inner loop over all cols of the kernel*/
         for (mwSignedIndex kn = 0; kn < kernw; kn++)
@@ -241,21 +241,23 @@ leglaupdatereal_execute_col(leglaupdate_plan_col* plan, mwSignedIndex nfirst,
                 double bi  = ciCol[mfirst+km];
                 double bbr = crCol[mlast-km];
                 double bbi = ciCol[mlast-km];
-                coutrCol[mfirst] += ar*(br+bbr) - ai*(bi-bbi);
-                coutiCol[mfirst] += ar*(bi+bbi) + ai*(br-bbr);
+                accumr += ar*(br+bbr) - ai*(bi-bbi);
+                accumi += ar*(bi+bbi) + ai*(br-bbr);
             }
 
             /* The middle row is real*/
-            coutrCol[mfirst] += actKrCol[kernhMidId]*crCol[m];
-            coutiCol[mfirst] += actKrCol[kernhMidId]*ciCol[m];
+            accumr += actKrCol[kernhMidId]*crCol[m];
+            accumi += actKrCol[kernhMidId]*ciCol[m];
         }
+        coutrCol[mfirst] = accumr;
+        coutiCol[mfirst] = accumi;
 
         /* Update the phase of a coefficient immediatelly */
         if(do_onthefly)
         {
             double arg = atan2(coutiCol[mfirst], coutrCol[mfirst]);
-            coutrCol[mfirst] = s[nfirst*M2 + mfirst]*cos(arg);
-            coutiCol[mfirst] = s[nfirst*M2 + mfirst]*sin(arg);
+            coutrCol[mfirst] = sCol[mfirst]*cos(arg);
+            coutiCol[mfirst] = sCol[mfirst]*sin(arg);
             crColFirst[kernwMidId*M2buf + m] = coutrCol[mfirst];
             ciColFirst[kernwMidId*M2buf + m] = coutiCol[mfirst];
         }
@@ -268,8 +270,8 @@ leglaupdatereal_execute_col(leglaupdate_plan_col* plan, mwSignedIndex nfirst,
         for(m=kernh2-1,mfirst= 0; mfirst<M2; m++,mfirst++)
         {
             double arg = atan2(coutiCol[mfirst], coutrCol[mfirst]);
-            coutrCol[mfirst] = s[nfirst*M2 + mfirst]*cos(arg);
-            coutiCol[mfirst] = s[nfirst*M2 + mfirst]*sin(arg);
+            coutrCol[mfirst] = sCol[mfirst]*cos(arg);
+            coutiCol[mfirst] = sCol[mfirst]*sin(arg);
             crColFirst[kernwMidId*M2buf + m] = coutrCol[mfirst];
             ciColFirst[kernwMidId*M2buf + m] = coutiCol[mfirst];
         }
@@ -291,7 +293,7 @@ leglaupdatereal_execute(leglaupdate_plan* plan,  double* cr, double* ci, double*
     int do_revorder = plan->plan_col.flags & ORDER_REV;
 
 
-    double* s = plan->plan_col.s;
+    double* s = plan->s;
     /* Clear the output */
     memset(coutr,0,M2*N*sizeof*coutr);
     memset(couti,0,M2*N*sizeof*couti);
@@ -325,8 +327,10 @@ leglaupdatereal_execute(leglaupdate_plan* plan,  double* cr, double* ci, double*
         double* crColFirst = bufr + nfirst*M2buf;
         double* ciColFirst = bufi + nfirst*M2buf;
 
-        leglaupdatereal_execute_col(&plan->plan_col,nfirst,crColFirst,ciColFirst,
-                actKr,actKi,coutrCol,coutiCol);
+        double* sCol = s + nfirst*M2;
+
+        leglaupdatereal_execute_col(&plan->plan_col,crColFirst,ciColFirst,
+                actKr,actKi,sCol,coutrCol,coutiCol);
 
     }
 
