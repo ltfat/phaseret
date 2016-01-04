@@ -112,13 +112,9 @@ for jj = 1:numel(speakers)
         
         if flags.do_nowarmstart
             glarandAll = glarandAll + postpad(relresglarand,maxit,relresglarand(end));
+            rtisiAll = rtisiAll + relresrtisi;
         end
-        
-        
-        rtisiAll = rtisiAll + relresrtisi;
-        
-        
-        
+   
     end
 end
 
@@ -130,7 +126,7 @@ fglaMean = fglaAll./numFiles;
 lbfgsMean = lbfgsAll./(numFiles-lbfgsInvalidFilesNo);
 leglaMean = leglaAll./numFiles;
 fleglaMean = fleglaAll./numFiles;
-rtisiMean = rtisiAll./numFiles;
+
 rtisiXaxis = kv.rtisiiters*(M/a);
 CspsiAllMean = CspsiAll./numFiles;
 CheapintAllMean = CheapintAll./numFiles;
@@ -145,6 +141,7 @@ if ~flags.do_nowarmstart
     end
 else
     glarandMean = glarandAll./numFiles;
+    rtisiMean = rtisiAll./numFiles;
     if ~flags.do_excludelbfgs
         plot(20*log10([fglaMean,lbfgsMean,leglaMean,fleglaMean,glazeroMean,glarandMean]));
         hold on; plot(rtisiXaxis,20*log10(rtisiMean),'ko--');hold off;
@@ -172,7 +169,7 @@ if ~isempty(kv.exportdir)
         save(sprintf([kv.exportdir,filesep,'%scomparison_%s_%s.mat'],flags.winmod,kv.expname,wsstring),...
         'Cres');
     else
-        Cres = {CheapintAllMean,CspsiAllMean,fglaMean,lbfgsMean,leglaMean,fleglaMean,glazeroMean,glarandMean};
+        Cres = {CheapintAllMean,CspsiAllMean,fglaMean,lbfgsMean,leglaMean,fleglaMean,glazeroMean,glarandMean,rtisiMean};
         save(sprintf([kv.exportdir,filesep,'%scomparison_%s_%s.mat'],flags.winmod,kv.expname,wsstring),...
         'Cres');
     end
