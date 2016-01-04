@@ -39,9 +39,8 @@ function [f,relres,iter,c]=rtisireal(s,g,a,M,varargin)
 %     'lookahead',lookahead  Number of lookahead frames. The default value 
 %                            is `ceil(M/a)-1`.
 %
-%     'kernfreqsize',kfs     The truncated size of the kernel in the 
-%                            frequency direction. 
-%                            The default value is `2*lookahead+1`.
+%     'kernsize',[height,width] The truncated size of the kernel. 
+%                               The default value is `2*lookahead+1`.
 %
 %     'asymwin'              Use asymetric window for the newest lookahead
 %                            frame.
@@ -129,7 +128,7 @@ definput.flags.startphase={'zhu','input','zero','rand','unwrap'};
 definput.flags.frameorder={'plain','energy'};
 definput.flags.asymwin={'asymwin','regwin'};
 definput.keyvals.lookahead = [];
-definput.keyvals.kernfreqsize = [];
+definput.keyvals.kernsize = [];
 definput.flags.phase={'freqinv','timeinv'};
 [flags,kv,Ls]=ltfatarghelper({'Ls','maxit'},definput,varargin);
 
@@ -148,13 +147,28 @@ else
 end
 
 % Default kernel size in the frequency direction
-if isempty(kv.kernfreqsize)
-    kv.kernfreqsize = 2*(kv.lookahead) + 1;
-else
-    if kv.kernfreqsize < 1 || kv.kernfreqsize > M2
-       error(['%s: Kernel size in the frequency direction must be',...
-              ' in range [1-%d]'],upper(mfilename),M2); 
-    end
+if isempty(kv.kernsize)
+    kv.kernsize = [2*(kv.lookahead) + 1, 2*(kv.lookahead) + 1];
+end
+
+% Kernel dimensions
+% !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+kernh = kv.kernsize(1);
+kernw = kv.kernsize(2);
+% !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+if kernh < 1 || kernh > M2
+   error(['%s: Kernel size in the frequency direction must be',...
+          ' in range [1-%d]'],upper(mfilename),M2); 
+end
+
+if kernw > 2*(kv.lookahead) + 1
+    error(['%s: Kernel size in the time dimension must not be bigger',...
+           ' than 2*(lookahead) + 1'],upper(mfilename));
+end
+
+if any(mod(kv.kernsize,2)==0)
+    error('%s: Kernel size must be odd.',upper(mfilename));
 end
 
 abss = abs(s);
@@ -177,11 +191,7 @@ end;
 % Dual window
 gd = gabdual(g,a,M,L);
 
-% Kernel dimensions
-% !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-kernw = 2*(kv.lookahead) + 1;
-kernh = kv.kernfreqsize;
-% !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
 
 % Prepare truncated projection kernels
 projfncBase = @(c) dgt(idgt(c,gd,a),g,a,M);
@@ -195,7 +205,7 @@ kernsmall = middlepad2(kern,[kernh, kernw]);
 
 % Kernel for the first asymetric window
 ctmpSpec1 = zeros(M,N);
-ctmpSpec1(1,[2:kv.lookahead]) = 1;
+ctmpSpec1(1,[2:floor(kernw/2)]) = 1;
 kernSpec1 = projfncSpec(ctmpSpec1);
 
 % Just shrink the kernel to the size of look ahead
@@ -203,7 +213,7 @@ kernsmallSpec1 = middlepad2(kernSpec1,[kernh, kernw]);
 
 % Kernel for the second asymetric window
 ctmpSpec2 = zeros(M,N);
-ctmpSpec2(1,[1:kv.lookahead]) = 1;
+ctmpSpec2(1,[1:floor(kernw/2)]) = 1;
 kernSpec2 = projfncSpec(ctmpSpec2);
 
 % Just shrink the kernel to the size of look ahead
@@ -230,7 +240,9 @@ for k = 0:kNo-1
 end
 
 % Buffer initialization
-cbuf(:,1:kernw) = cfull(:,mod( -1 + (-kv.lookahead:kv.lookahead), N)+1);
+cbuf(:,1:2*kv.lookahead+1) = cfull(:,mod( -1 + (-kv.lookahead:kv.lookahead), N)+1);
+
+kernw2 = floor(kernw/2);
 
 % n -th frame is the submit frame
 for n=1:N
@@ -279,7 +291,7 @@ for n=1:N
     end
 
     indx = kv.lookahead+kv.lookahead+1;
-    indxRange = indx + (-kv.lookahead:kv.lookahead);
+    indxRange = indx + (-kernw2:kernw2);
     
     cbuf(:,indx) = comp_leglaupdaterealsinglecol(cbuf(:,indxRange),...
                          kernact,abs(cfull(:,nextnewframeidx)),M);
@@ -289,7 +301,7 @@ for n=1:N
     for nback = kv.lookahead-1:-1:0
        kernact = kernelsSmall(:,:,mod(n-1 + nback,kNo)+1);
        indx = kv.lookahead+nback+1;
-       indxRange = indx + (-kv.lookahead:kv.lookahead);
+       indxRange = indx + (-kernw2:kernw2);
        
        cbuf(:,indx) = comp_leglaupdaterealsinglecol(cbuf(:,indxRange),...
                          kernact,abs(cfull(:,mod(n-1+nback,N)+1)),M);
@@ -314,7 +326,7 @@ for n=1:N
             end
             
             indx = kv.lookahead+nback+1;
-            indxRange = indx + (-kv.lookahead:kv.lookahead);
+            indxRange = indx + (-kernw2:kernw2);
             
             cbuf(:,indx) = comp_leglaupdaterealsinglecol(cbuf(:,indxRange),...
                               kernact,abs(cfull(:,mod(n-1+nback,N)+1)),M);
