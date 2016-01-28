@@ -1,4 +1,4 @@
-function [atheight,minorm] = findbestgauss( gnum )
+function [atheight,minorm] = findbestgauss( gnum , varargin)
 %FINDBESTGAUSS Find Gaussian window closest to the given window
 %   Usage: atheight = winwidthatheight(gnum)
 %
@@ -42,7 +42,13 @@ function [atheight,minorm] = findbestgauss( gnum )
 
 % AUTHOR: Zdenek Prusa
 
-atheightrange = 0.01:0.001:0.8;
+definput.keyvals.atheightrange = [];
+[~,~,atheightrange]=ltfatarghelper({'atheightrange'},definput,varargin);
+
+if isempty(atheightrange)
+    atheightrange = 0.01:0.001:0.8;
+end
+
 w = winwidthatheight(gnum, atheightrange);
 
 L = 10*numel(gnum);
