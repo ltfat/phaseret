@@ -36,10 +36,22 @@ mexFunction(int nlhs, mxArray *plhs[],
         ci = mxCalloc(M2*N,sizeof*ci);
     }
 
+
+
+
     kernr = mxGetPr(prhs[1]);
     kerni = mxGetPi(prhs[1]);
     kernh = mxGetM(prhs[1]);
     kernw = mxGetN(prhs[1]);
+    int iskernreal = !mxIsComplex(prhs[1]);
+
+    if(iskernreal)
+    {
+        /* This is real only input. Create an empty array so that the code does not
+         * explode */
+        kerni = mxCalloc(kernw*kernh,sizeof*kerni);
+    }
+
     s = mxGetPr(prhs[2]);
 
     plhs[0] = mxCreateDoubleMatrix(M2,1,mxCOMPLEX);
