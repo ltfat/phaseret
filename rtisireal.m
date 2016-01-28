@@ -205,7 +205,7 @@ kernsmall = middlepad2(kern,[kernh, kernw]);
 
 % Kernel for the first asymetric window
 ctmpSpec1 = zeros(M,N);
-ctmpSpec1(1,[2:floor(kernw/2)]) = 1;
+ctmpSpec1(1,[2:kernw+1]) = 1;
 kernSpec1 = projfncSpec(ctmpSpec1);
 
 % Just shrink the kernel to the size of look ahead
@@ -213,7 +213,7 @@ kernsmallSpec1 = middlepad2(kernSpec1,[kernh, kernw]);
 
 % Kernel for the second asymetric window
 ctmpSpec2 = zeros(M,N);
-ctmpSpec2(1,[1:floor(kernw/2)]) = 1;
+ctmpSpec2(1,[1:kernw+1]) = 1;
 kernSpec2 = projfncSpec(ctmpSpec2);
 
 % Just shrink the kernel to the size of look ahead
