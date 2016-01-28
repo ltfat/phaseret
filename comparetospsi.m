@@ -19,7 +19,6 @@ if isempty(kv.gl)
     kv.gl = kv.M;
 end
 
-basepath = fileparts(which(mfilename));
 
 prefix = [databasePath,filesep];
 speakers = subdirs;
