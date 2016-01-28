@@ -1,8 +1,14 @@
-function chat = comp_spsireal(c,a,M,mask)
+function [chat,newphase] = comp_spsireal(c,a,M,mask,startphase)
 M2 = floor(M/2) + 1;
 N = size(c,2);
 
-m_phase = zeros(size(c,1),1); 
+if nargin <5 || isempty(startphase)
+    m_phase = zeros(size(c,1),1); 
+else
+    m_phase = startphase;
+end
+
+
 newphase = zeros(size(c));
 
 for n=1:N
@@ -17,9 +23,9 @@ for n=1:N
         %  http://www.dsprelated.com/dspbooks/sasp/Quadratic_Interpolation_Spectral_Peaks.html
         %  Use quadratic interpolation to estimate the real peak position
         %  ***************************************************************
-            alpha=sabs(m-1);
-            beta=sabs(m);
-            gamma=sabs(m+1);
+            alpha=log(sabs(m-1)+eps);
+            beta=log(sabs(m)+eps);
+            gamma=log(sabs(m+1)+eps);
             denom=alpha-2*beta+gamma;
 
             % initialize p
