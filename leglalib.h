@@ -58,8 +58,6 @@ typedef struct
     leglaupdate_plan_col plan_col;
 } leglaupdate_plan;
 
-
-
 /* Planning */
 leglaupdate_plan*
 leglaupdate_init(double* s,mwSignedIndex a, mwSignedIndex M,
