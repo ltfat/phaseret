@@ -2,7 +2,7 @@
 #include <uchar.h>
 #endif
 #include "mex.h"
-#include "leglalib.h"
+#include "legla.h"
 
 /*
  Calling convention                   0         1 2 3 

@@ -1,4 +1,4 @@
-#include "leglalib.h"
+#include "legla.h"
 
 leglaupdate_plan_col
 leglaupdate_init_col( mwSignedIndex M,
