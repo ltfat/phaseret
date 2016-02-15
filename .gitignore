@@ -1,1 +1,7 @@
 texexport*/*
+html
+latex
+*.o
+*.wav
+*.mat
+*.mex*
