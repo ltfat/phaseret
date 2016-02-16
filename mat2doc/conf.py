@@ -11,3 +11,4 @@ addonbase='~/Dropbox'
 
 # Settings used by scripts just for this project
 username='susnak'
+

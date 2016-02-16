@@ -1,5 +1,5 @@
 function demo_blockproc_phaseretmix(source,varargin) %RUNASSCRIPT
-%DEMO_BLOCKPROC_PHASERET Variable coefficients thresholding
+%DEMO_BLOCKPROC_PHASERETMIX Variable coefficients thresholding
 %   Usage: demo_blockproc_phaseret('gspi.wav')
 %
 %   For additional help call |demo_blockproc_phaseret| without arguments.

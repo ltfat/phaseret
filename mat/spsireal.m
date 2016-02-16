@@ -30,19 +30,9 @@ function chat  = spsireal(c,a,M,varargin)
 %   ---------
 %
 %   Reconstructing phase for greasy
-%   :::
 %   
-%   
-%   See also:  idgtreal, dgtreal
+%   References: be15 ltfatnote040
 %
-%   References: 
-%
-%   Beauregard, G., Harish, M. and Wyse, L. (2015), Single Pass Spectrogram
-%   Inversion, in Proceedings of the IEEE International Conference on 
-%   Digital Signal Processing. Singapore, 2015. 
-%
-%   Prusa, Z., Balazs, P. and Soendergaard, P. L. (2016), A Non-iterative 
-%   Method for STFT Phase (Re)Construction, ...
 
 %   AUTHORS: Beauregard, G., Harish, M. and Wyse, L.
 %   MODIFIED BY: Zdenek Prusa

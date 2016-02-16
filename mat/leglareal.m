@@ -88,17 +88,7 @@ function [f,relres,iter,c]=leglareal(s,g,a,M,varargin)
 %   This function requires LTFAT 2.1.2 and above.
 %   !!!!!!!!!!!!!!!!!!!!!!!!!!! WARNING !!!!!!!!!!!!!!!!!!!!!!!!!!!
 %
-%   See also:  idgtreal, dgtreal
-%
-%   References:
-%
-%   Le Roux J., Kameoka H., Ono N., Sagayama S.: Fast Signal Reconstruction
-%   from magnitude STFT Spectrogram Based on Spectrogram Consistency,
-%   DAFx-10, Graz, Austria, September 6-10, 2010
-%
-%   Perraudin N., Balazs P., Søndergaard P. L.: A fast Griffin-Lim algorithm.
-%   In Applications of Signal Processing to Audio and Acoustics (WASPAA),
-%   2013 IEEE Workshop on, pages 1-4, Oct 2013.
+%   References: leroux08 leroux10 pebaso13
 %
 
 %   AUTHOR: Zdenek Prusa

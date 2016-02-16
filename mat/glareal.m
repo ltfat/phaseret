@@ -2,7 +2,7 @@ function [c,relres,iter,f]=glareal(s,g,a,M,varargin)
 %GLAREAL Griffin-Lim Algorithm for real signals
 %   Usage: f = glareal(s,g,a,M)
 %          f = glareal(s,g,a,M,Ls)
-%          [f,relres,iter,c] = leglareal(...)
+%          [f,relres,iter,c] = glareal(...)
 %
 %   Input parameters:
 %         s       : Array of initial coefficients.
@@ -84,16 +84,9 @@ function [c,relres,iter,f]=glareal(s,g,a,M,varargin)
 %   This function requires LTFAT 2.1.2 and above.
 %   !!!!!!!!!!!!!!!!!!!!!!!!!!! WARNING !!!!!!!!!!!!!!!!!!!!!!!!!!!
 %
-%   See also:  idgtreal, dgtreal
+%   See also: dgtreal
 %
-%   References:
-%
-%   Griffin-Lim
-%
-%
-%   Perraudin N., Balazs P., Søndergaard P. L.: A fast Griffin-Lim algorithm.
-%   In Applications of Signal Processing to Audio and Acoustics (WASPAA),
-%   2013 IEEE Workshop on, pages 1-4, Oct 2013.
+%   References: griflim84 pebaso13
 %
 
 %   AUTHOR: Zdenek Prusa

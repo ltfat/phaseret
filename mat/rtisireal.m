@@ -80,28 +80,7 @@ function [f,relres,iter,c]=rtisireal(s,g,a,M,varargin)
 %   This function requires LTFAT 2.1.2 and above.
 %   !!!!!!!!!!!!!!!!!!!!!!!!!!! WARNING !!!!!!!!!!!!!!!!!!!!!!!!!!!
 %
-%   See also:  idgtreal, dgtreal
-%
-%   References:
-%
-%   This function implements algorithms published in:
-%
-%   Zhu X., Beauregard G. T., Wyse L. L.: Real-Time Signal Estimation From
-%   Modified Short-Time Fourier Transform Magnitude Spectra,
-%   Audio, Speech, and Language Processing, IEEE Transactions on , vol.15, 
-%   no.5, pp.1645,1653, July 2007
-%
-%   and (useless) modifications described in
-%
-%   Gnann V., Spiertz M., Improving RTISI Phase Estimation with Energy Order
-%   and Phase Unwrapping, DAFx-10, Graz, Austria, September 6-10, 2010
-%
-%   with the coefficientwise phase updates from
-%
-%   J. Le Roux, H. Kameoka, N. Ono, and S. Sagayama, Fast signal
-%   reconstruction from magnitude STFT spectrogram based on spectrogram
-%   consistency,” in Proc. 13th International Conference on Digital Audio
-%   Effects (DAFx-10), Sep. 2010, pp. 397–403.
+%   References: zhbewy07 gnsp10 leroux10
 %
 
 %   AUTHORS: Zdenek Prusa   
