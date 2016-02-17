@@ -36,18 +36,18 @@ function [f,relres,iter,c]=rtisireal(s,g,a,M,varargin)
 %
 %   Algorithm parameters:
 %
-%     'lookahead',lookahead  Number of lookahead frames. The default value 
-%                            is `ceil(M/a)-1`.
+%     'lookahead',la   Number of lookahead frames. 
+%                      The default value is `ceil(M/a)-1`.
 %
-%     'kernsize',[height,width] The truncated size of the kernel. 
-%                               The default value is `2*lookahead+1`.
+%     'kernsize',ks    The truncated dimensions [heigh,width] of the kernel.
+%                      The default value is `2*lookahead+1` for both.
 %
-%     'asymwin'              Use asymetric window for the newest lookahead
-%                            frame.
-%                            This is the default.
+%     'asymwin'        Use asymetric window for the newest lookahead
+%                      frame.
+%                      This is the default.
 %
-%     'regwin'               Use regular window for the newest lookahead
-%                            frame.
+%     'regwin'         Use regular window for the newest lookahead
+%                      frame.
 %
 %   Initial phase guess:
 %
@@ -75,11 +75,6 @@ function [f,relres,iter,c]=rtisireal(s,g,a,M,varargin)
 %     'energy'     Process the lookahead frames in the order of their
 %                  energy.
 %   
-%
-%   !!!!!!!!!!!!!!!!!!!!!!!!!!! WARNING !!!!!!!!!!!!!!!!!!!!!!!!!!!
-%   This function requires LTFAT 2.1.2 and above.
-%   !!!!!!!!!!!!!!!!!!!!!!!!!!! WARNING !!!!!!!!!!!!!!!!!!!!!!!!!!!
-%
 %   References: zhbewy07 gnsp10 leroux10
 %
 

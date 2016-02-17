@@ -5,11 +5,11 @@ function [c,relres,iter,f]=glareal(s,g,a,M,varargin)
 %          [f,relres,iter,c] = glareal(...)
 %
 %   Input parameters:
-%         s       : Array of initial coefficients.
+%         s       : Initial coefficients.
 %         g       : Analysis Gabor window
 %         a       : Hop factor
 %         M       : Number of channels
-%         Ls      : length of signal.
+%         Ls      : Length of signal.
 %   Output parameters:
 %         f       : Signal.
 %         relres  : Vector of residuals.
@@ -47,21 +47,21 @@ function [c,relres,iter,f]=glareal(s,g,a,M,varargin)
 %
 %     'coefmod',coefmod   Anonymous function in a form coefmod = @(c) ...;
 %                         altering coefficients in each iteration after
-%                         the phase update is done.
+%                         the phase update has been done.
 %                         This is usefull when e.g. phase of some of
 %                         the coefficients is known.
 %
 %     'timemod',timemod   Anonymous function in a form timemod = @(f) ...;
 %                         altering the time-domain signal in each iteration.
-%                         This is usefull for  
+%                         This is usefull when e.g. the time support of the
+%                         signal is known.
 %
 %   Algorithm acceleration:
 %
 %     'gla'      The original Giffin-Lim iteration scheme.
 %                This is the default.
 %
-%     'fgla'     A fast Griffin-Lim iteration scheme from the 2nd
-%                reference.
+%     'fgla'     A fast Griffin-Lim iteration scheme from Perraudin et. al..
 %
 %     'alpha',a    Parameter of the Fast Griffin-Lim algorithm. It is
 %                  ignored if not used together with 'flegla' flag.
@@ -80,16 +80,12 @@ function [c,relres,iter,f]=glareal(s,g,a,M,varargin)
 %     'printstep',p  If 'print' is specified, then print every p'th
 %                    iteration. Default value is p=10;
 %
-%   !!!!!!!!!!!!!!!!!!!!!!!!!!! WARNING !!!!!!!!!!!!!!!!!!!!!!!!!!!
-%   This function requires LTFAT 2.1.2 and above.
-%   !!!!!!!!!!!!!!!!!!!!!!!!!!! WARNING !!!!!!!!!!!!!!!!!!!!!!!!!!!
-%
-%   See also: dgtreal
+%   See also: dgtreal idgtreal gabdual
 %
 %   References: griflim84 pebaso13
 %
 
-%   AUTHOR: Zdenek Prusa
+%   AUTHOR: Zdenek Prusa, Peter Soendergaard
 
 [~,N,W] = size(s);
 L = N*a;
