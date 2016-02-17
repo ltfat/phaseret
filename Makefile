@@ -55,12 +55,13 @@ matlab: $(TARGET) $(MEXTARGETS)
 	$(MEX) CFLAGS='$(CFLAGS)' $< $(LDFLAGS) -outdir mex -largeArrayDims > /dev/null
 
 # OCTAVE MEX files
-octave: $(TARGET)
-octave: MKOCTFILE ?= mkoctfile
-octave: FFTW_LIBS := $(shell $(MKOCTFILE) -p FFTW_LIBS)
-octave: export CFLAGS := $(shell $(MKOCTFILE) -p CFLAGS) -std=c11 -DNDEBUG -I./include -Wall -Wextra -fPIC
-octave: export LFLAGS := $(shell $(MKOCTFILE) -p LFLAGS) $(FFTW_LIBS)
-octave: $(OCTAVEMEXTARGETS)
+# := $(shell ...) runs shell immediatelly even if we do not use the octave 
+# target at all
+octave: MKOCTFILE = mkoctfile
+octave: FFTW_LIBS = $(shell $(MKOCTFILE) -p FFTW_LIBS)
+octave: export CFLAGS = $(shell $(MKOCTFILE) -p CFLAGS) -std=c11 -DNDEBUG -I./src -Wall -Wextra -fPIC
+octave: export LFLAGS = $(shell $(MKOCTFILE) -p LFLAGS) $(FFTW_LIBS)
+octave: $(TARGET) $(OCTAVEMEXTARGETS) 
 
 %.mex: %.c
 	$(MKOCTFILE) --mex -o $@ $<
@@ -73,8 +74,16 @@ clean:
 	@rm -rf build $(LIBOBJECTS)
 	@rm -rf mex/*.mex*
 
-.PHONY: doc doxy mat2doc mat2docmat
+.PHONY: doc doxy mat2doc mat2docmat clean octave matlab cleandoc cleandoxy cleanmat2doc
 doc: doxy mat2doc
+
+cleanmat2doc:
+	@rm -rf mat2doc_publish
+
+cleandoxy:
+	@rm -rf html
+
+cleandoc: cleanmat2doc cleandoxy
 
 doxy:
 	doxygen doxygen/doxyconfig
