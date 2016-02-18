@@ -1,5 +1,5 @@
-repr/*
-texexport*/*
+repr/Databases/*
+repr/texexport*/*
 mat2doc_*
 html
 latex
