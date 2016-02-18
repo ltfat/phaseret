@@ -7,4 +7,4 @@ function Edb = magnitudeerrdb(target,reconstructed)
 %
 %   References: griflim84
 
-E = 20*log10(magnitudeerr(target,reconstructed));
+Edb = 20*log10(magnitudeerr(target,reconstructed));
