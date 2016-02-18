@@ -1,7 +1,7 @@
 function chat  = spsireal(c,a,M,varargin)
 %SPSIREAL Single Pass Spectrogram Inversion (SPSI) for real signals
 %   Usage:  c=spsireal(s,a,M);
-%           c=spsireal(s,a,M,mask);   
+%           c=spsireal(s,a,M,mask,phase);   
 %
 %   Input parameters:
 %         s     : $M2 \times N$ array of modulus of Gabor coefficients.
@@ -51,23 +51,34 @@ end
 
 definput.flags.phase={'freqinv','timeinv'};
 definput.keyvals.mask = [];
-[flags,kv]=ltfatarghelper({},definput,varargin);
-mask = kv.mask;
+definput.keyvals.phase = [];
+[flags,kv,mask,phase]=ltfatarghelper({'mask','phase'},definput,varargin);
 
 if ~isempty(mask)
+    if isempty(phase)
+        error('%s: mask and phase must be both defined.',upper(mfilename));
+    end
+
+    if ~all(cellfun(@(el) isequal(size(el),size(c)),{mask,phase}))
+        error('%s: Dimensions of c, mask and phase must be equal.',upper(mfilename));
+    end
+
     % Convert to logical
     mask = kv.mask ~= 0;
 end
 
-[M2,N,W] = size(c); 
+M2 = size(c,1); 
 M2user = floor(M/2) + 1;
 
 if M2~=M2user
     error('%s: Size of s does not comply with M.',upper(mfilename));
 end
 
-chat = comp_spsireal(c,a,M,mask);
-
+if isempty(mask)
+    chat = comp_spsireal(c,a,M);
+else
+    chat = comp_maskedspsireal(c,a,M,mask,phase);
+end
 
 if ~flags.do_timeinv
     % Convert to frequency invariant phase

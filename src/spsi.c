@@ -15,7 +15,6 @@ spsireal(const double* s, int a, int M, int N,  double* initphase,
         memset(tmpphase, 0, M2 * sizeof * tmpphase);
     }
 
-
     for (int n = 0; n < N; n++)
     {
         const double* scol = s + n * M2;
@@ -45,7 +44,6 @@ maskedspsireal(const double* s, int a, int M, int N,
         memset(tmpphase, 0, M2 * sizeof * tmpphase);
     }
 
-
     for (int n = 0; n < N; n++)
     {
         const double* scol = s + n * M2;
@@ -55,11 +53,12 @@ maskedspsireal(const double* s, int a, int M, int N,
 
         spsirealupdate(scol, a, M, tmpphase);
 
+        /* Overwrite with known phase */
         for (int m = 0; m < M2; m++)
-            if (maskcol[m])
-                ccol[m] = scol[m] * cexp(I * phasecol[m]);
-            else
-                ccol[m] = scol[m] * cexp(I * tmpphase[m]);
+            if (maskcol[m]) tmpphase[m] = phasecol[m];
+
+        for (int m = 0; m < M2; m++)
+            ccol[m] = scol[m] * cexp(I * tmpphase[m]);
     }
 
     if (!initphase)
@@ -89,6 +88,7 @@ spsirealupdate(const double* scol, int a, int M, double* tmpphase)
             double instf = m + p;
             double peakPhase = tmpphase[m] + 2.0 * M_PI * a * instf / M;
             tmpphase[m] = peakPhase;
+
             // Go towards low frequency bins
             int bin = m - 1;
 
@@ -98,6 +98,7 @@ spsirealupdate(const double* scol, int a, int M, double* tmpphase)
                 bin--;
             }
 
+            // Go towards high frequency bins
             bin = m + 1;
 
             while (bin < M2 - 1 && scol[bin] < scol[bin - 1])
