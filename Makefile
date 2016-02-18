@@ -21,6 +21,8 @@ MEXSOURCES = $(wildcard mex/*.c)
 MEXTARGETS = $(patsubst %.c,%.mexa64,$(MEXSOURCES))
 OCTAVEMEXTARGETS = $(patsubst %.c,%.mex,$(MEXSOURCES))
 
+.INTERMEDIATE: %.o
+
 CFLAGS=-std=c11 -pedantic -Wall -Wextra -DNDEBUG -I./include $(OPTFLAGS)
 LIBS=-lm -lfftw3
 
