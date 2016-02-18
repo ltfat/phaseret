@@ -25,7 +25,7 @@ Algorithms
 - \ref rtisila
 - \ref legla
 - \ref spsi
-- \ref heapint
+- \ref pghi
 
 Block processing
 ----------------
