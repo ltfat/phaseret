@@ -3,6 +3,8 @@ mat2doc_*
 html
 latex
 *.o
+*.a
+*.so
 *.wav
 *.mat
 *.mex*
