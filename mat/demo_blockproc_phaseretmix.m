@@ -15,6 +15,7 @@ function demo_blockproc_phaseretmix(source,varargin) %RUNASSCRIPT
 %   .. image:: ../images/phaseretmix_spsi.png
 %   .. image:: ../images/phaseretmix_rtisi.png
 %
+%   References: ltfatnote043 gnsp08
 
 % AUTHOR: Zdenek Prusa
 

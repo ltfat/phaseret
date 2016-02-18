@@ -15,6 +15,8 @@ function demo_blockproc_phaseret(source,varargin) %RUNASSCRIPT
 %   .. image:: ../images/phaseret_spsi.png
 %   .. image:: ../images/phaseret_rtisi.png
 % 
+%   References: ltfatnote043
+%   References: ltfatnote043
 
 % AUTHOR: Zdenek Prusa
 
