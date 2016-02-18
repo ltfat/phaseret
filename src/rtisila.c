@@ -2,27 +2,6 @@
 #include <math.h>
 
 void
-fftrealifftshift(const double complex* in, int L, double complex* out)
-{
-    const div_t domod = div(L, 2);
-
-    if (domod.rem)
-    {
-        double complex phasefact = I * 2.0 * M_PI * (1.0 - 1.0 / L);
-
-        for (int ii = 1; ii < domod.quot + 1; ii++)
-        {
-            out[ii] = cexp(ii * phasefact) * in[ii];
-        }
-    }
-    else
-    {
-        for (int ii = 1; ii < domod.quot + 1; ii += 2)
-            out[ii] = -1.0 * in[ii];
-    }
-}
-
-void
 rtisilaoverlaynthframe(rtisilaupdate_plan* p, const double* frames,
                        const double* g, int n, int N)
 {

@@ -1,17 +1,39 @@
-/** \addtogroup rtisila
- *  @{
+/** \addtogroup mex
+ *  \{
+ *  \file
+ *  \brief MEX file interface for rtisilaupdate()
+ *  
+ *  **This is a computaional routine. The input arguments are not checked for correctness!!**
+ *
+ *  Matlab calling convention:
+ *  --------------------------
+ *
+ *      [frames2,c] = comp_rtisilaupdate(frames,g,scpecg1,specg2,gd,a,M,s,lookahead,maxit)
+ *
+ *  Input arg.   | Description
+ *  ------------ | -------------------------------------------------------------
+ *  frames       | M x N real matrix, frame buffer, N = lookback + 1 + lookahead
+ *  g            | M el. vector, analysis window
+ *  specg1       | M el. vector, alternative analysis window for the first iteration of the newest lookahead frame.
+ *  specg2       | M el. vector, alternative analyis window for second and other iterations of the newest lookahead frame.
+ *  gd           | M el. vector, synthesis window
+ *  a            | Hop factor 
+ *  M            | Number of channels (FFT length)
+ *  s            | M2 x lookahead+1 matrix    
+ *
+ *  Output arg.  | Description
+ *  -----------  | -------------------------------------------------------------
+ *  frames2      | frames with updated last lookahead + 1 cols.
+ *  c            | Complex coefficients of the submit frame.
+ *
+ *  \author Zdeněk Průša
+ *  \date 17.02.2016
+ *  \}
  */
 
 #include "mex_helper.h"
 #include "rtisila.h"
 
-/** MEX interface for RTISI-LA
- *
- * Matlab calling convention:
- *
- *     cframes2 = comp_rtisilaupdate(cframes,gnum,scpecg1,specg2,dgnum,a,M,sframes,lookahead,maxit)
- *
- */
 void
 mexFunction(int nlhs, mxArray* plhs[],
             int nrhs, const mxArray* prhs[])
@@ -60,6 +82,7 @@ mexFunction(int nlhs, mxArray* plhs[],
 
         if (nlhs > 1)
         {
+            // Convert interleaved to split
             double complex* cc = (double complex*) p->fftframe;
             double* crChan = cr + w * M2;
             double* ciChan = ci + w * M2;
@@ -72,8 +95,5 @@ mexFunction(int nlhs, mxArray* plhs[],
         }
     }
 
-
     rtisilaupdate_done(p);
-
 }
-/** @} */

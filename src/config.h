@@ -3,7 +3,12 @@
 
 #include <math.h>
 #include <string.h>
+#if defined(__cplusplus) || (defined(__STDC_VERSION__) && (__STDC_VERSION__ < 199901L) ) || defined(NOC99COMPLEXH)
+typedef double cdouble[2];
+#else
 #include <complex.h>
+typedef double complex cdouble;
+#endif
 #include <stdlib.h>
 
 #define ALIGNBYTES 16
