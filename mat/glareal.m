@@ -16,10 +16,10 @@ function [c,relres,iter,f]=glareal(s,g,a,M,varargin)
 %         iter    : Number of iterations done.
 %         c       : Coefficients with the reconstructed phase
 %
-%   `glareal(s,g,a,M)` attempts to find a signal *f* with has *s* as
-%   the abs. value of the Gabor coefficients such as::
+%   `glareal(s,g,a,M)` attempts to find coefficients *c*
+%   their abs. value is::
 %
-%     s = abs(dgtreal(f,g,a,M));
+%     s = abs(c);
 %
 %   using the Griffin-Lim algorithm.
 %

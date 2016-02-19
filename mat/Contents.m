@@ -13,6 +13,7 @@
 %    glareal     - Griffin-Lim Algorithm
 %    leglareal   - Le Rouxs Griffin-Lim algorithm Modifications
 %    pghi        - Phase Gradient Heap Integration
+%    decolbfgs   - Decorsiere's phase reconstruction algorithm
 %
 %  Implementation of online algorithms
 %    spsireal     - Single Pass Spectrogram Inversion (SPSI)
@@ -28,6 +29,9 @@
 %
 %  Plots
 %    plotdgtrealphasediff - Plots phase difference
+%
+%  Demos
+%    demo_windowaliasing  - Window aliasing dependence on Gabor sampling lattice
 %
 %  Block-processing demos
 %    demo_blockproc_phaseret    - Comparison of SPSI, RTPGHI and RTISI-LA algorithms, reconstruction only
