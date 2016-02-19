@@ -1,11 +1,11 @@
-function [f,relres,iter,c]=rtisireal(s,g,a,M,varargin)
+function [c,relres,iter,f]=rtisireal(s,g,a,M,varargin)
 %RTISIREAL Real-Time Iterative Spectrogram Inversion (RTISI) for real signals
 %   Usage: f = rtisireal(s,g,a,M)
 %          f = rtisireal(s,g,a,M,Ls)
 %          [f,relres,iter,c] = rtisireal(...)
 %
 %   Input parameters:
-%         s       : Array of initial coefficients.
+%         s       : Modulus of coefficients.
 %         g       : Analysis Gabor window
 %         a       : Hop factor
 %         M       : Number of channels
@@ -16,15 +16,15 @@ function [f,relres,iter,c]=rtisireal(s,g,a,M,varargin)
 %         iter    : Number of per-frame iterations done.
 %         c       : Coefficients with the reconstructed phase.
 %
-%   `rtisireal(s,g,a,M)` attempts to find a signal *f* with has *s* as 
-%   the abs. value of the Gabor coefficients such as::
+%   `rtisireal(s,g,a,M)` attempts to find Gabor coefficients *c* such
+%   that::
 %
-%     s = abs(dgtreal(f,g,a,M));
+%     s = abs(c);
 %
 %   using the Real-Time Iterative Spectrogram Inversion with Look Ahead.
-%   
-%   `[f,relres,iter,c]=rtisireal(...)` additionally returns an array
-%   of residuals `relres`, the number of per-frame iterations done `iter` and the
+%
+%   `[c,relres,iter,f]=rtisireal(...)` additionally returns the final
+%   of residual `relres`, the number of per-frame iterations done `iter` and the
 %   coefficients *c* with the reconstructed phase. The relationship between
 %   *f* and *c* is::
 %
@@ -36,49 +36,15 @@ function [f,relres,iter,c]=rtisireal(s,g,a,M,varargin)
 %
 %   Algorithm parameters:
 %
-%     'lookahead',la   Number of lookahead frames. 
-%                      The default value is `ceil(M/a)-1`.
+%     'lookahead',lookahead  Number of lookahead frames. The default value
+%                            is `ceil(M/a)-1`.
 %
-%     'kernsize',ks    The truncated dimensions [heigh,width] of the kernel.
-%                      The default value is `2*lookahead+1` for both.
+%   See also:  lertisireal, idgtreal, dgtreal
 %
-%     'asymwin'        Use asymetric window for the newest lookahead
-%                      frame.
-%                      This is the default.
-%
-%     'regwin'         Use regular window for the newest lookahead
-%                      frame.
-%
-%   Initial phase guess:
-%
-%     'zhu'        The initial phase of the newly read look-ahead frame
-%                  is computed from the overlapped previous frames.
-%                  This is the default.
-%
-%     'input'      Choose the starting phase as the phase of the input
-%                  *s*.
-%
-%     'zero'       Choose a starting phase of zero.
-%
-%     'rand'       Choose a random starting phase.
-%
-%     'unwrap'     Determines phase by unwrapping the phase from the
-%                  previous frames.
-%
-%     'unwrappar',upar  Argument of the unwrapping phase initialization.
-%                       It is ignored if the 'unwrap' parameter is not
-%                       used. 
-%                       The default value is 0.3.
-%
-%   Parameters of modifications:
-%
-%     'energy'     Process the lookahead frames in the order of their
-%                  energy.
-%   
-%   References: zhbewy07 gnsp10 leroux10
+%   References: zhbewy07
 %
 
-%   AUTHORS: Zdenek Prusa   
+%   AUTHORS: Zdenek Prusa
 %
 
 complainif_notposint(a,'a',mfilename);
@@ -89,7 +55,7 @@ if ~isnumeric(s) || isempty(s)
 end
 
 if size(s,3)>1
-   error('%s: s cannot be 3dimensional.',upper(mfilename)); 
+    error('%s: s cannot be 3dimensional.',upper(mfilename));
 end
 
 [M2,N,W] = size(s);
@@ -97,18 +63,11 @@ L = N*a;
 
 definput.keyvals.Ls=[];
 definput.keyvals.maxit=5;
-definput.keyvals.unwrappar=0.3;
-definput.flags.startphase={'zhu','input','zero','rand','unwrap'};
-definput.flags.frameorder={'plain','energy'};
-definput.flags.asymwin={'asymwin','regwin'};
 definput.keyvals.lookahead = [];
-definput.keyvals.kernsize = [];
 definput.flags.phase={'freqinv','timeinv'};
 [flags,kv,Ls]=ltfatarghelper({'Ls','maxit'},definput,varargin);
 
-if ~isnumeric(kv.maxit) || any(kv.maxit<=0) || any(rem(kv.maxit,1))
-    error('%s: maxit must be a positive integer (or array).',upper(mfilename));
-end
+complainif_notposint(kv.maxit,'maxit',mfilename);
 
 % Default number of lookahead frames.
 % The kernel size in the horizontal direction is 2*kv.lookahead + 1
@@ -120,250 +79,97 @@ else
     end
 end
 
-% Default kernel size in the frequency direction
-if isempty(kv.kernsize)
-    kv.kernsize = [2*(kv.lookahead) + 1, 2*(kv.lookahead) + 1];
-end
-
-% Kernel dimensions
-% !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-kernh = kv.kernsize(1);
-kernw = kv.kernsize(2);
-% !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
-if kernh < 1 || kernh > M2
-   error(['%s: Kernel size in the frequency direction must be',...
-          ' in range [1-%d]'],upper(mfilename),M2); 
-end
-
-if kernw > 2*(kv.lookahead) + 1
-    error(['%s: Kernel size in the time dimension must not be bigger',...
-           ' than 2*(lookahead) + 1'],upper(mfilename));
-end
-
-if any(mod(kv.kernsize,2)==0)
-    error('%s: Kernel size must be odd.',upper(mfilename));
-end
-
 abss = abs(s);
 norm_s = norm(abss,'fro');
-if flags.do_input
-  % Start with the phase given by the input.
-  c=s;
-end;
 
-if flags.do_zero || flags.do_unwrap || flags.do_zhu
-  % Start with a phase of zero.
-  c=abss;
-end;
-
-if flags.do_rand
-  % Start with a renadom phase
-  c=abss.*exp(2*pi*1i*rand(size(s)));
-end;
-
-% Dual window
+lookback = ceil(M/a) - 1;
+% Analysis window (as array)
+gnum = gabwin(g,a,M);
+% Synthesis window
 gd = gabdual(g,a,M,L);
+% ... as array
+gdnum = gabwin(gd,a,M);
+% Create and overlay several scaled dual windows
+wins = repmat(gdnum,1,2*lookback+1);
+specg2 = overlayframes(wins,a,M);
+% ... and get the asymetric window to be used for the newest lookahead
+% frame in 2nd and further iterations
+specg2 = (specg2(1:M));
+wins(:,1) = 0;
+% Do the same thing without contribution of the first window
+% This is to be used 
+specg1 = overlayframes(wins,a,M);
+specg1 = (specg1(1:M));
 
-
-
-% Prepare truncated projection kernels
-projfncBase = @(c) dgt(idgt(c,gd,a),g,a,M);
-projfncSpec = @(c) dgt(idgt(c,gd,a),gd,a,M);
-projfncBaseReal = @(c) dgtreal(idgtreal(c,gd,a,M),g,a,M);
-ctmp = zeros(M,N); ctmp(1) = 1;
-kern = projfncBase(ctmp);
-
-% Just shrink the kernel to the size of look ahead
-kernsmall = middlepad2(kern,[kernh, kernw]);
-
-% Kernel for the first asymetric window
-ctmpSpec1 = zeros(M,N);
-ctmpSpec1(1,[2:kernw+1]) = 1;
-kernSpec1 = projfncSpec(ctmpSpec1);
-
-% Just shrink the kernel to the size of look ahead
-kernsmallSpec1 = middlepad2(kernSpec1,[kernh, kernw]);
-
-% Kernel for the second asymetric window
-ctmpSpec2 = zeros(M,N);
-ctmpSpec2(1,[1:kernw+1]) = 1;
-kernSpec2 = projfncSpec(ctmpSpec2);
-
-% Just shrink the kernel to the size of look ahead
-kernsmallSpec2 = middlepad2(kernSpec2,[kernh,kernw]);
-
-cfull = c;
-c = zeros(size(cfull));
-
-cbuf = zeros(M2,3*(kv.lookahead) + 1);
-
-% Precompute modulated kernels
-kNo = lcm(M,a)/a;
-kernelsSmall = zeros([kernh,kernw,kNo]);
-kernelsSpec1Small = kernelsSmall;
-kernelsSpec2Small = kernelsSmall;
-for k = 0:kNo-1
-    kernelsSmall(:,:,k+1) = phasekernfi(kernsmall,k,a,M);
-    kernelsSpec1Small(:,:,k+1) = phasekernfi(kernsmallSpec1,k,a,M);
-    kernelsSpec2Small(:,:,k+1) = phasekernfi(kernsmallSpec2,k,a,M);
-    
-    kernelsSmall(:,:,k+1)=fftshift(involute2(conj(kernelsSmall(:,:,k+1))));
-    kernelsSpec1Small(:,:,k+1)=fftshift(involute2(conj(kernelsSpec1Small(:,:,k+1))));
-    kernelsSpec2Small(:,:,k+1)=fftshift(involute2(conj(kernelsSpec2Small(:,:,k+1))));
-end
+gnum = fftshift(gnum);
+gdnum = fftshift(gdnum);
 
 % Buffer initialization
-cbuf(:,1:2*kv.lookahead+1) = cfull(:,mod( -1 + (-kv.lookahead:kv.lookahead), N)+1);
+cframes = zeros(M ,lookback + kv.lookahead+1);
+sframes = zeros(M2,kv.lookahead+1);
 
-kernw2 = floor(kernw/2);
+c = zeros(M2,N);
+
+%recframes = zeros(M,N);
+
+% Preread modulus
+sframes(:,2:end) = abss(:,1:kv.lookahead);
 
 % n -th frame is the submit frame
 for n=1:N
-    % Shift cols in the buffer 
-    cbuf(:,1:kernw-1) = cbuf(:,2:kernw);
-    cbuf(:,kernw:end) = 0;
-    
-    % Index of the newest look-ahead frame
+    % Index of the submit and the look-ahead frames in the spectrogram
     nextnewframeidx = mod(n - 1 + kv.lookahead,N) + 1;
     
-    % Pick new lookahead frame
-    if flags.do_unwrap
-        newframeidx1 = mod(nextnewframeidx-1 -1,N) +1;
-        newframeidx2 = mod(nextnewframeidx-2 -1,N) +1;
-        
-        cbuf(:,kernw) = kv.unwrappar*abs(cfull(:,nextnewframeidx)) ...
-                                    .*cfull(:,newframeidx1).^2 ...
-                                    .*abs(cfull(:,newframeidx2))./ ...
-                                    (abs(cfull(:,newframeidx1)).^2 ...
-                                    .*cfull(:,newframeidx2) );
-    elseif ~flags.do_zhu
-        % Use the initial estimate
-        cbuf(:,kernw) = cfull(:,nextnewframeidx);      
-    elseif flags.do_zhu
-        % Do nothing. The original algorithm assumes the new frame to only
-        % consist of the sum of the overlapping preceeding frames.
-        % This is equivalent to setting cbuf(:,kernw) to zeros.
-        % It gets filled after the first iteration.
-    end
+    % Shift cols in the buffer
+    cframes(:,1:end-1)   = cframes(:,2:end);
+    % New empty column
+    cframes(:,end) = 0;
     
-    %% Explicit first iteration
-    % 1) No energy sorting
-    % 2) Special analysis window for the rightmost frame 
-    %    There are two different "special" analysis frames
-    %    depending on flags.do_zhu
+    sframes(:,1:end-1)   = sframes(:,2:end);
+    sframes(:,end) = abss(:,nextnewframeidx);
+   
+    % Update the lookahead frames and the submit frame 
+    [cframes, c(:,n)] = ...
+        comp_rtisilaupdate(cframes,gnum,specg1,specg2,gdnum,a,M,sframes,kv.lookahead,kv.maxit);
     
-    %% 1) The new looakahead frame
-    if flags.do_asymwin
-        if flags.do_zhu
-           kernact = kernelsSpec1Small(:,:,mod(n-1 + kv.lookahead,kNo)+1);
-        else
-           kernact = kernelsSpec2Small(:,:,mod(n-1 + kv.lookahead,kNo)+1);
-        end
-    else
-        kernact = kernelsSmall(:,:,mod(n-1 + kv.lookahead,kNo)+1);
-    end
-
-    indx = kv.lookahead+kv.lookahead+1;
-    indxRange = indx + (-kernw2:kernw2);
-    
-    cbuf(:,indx) = comp_leglaupdaterealsinglecol(cbuf(:,indxRange),...
-                         kernact,abs(cfull(:,nextnewframeidx)),M);
-
-    
-    %% 2) Other lookahead frames and the submit frame
-    for nback = kv.lookahead-1:-1:0
-       kernact = kernelsSmall(:,:,mod(n-1 + nback,kNo)+1);
-       indx = kv.lookahead+nback+1;
-       indxRange = indx + (-kernw2:kernw2);
-       
-       cbuf(:,indx) = comp_leglaupdaterealsinglecol(cbuf(:,indxRange),...
-                         kernact,abs(cfull(:,mod(n-1+nback,N)+1)),M);
-    end
-    
-    % Determine order of frames for the next iterations
-    frameorder = kv.lookahead:-1:0;
-    if flags.do_energy
-        [~,frameorder] = sort(sum(abs(cbuf(:,kv.lookahead+1:kernw)).^2),'descend');
-        frameorder = frameorder - 1;
-    end
-      
-    %% 3) All the other iterations
-    for iter=2:kv.maxit
-        for nback = frameorder
-            % Last frame gets (another) special analysis window
-            if flags.do_asymwin && nback == kv.lookahead
-                kernact = kernelsSpec1Small(:,:,mod(n-1 + kv.lookahead,kNo)+1);
-            else
-                % Pick the right kernel
-                kernact = kernelsSmall(:,:,mod(n-1 + nback,kNo)+1);
-            end
-            
-            indx = kv.lookahead+nback+1;
-            indxRange = indx + (-kernw2:kernw2);
-            
-            cbuf(:,indx) = comp_leglaupdaterealsinglecol(cbuf(:,indxRange),...
-                              kernact,abs(cfull(:,mod(n-1+nback,N)+1)),M);
-        end
-    end
-    
-    % Submit a frame
-    c(:,n) = cbuf(:,kv.lookahead + 1);
+    % Get the submit frame
+    % recframes(:,n) = cframes(:,lookback+1);
 end
 
-relres = norm(abs(projfncBaseReal(c))-abss,'fro')/norm_s;
 iter = kv.maxit*kv.lookahead;
 
-f = idgtreal(c,gd,a,M,Ls);
-f = comp_sigreshape_post(f,Ls,0,[0; W]);
+% Alternative way of reconstruction from recframes
+% 
+% f = zeros(L,1);
+% idxrange = [0:floor(M/2),-ceil(M/2)+1:-1];
+% for n=0:N-1
+%     idx = mod(n*a + idxrange,L) + 1;
+%     f(idx) = f(idx) + recframes(:,n+1);
+% end
+% c = dgtreal(f,g,a,M,flags.phase);
 
-if flags.do_timeinv
-    % Convert to time invariant phase
-    N = size(c,2);
-    L = N*a;
-    b = L/M;
-    M2=floor(M/2)+1;
-    N=size(chat,2);
+f = idgtreal(c,gd,a,M,'timeinv');
 
-    TimeInd = (0:(N-1))/N;
-    FreqInd = (0:(M2-1))*b;
-
-    phase = FreqInd'*TimeInd;
-    phase = exp(2*1i*pi*phase);
-
-    % Handle multisignals
-    c = bsxfun(@times,c,phase);
+if nargout>1
+    relres = norm(dgtreal(f,g,a,M,'timeinv')-abss,'fro')/norm_s;
 end
 
-% M/a periodic in n
-function kernm = phasekernfi(kern,n,a,M)
-kern = involute2(kern);
-
-kernh = size(kern,1);
-l = -2*pi*n*fftindex(kernh)*a/M;
-
-kernm = bsxfun(@times,kern,exp(1i*l));
-
-% M/a periodic in m
-function kernm = phasekernti(kern,m,a,M)
-
-[kernh, kernw] = size(kern);
-l = 2*pi*m*fftindex(kernw)'*a/M;
-
-kernm = bsxfun(@times,kern,exp(1i*l));
+% Cur or extend and reformat f
+f = comp_sigreshape_post(f,Ls,0,[0; W]);
 
 
-function f=involute2(f)
-f = involute(f,1);
-f = conj(involute(f,2));
+function partrec = overlayframes(cframes,a,M)
 
-function f=middlepad2(f,L,varargin)
-f = middlepad(f,L(1),1,varargin{:});
-f = middlepad(f,L(2),2,varargin{:});
+N = size(cframes,2);
+bufLen = N*a - (a-1) + M-1;
+partrec = zeros(bufLen,1);
 
-
-
-
+startidx = ceil(M/2)-1;
+idxrange = startidx + [0:floor(M/2),-ceil(M/2)+1:-1];
+for n=0:N-1
+    idx = n*a + idxrange + 1;
+    partrec(idx) = partrec(idx) + cframes(:,n+1);
+end
 
 
 

@@ -1,4 +1,11 @@
-function [c,newphase,tgrad,fgrad]=simrealtime(s,lambdaL,a,M,varargin)
+function [c,newphase,tgrad,fgrad]=rtpghi(s,lambdaL,a,M,varargin)
+%RTPGHI Real-Time Phase Gradient Integration
+%
+%   References: ltfatnote040 ltfatnote043
+%
+
+%   AUTHORS: Zdenek Prusa
+%
 
 thismfilename = upper(mfilename);
 complainif_notposint(a,'a',thismfilename);
@@ -24,17 +31,7 @@ if M2true ~= M2
     error('%s: Mismatch between *M* and the size of *s*.',thismfilename);
 end
 
-L=N*a;
-
-% [~,info]=gabwin(g,a,M,L,'callfun',upper(mfilename));
-% 
-% if ~info.gauss
-%     error(['%s: The window must be a Gaussian window (specified ',...
-%            'as a string or as a cell array)'],upper(mfilename));
-% end
-
 abss = abs(s);
-%lambdaL = info.tfr*L;
 
 if flags.do_timeinv
     fgradmul = @(fgrad) -lambdaL/(a*M)*fgrad;
@@ -53,8 +50,6 @@ if flags.do_normal
     fgrad = pderiv(logs,2,difforder)/size(logs,2);
 elseif flags.do_causal
     fgrad = (circshift(logs,[0,2]) -4*circshift(logs,[0,1])+3*logs)/2;
-    %fgrad = -1/3*circshift(logs,[0,3]) + 3/2*circshift(logs,[0,2]) -3*circshift(logs,[0,1])+11/6*logs;
-    %fgrad = -circshift(logs,[0,1])+logs;
 end
 
 % Undo the scaling done by pderiv and scale properly
@@ -73,7 +68,6 @@ tmpmask(:,1) = 1;
 newphase = zeros(M2,N);
 c = zeros(M2,N);
 
-
 for n=1:N
     idx = mod( n-1-1:n-1, N ) + 1;   
 
@@ -84,6 +78,3 @@ for n=1:N
     % Build the coefficients
     c(:,n)=abss(:,n).*exp(1i*newphase(:,n));
 end
-
-
-

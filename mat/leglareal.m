@@ -1,8 +1,8 @@
-function [f,relres,iter,c]=leglareal(s,g,a,M,varargin)
-%LEGLAREAL Le Rouxs Griffin-Lim Algorithm for real signals
-%   Usage: f = leglareal(s,g,a,M)
-%          f = leglareal(s,g,a,M,Ls)
-%          [f,relres,iter,c] = leglareal(...)
+function [c,relres,iter,f]=leglareal(s,g,a,M,varargin)
+%LEGLAREAL Le Roux's Griffin-Lim Algorithm for real signals
+%   Usage: c = leglareal(s,g,a,M)
+%          c = leglareal(s,g,a,M,Ls)
+%          [c,relres,iter,f] = leglareal(...)
 %
 %   Input parameters:
 %         s       : Array of initial coefficients.
@@ -64,16 +64,12 @@ function [f,relres,iter,c]=leglareal(s,g,a,M,varargin)
 %     'legla'      The original Giffin-Lim iteration scheme.
 %                  This is the default.
 %
-%     'flegla'     A fast Griffin-Lim iteration scheme from the 2nd
-%                  reference.
+%     'flegla'     A fast Griffin-Lim iteration scheme from Perraudin et. al.
 %
 %     'alpha',a    Parameter of the Fast Griffin-Lim algorithm. It is
 %                  ignored if not used together with 'flegla' flag.
 %
 %   Other:
-%
-%     'tol',t      Stop if relative residual error is less than the
-%                  specified tolerance.
 %
 %     'maxit',n    Do at most n iterations.
 %
@@ -97,7 +93,6 @@ function [f,relres,iter,c]=leglareal(s,g,a,M,varargin)
 L = N*a;
 
 definput.keyvals.Ls=[];
-definput.keyvals.tol=1e-6;
 definput.keyvals.maxit=100;
 definput.flags.startphase={'input','zero','rand'};
 definput.flags.algvariant={'trunc','modtrunc'};
@@ -109,9 +104,12 @@ definput.flags.phase={'freqinv','timeinv'};
 definput.keyvals.relthr = 0.1;
 definput.keyvals.kernsize = [];
 definput.keyvals.printstep=10;
-
+definput.keyvals.coefmod = [];
 [flags,kv,Ls]=ltfatarghelper({'Ls','tol','maxit'},definput,varargin);
 
+if ~isempty(kv.coefmod) && isa(kv.coefmod,'function_handle')
+    error('%s: coefmod must be anonymous function.',upper(mfilename))
+end
 
 if flags.do_input
     % Start with the phase given by the input.
@@ -156,8 +154,8 @@ else
     end
 end
 
+% Projection kernel
 projfnc = @(c) comp_dgtreal(comp_idgtreal(c,gd,a,M,[0 1],flags.do_timeinv),gnum,a,M,[0 1],flags.do_timeinv);
-
 
 if flags.do_modtrunc
     kern(1,1) = 0;
@@ -166,21 +164,29 @@ end
 kernsmall = middlepad2(kern,kv.kernsize);
 kernsmall = fftshift(involute2(kernsmall));
 
+% Do explicit coefmod
+if ~isempty(kv.coefmod)
+    c = kv.coefmod(c);
+end
+
 if flags.do_legla
     for iter=1:kv.maxit
-        % We do the projection explicitly as the comp_leglaupdatereal
-        % returns something different
+
         if nargout>1
+            % We do the projection explicitly as comp_leglaupdatereal
+            % returns something different. This effectivelly doubles the
+            % execution time.
             cproj = projfnc(c);
             relres(iter)=norm(abs(cproj)-s,'fro')/norm_s;
         end
 
+        % Do the leGLA phase update
         c = comp_leglaupdatereal(c,kernsmall,s,a,M,flags.do_onthefly);
-
-        if relres(iter)<kv.tol
-            relres=relres(1:iter);
-            break;
-        end;
+        
+        % Apply coefficient restriction
+        if ~isempty(kv.coefmod)
+            c = kv.coefmod(c);
+        end
 
         if flags.do_print
             if mod(iter,kv.printstep)==0
@@ -191,28 +197,31 @@ if flags.do_legla
 elseif flags.do_flegla
     told=c;
     for iter=1:kv.maxit
-        % We do the projection explicitly as the comp_leglaupdatereal
-        % returns something different
+        
         if nargout>1
             cproj = projfnc(c);
             relres(iter)=norm(abs(cproj)-s,'fro')/norm_s;
         end
 
+        % Do the leGLA phase update
         tnew = comp_leglaupdatereal(c,kernsmall,s,a,M,flags.do_onthefly);
+        
+        % Apply coefficient restriction
+        if ~isempty(kv.coefmod)
+            tnew = kv.coefmod(tnew);
+        end
+        
+        % The acceleration step
         c = tnew + kv.alpha*(tnew-told);
-
-        if relres(iter)<kv.tol
-            relres=relres(1:iter);
-            break;
-        end;
+        
+        % Keep for next iteration
+        told = tnew;
 
         if flags.do_print
             if mod(iter,kv.printstep)==0
                 fprintf('LEGLA: Iteration %i, residual = %f.\n',iter,relres(iter));
             end
         end
-
-        told = tnew;
     end
 end
 

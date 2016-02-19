@@ -25,7 +25,7 @@ void
 rtpghi_done(rtpghiplan* p);
 
 void
-rtpghi_execute(rtpghiplan* p, const double* s, const double* tgrad, const double* fgrad, complex double* c);
+rtpghi_execute(rtpghiplan* p, const double* s, complex double* c);
 
 void
 rtpghifgrad(const double* logs, int a, int M, double gamma,

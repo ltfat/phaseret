@@ -1,8 +1,8 @@
 function [c,relres,iter,f]=glareal(s,g,a,M,varargin)
 %GLAREAL Griffin-Lim Algorithm for real signals
-%   Usage: f = glareal(s,g,a,M)
-%          f = glareal(s,g,a,M,Ls)
-%          [f,relres,iter,c] = glareal(...)
+%   Usage: c = glareal(s,g,a,M)
+%          c = glareal(s,g,a,M,Ls)
+%          [c,relres,iter,f] = glareal(...)
 %
 %   Input parameters:
 %         s       : Initial coefficients.
@@ -23,7 +23,7 @@ function [c,relres,iter,f]=glareal(s,g,a,M,varargin)
 %
 %   using the Griffin-Lim algorithm.
 %
-%   `[f,relres,iter,c]=leglareal(...)` additionally returns an array
+%   `[f,relres,iter,c]=glareal(...)` additionally returns an array
 %   of residuals `relres`, the number of iterations done `iter` and the
 %   coefficients *c* with the reconstructed phase. The relationship between
 %   *f* and *c* is::
@@ -139,6 +139,11 @@ gd = gabdual(g,a,M,L);
 fwdtra = @(f)  comp_sepdgtreal(f,gnum,a,M,flags.do_timeinv);
 backtra = @(c) comp_isepdgtreal(c,gd,a,M,flags.do_timeinv);
 
+% Do explicit coefmod
+if ~isempty(kv.coefmod)
+    c = kv.coefmod(c);
+end
+
 if flags.do_gla
     for iter=1:kv.maxit
         fiter = backtra(c);
@@ -147,7 +152,7 @@ if flags.do_gla
             fiter = kv.timemod(fiter);
         end
 
-        c = s.*exp(i*angle(backtra(fiter)));
+        c = s.*exp(1i*angle(fwdtra(fiter)));
 
         if ~isempty(kv.coefmod)
             c = kv.coefmod(c);

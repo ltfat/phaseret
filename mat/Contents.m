@@ -9,12 +9,16 @@
 %
 %   .. math:: c\left(m+1,n+1\right)=\sum_{l=0}^{L-1}f(l+1)\overline{g(l-an+1)}e^{-2\pi \mi lm/M}
 %            
-%  Implementation of algorithms
-%    spsireal    - Single Pass Spectrogram Inversion (SPSI)
-%    leglareal   - Le Rouxs Griffin-Lim algorithm Modifications
-%    rtisireal   - Real-Time Iterative Spectrogram Inversion (RTISI and RTISI-LA)
+%  Implementation of offline algorithms
 %    glareal     - Griffin-Lim Algorithm
+%    leglareal   - Le Rouxs Griffin-Lim algorithm Modifications
+%    pghi        - Phase Gradient Heap Integration
 %
+%  Implementation of online algorithms
+%    spsireal     - Single Pass Spectrogram Inversion (SPSI)
+%    rtisireal    - Real-Time Iterative Spectrogram Inversion (RTISI and RTISI-LA)
+%    lertisireal  - |rtisireal| using Le Roux's phase updates
+%    rtpghi       - Real-Time Phase Gradient Integration
 %
 %  Auxilary functions
 %    winwidthatheight  - Get window width at specified height

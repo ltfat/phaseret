@@ -9,3 +9,4 @@ latex
 *.wav
 *.mat
 *.mex*
+*.m~
