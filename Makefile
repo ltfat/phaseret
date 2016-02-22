@@ -11,20 +11,12 @@ INCDIR = $(PREFIX)/include
 # LIB
 LIBSOURCES = $(wildcard src/*.c)
 LIBOBJECTS = $(patsubst %.c,%.o,$(LIBSOURCES))
-$(info $(LIBSOBJECTS))
 
-TARGET=build/libphaseret.a
+export TARGET=build/libphaseret.a
 SO_TARGET=$(patsubst %.a,%.so,$(TARGET))
 
-# MEX
-MEXSOURCES = $(wildcard mex/*.c)
-MEXTARGETS = $(patsubst %.c,%.mexa64,$(MEXSOURCES))
-OCTAVEMEXTARGETS = $(patsubst %.c,%.mex,$(MEXSOURCES))
-
-.INTERMEDIATE: %.o
-
 CFLAGS=-std=c11 -pedantic -Wall -Wextra -DNDEBUG -I./include $(OPTFLAGS)
-LIBS=-lm -lfftw3
+export LIBS=-lm -lfftw3
 
 all: lib matlab
 
@@ -42,39 +34,21 @@ $(SO_TARGET): $(TARGET) $(LIBOBJECTS)
 	$(CC) -shared -Wl,--no-undefined -o $@ $(LIBOBJECTS) $(LIBS)
 
 %.o: %.c
-	$(CC) -c $(CFLAGS) $< -o $@ 
-
-# MATLAB MEX files
-matlab: MEX ?= mex
-matlab: CFLAGS = -std=c11 -pedantic -Wall -Wextra -DNDEBUG -I./src -fPIC
-matlab: LDFLAGS = -l:$(TARGET) $(LIBS)
-matlab: $(TARGET) $(MEXTARGETS)
-
-# This appends the correct suffix anyway
-# and also only supresses warnings from mex (about old compiler) but not from 
-# the compiler itself.
-%.mexa64 : %.c
-	$(MEX) CFLAGS='$(CFLAGS)' $< $(LDFLAGS) -outdir mex -largeArrayDims > /dev/null
-
-# OCTAVE MEX files
-# := $(shell ...) runs shell immediatelly even if we do not use the octave 
-# target at all
-octave: MKOCTFILE = mkoctfile
-octave: FFTW_LIBS = $(shell $(MKOCTFILE) -p FFTW_LIBS)
-octave: export CFLAGS = $(shell $(MKOCTFILE) -p CFLAGS) -std=c11 -DNDEBUG -I./src -Wall -Wextra -fPIC
-octave: export LFLAGS = $(shell $(MKOCTFILE) -p LFLAGS) $(FFTW_LIBS)
-octave: $(TARGET) $(OCTAVEMEXTARGETS) 
-
-%.mex: %.c
-	$(MKOCTFILE) --mex -o $@ $<
+	$(CC) -c $(CFLAGS) $< -o $@
 
 build:
 	@mkdir -p build
 	@mkdir -p bin
 
+matlab:
+	make -C mex matlab
+
+octave:
+	make -C mex octave
+
 clean:
 	@rm -rf build $(LIBOBJECTS)
-	@rm -rf mex/*.mex*
+	make -C mex clean
 
 .PHONY: doc doxy mat2doc mat2docmat clean octave matlab cleandoc cleandoxy cleanmat2doc
 doc: doxy mat2doc
