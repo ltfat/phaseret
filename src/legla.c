@@ -49,7 +49,7 @@ leglaupdate_init(double* s, mwSignedIndex a, mwSignedIndex M,
                  mwSignedIndex kernh, mwSignedIndex kernw,
                  int flags)
 {
-    leglaupdate_plan* plan = aligned_alloc(ALIGNBYTES, sizeof(leglaupdate_plan));
+    leglaupdate_plan* plan = malloc (sizeof(leglaupdate_plan));
     plan->plan_col = leglaupdate_init_col( M, kernh, kernw, flags);
     plan->s = s;
 
@@ -61,19 +61,19 @@ leglaupdate_init(double* s, mwSignedIndex a, mwSignedIndex M,
     int M2 = M / 2 + 1;
 
 
-    plan->kr = aligned_alloc(ALIGNBYTES, plan->kernelNo * sizeof(double*));
-    plan->ki = aligned_alloc(ALIGNBYTES, plan->kernelNo * sizeof(double*));
+    plan->kr = malloc( plan->kernelNo * sizeof(double*));
+    plan->ki = malloc( plan->kernelNo * sizeof(double*));
 
-    plan->bufr = aligned_alloc(ALIGNBYTES,
+    plan->bufr = malloc(
                                ((M2 + kernh - 1) * (plan->N + kernw - 1)) * sizeof * plan->bufr);
-    plan->bufi = aligned_alloc(ALIGNBYTES,
+    plan->bufi = malloc(
                                ((M2 + kernh - 1) * (plan->N + kernw - 1)) * sizeof * plan->bufi);
 
     for (int n = 0; n < plan->kernelNo; n++)
     {
-        plan->kr[n] = aligned_alloc(ALIGNBYTES,
+        plan->kr[n] = malloc(
                                     plan->plan_col.kernw * plan->plan_col.kernwskip);
-        plan->ki[n] = aligned_alloc(ALIGNBYTES,
+        plan->ki[n] = malloc(
                                     plan->plan_col.kernw * plan->plan_col.kernwskip);
         kernphasefi(kernr, kerni, kernh, kernw, plan->plan_col.kernwskip, n, a, M,
                     plan->kr[n], plan->ki[n]);

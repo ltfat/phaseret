@@ -55,7 +55,7 @@ mexFunction(int nlhs, mxArray* plhs[],
     cr = mxGetData(plhs[0]);
     ci = mxGetImagData(plhs[0]);
 
-    double complex* cc = aligned_alloc(ALIGNBYTES, M2 * N * sizeof * cc);
+    double complex* cc = mxMalloc( M2 * N * sizeof * cc);
 
     maskedspsireal(s, a, M, N, mask, phase, initphase, cc);
 
@@ -68,5 +68,5 @@ mexFunction(int nlhs, mxArray* plhs[],
         memcpy(endphase, initphase, M2 * sizeof * initphase);
     }
 
-    free(cc);
+    mxFree(cc);
 }

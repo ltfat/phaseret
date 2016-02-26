@@ -58,10 +58,10 @@ mexFunction(int nlhs, mxArray *plhs[],
 
     leglaupdate_plan_col plan = leglaupdate_init_col( M, kernh, kernw, EXT_UPDOWN | MOD_FRAMEWISE );
 
-    double* kr = aligned_alloc(ALIGNBYTES,plan.kernw*plan.kernwskip);
-    double* ki = aligned_alloc(ALIGNBYTES,plan.kernw*plan.kernwskip);
-    double* bufr = aligned_alloc(ALIGNBYTES,((M2+kernh-1)*N)*sizeof*bufr);
-    double* bufi = aligned_alloc(ALIGNBYTES,((M2+kernh-1)*N)*sizeof*bufi);
+    double* kr = mxMalloc(plan.kernw*plan.kernwskip);
+    double* ki = mxMalloc(plan.kernw*plan.kernwskip);
+    double* bufr = mxMalloc(((M2+kernh-1)*N)*sizeof*bufr);
+    double* bufi = mxMalloc(((M2+kernh-1)*N)*sizeof*bufi);
 
     extendborders(&plan,cr,ci,N,bufr,bufi);
 
@@ -69,10 +69,10 @@ mexFunction(int nlhs, mxArray *plhs[],
 
     leglaupdatereal_execute_col(&plan,bufr,bufi,kr,ki,s,coutr,couti);
 
-    free(kr);
-    free(ki);
-    free(bufr);
-    free(bufi);
+    mxFree(kr);
+    mxFree(ki);
+    mxFree(bufr);
+    mxFree(bufi);
 
     if(isreal) mxFree(ci);
 }

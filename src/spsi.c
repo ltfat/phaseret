@@ -11,7 +11,7 @@ spsireal(const double* s, int a, int M, int N,  double* initphase,
 
     if (!initphase)
     {
-        tmpphase = aligned_alloc(ALIGNBYTES, M2 * sizeof * tmpphase);
+        tmpphase = malloc( M2 * sizeof * tmpphase);
         memset(tmpphase, 0, M2 * sizeof * tmpphase);
     }
 
@@ -40,7 +40,7 @@ maskedspsireal(const double* s, int a, int M, int N,
 
     if (!initphase)
     {
-        tmpphase = aligned_alloc(ALIGNBYTES, M2 * sizeof * tmpphase);
+        tmpphase = malloc( M2 * sizeof * tmpphase);
         memset(tmpphase, 0, M2 * sizeof * tmpphase);
     }
 
