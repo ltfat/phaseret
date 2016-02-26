@@ -105,6 +105,7 @@ definput.flags.asymwin={'asymwin','regwin'};
 definput.keyvals.lookahead = [];
 definput.keyvals.kernsize = [];
 definput.flags.phase={'freqinv','timeinv'};
+definput.flags.algvariant={'trunc','modtrunc'};
 [flags,kv,Ls]=ltfatarghelper({'Ls','maxit'},definput,varargin);
 
 if ~isnumeric(kv.maxit) || any(kv.maxit<=0) || any(rem(kv.maxit,1))
@@ -174,6 +175,10 @@ projfncSpec = @(c) dgt(idgt(c,gd,a),gd,a,M);
 projfncBaseReal = @(c) dgtreal(idgtreal(c,gd,a,M),g,a,M);
 ctmp = zeros(M,N); ctmp(1) = 1;
 kern = projfncBase(ctmp);
+
+if flags.do_modtrunc
+    kern(1,1) = 0;
+end
 
 % Just shrink the kernel to the size of look ahead
 kernsmall = middlepad2(kern,[kernh, kernw]);
