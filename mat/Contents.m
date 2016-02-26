@@ -32,6 +32,7 @@
 %
 %  Demos
 %    demo_windowaliasing  - Window aliasing dependence on Gabor sampling lattice
+%    demo_vocoderphaseret - Vocoder-based time stretching and pitch shifting
 %
 %  Block-processing demos
 %    demo_blockproc_phaseret    - Comparison of SPSI, RTPGHI and RTISI-LA algorithms, reconstruction only
