@@ -36,19 +36,31 @@ for n=1:N
             instf = (m-1+p);
             centno = centno + 1;
             peakPhase = m_phase(m) + 2*pi*a*instf/M; %phase accumulator for this peak bin
-            % Assign the peak phase to current bin
+            
+            % Explicitly assign the peak phase to three bins around the peak
             m_phase(m) = peakPhase;
 
+            if (p>0)
+                m_phase(m+1)=peakPhase;
+                binup = m+2;
+                bindown = m-1; 
+            end
+            
+            if (p<0)
+                m_phase(m-1)=peakPhase;
+                binup = m+1;
+                bindown = m-2; 
+            end
           
             % Go down from the peak until valey
-            bin=m-1;
+            bin=bindown;
             while(bin>1 && sabs(bin)<sabs(bin+1))
                 m_phase(bin)=peakPhase;
                 bin=bin-1;
             end
               
             % Go up from the peak until valey
-            bin=m+1;
+            bin=binup;
             while(bin<(M2) && sabs(bin)<sabs(bin-1))
                 m_phase(bin)=peakPhase;
                 bin=bin+1;

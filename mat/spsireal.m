@@ -1,4 +1,4 @@
-function chat  = spsireal(c,a,M,varargin)
+function chat  = spsireal(s,a,M,varargin)
 %SPSIREAL Single Pass Spectrogram Inversion (SPSI) for real signals
 %   Usage:  c=spsireal(s,a,M);
 %           c=spsireal(s,a,M,mask,phase);   
@@ -41,11 +41,11 @@ function chat  = spsireal(c,a,M,varargin)
 complainif_notposint(a,'a',mfilename);
 complainif_notposint(M,'M',mfilename);
 
-if ~isnumeric(c) || isempty(c)
+if ~isnumeric(s) || isempty(s)
     error('%s: c must be a numeric array of coefficients.',upper(mfilename));
 end
 
-if size(c,3)>1
+if size(s,3)>1
    error('%s: c cannot be 3dimensional.',upper(mfilename)); 
 end
 
@@ -59,15 +59,17 @@ if ~isempty(mask)
         error('%s: mask and phase must be both defined.',upper(mfilename));
     end
 
-    if ~all(cellfun(@(el) isequal(size(el),size(c)),{mask,phase}))
+    if ~all(cellfun(@(el) isequal(size(el),size(s)),{mask,phase}))
         error('%s: Dimensions of c, mask and phase must be equal.',upper(mfilename));
     end
 
     % Convert to logical
-    mask = kv.mask ~= 0;
+    % Sanitize mask (anything other than 0 is true)
+    mask = cast(mask,'double');
+    mask(mask~=0) = 1;
 end
 
-M2 = size(c,1); 
+M2 = size(s,1); 
 M2user = floor(M/2) + 1;
 
 if M2~=M2user
@@ -75,9 +77,9 @@ if M2~=M2user
 end
 
 if isempty(mask)
-    chat = comp_spsireal(c,a,M);
+    chat = comp_spsireal(s,a,M);
 else
-    chat = comp_maskedspsireal(c,a,M,mask,phase);
+    chat = comp_maskedspsireal(s,a,M,mask,phase);
 end
 
 if ~flags.do_timeinv

@@ -74,7 +74,7 @@ spsirealupdate(const double* scol, int a, int M, double* tmpphase)
     {
         if (scol[m] > scol[m - 1] && scol[m] > scol[m + 1])
         {
-            double p;
+            double p; int binup, bindown;
             double alpha = log(scol[m - 1] + DBL_MIN);
             double beta = log(scol[m] + DBL_MIN);
             double gamma = log(scol[m + 1] + DBL_MIN);
@@ -89,8 +89,22 @@ spsirealupdate(const double* scol, int a, int M, double* tmpphase)
             double peakPhase = tmpphase[m] + 2.0 * M_PI * a * instf / M;
             tmpphase[m] = peakPhase;
 
+            if (p > 0)
+            {
+                tmpphase[m + 1] = peakPhase;
+                binup = m + 2;
+                bindown = m - 1;
+            }
+
+            if (p < 0)
+            {
+                tmpphase[m - 1] = peakPhase;
+                binup = m + 1;
+                bindown = m - 2;
+            }
+
             // Go towards low frequency bins
-            int bin = m - 1;
+            int bin = bindown;
 
             while (bin > 0 && scol[bin] < scol[bin + 1])
             {
@@ -99,7 +113,7 @@ spsirealupdate(const double* scol, int a, int M, double* tmpphase)
             }
 
             // Go towards high frequency bins
-            bin = m + 1;
+            bin = binup;
 
             while (bin < M2 - 1 && scol[bin] < scol[bin - 1])
             {
