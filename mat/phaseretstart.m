@@ -39,12 +39,29 @@ addpath(fullfile(basepath,'mex'));
 
 if verbose
     fprintf('PHASERET version %s. Copyright 2016 Zdenek Prusa.\n',phaseretver);
+end
 
-    mexcompiled = exist(['comp_rtisilaupdate.',mexext],'file') == 3;
-    if ~mexcompiled
-        fprintf('MEX files are not compiled. Consider running phaseretmex.\n');
+mexcompiled = exist(['phaseret_dummymex.',mexext],'file') == 3;
+if ~mexcompiled
+     fprintf('MEX files are not compiled. Consider running phaseretmex.\n');
+else
+    erroccured = 0;
+    callerrmsg = '';
+    try
+        ret = phaseret_dummymex();
+    catch
+        erroccured = 1;
+        err = lasterror;
+        callerrmsg = err.message;
+    end
+
+    if erroccured || ~strcmp(ret,'mexok')
+       error(['MEX files are broken. Consider running ',...
+                '`phaseretmex clean` immediatelly.\n%s'],callerrmsg); 
+
     end
 end
+
 
 function num = verstr2num(verstr)
 vercell = strsplit(verstr,'.');
