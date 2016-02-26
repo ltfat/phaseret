@@ -5,7 +5,7 @@ OCTAVEMEXTARGETS = $(patsubst %.c,%.mex,$(MEXSOURCES))
 
 TARGETUP = ../$(TARGET)
 
-MYCFLAGS = -std=c11 -pedantic -Wall -Wextra -I../include -I../include/phaseret -fPIC -Wl,--no-undefined
+MYCFLAGS = -std=c11 -pedantic -Wall -Wextra -I../include -I../include/phaseret -I../thirdparty -fPIC -Wl,--no-undefined
 MYLFLAGS = -l:$(TARGETUP)
 
 ifeq ($(CONFIG), debug)
@@ -42,3 +42,4 @@ octave: $(TARGETUP) $(OCTAVEMEXTARGETS)
 
 clean:
 	@rm -rf *.mex*
+	@rm -rf *.o

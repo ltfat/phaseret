@@ -1,0 +1,54 @@
+# To run this makefile, you must provide your system specific EXT and MATLABROOT
+# variables on the command line e.g.:
+#
+# make -f Makefile_mingw64 MATLABROOT="C:\Program Files\MATLAB\R2011b"  EXT=mexw64 ARCH=win64 FFTWLIB="-Lc:/dll -lfftw3-3"
+
+include ../ostools.mk
+
+ifndef MATLABROOT
+  $(warning MATLABROOT variable is undefined. Using default MATLABROOT="C:\Program Files\MATLAB\R2011b" )
+  MATLABROOT=C:\Program Files\MATLAB\R2011b
+endif
+
+ifndef EXT
+  $(warning EXT variable is undefined. Using default EXT=mexw64 )
+  EXT=mexw64
+endif
+
+ifndef ARCH
+  $(warning ARCH variable is undefined. Using default ARCH=win64 )
+  ARCH=win64
+endif
+
+ifndef DFFTW
+   FFTWLIB=-lfftw3-3
+endif
+
+# MEX
+MEXSOURCES = $(wildcard *.c)
+MEXTARGETS = $(patsubst %.c,%.$(EXT),$(MEXSOURCES))
+
+TARGETUP = ../build/libphaseret.a
+
+CFLAGS=-shared -s -Wall -std=c99 -I../include -I../include/phaseret -I../thirdparty
+
+ifeq ($(CONFIG), debug)
+	CFLAGS += -O0 -g
+else
+	CFLAGS += -O2 -DNDEBUG
+endif
+
+MEXCOMPFLAGS=-I"$(MATLABROOT)\extern\include" 
+MEXLINKFLAGS=-static-libgcc -Wl,--dll -L"$(MATLABROOT)\bin\$(ARCH)" \
+			 -lmex -lmx -l:$(TARGETUP) $(DFFTW)
+
+matlab: $(MEXTARGETS)
+	
+
+%.$(EXT): %.c 
+	$(CC) $(CFLAGS) $(MEXCOMPFLAGS) $< -o $@ -L./ $(FFTWLIB) $(MEXLINKFLAGS)
+
+clean: 
+	del /Q /F *.$(EXT)
+
+.PHONY: all clean

@@ -1,7 +1,17 @@
+ifdef CROSS
+CC = $(CROSS)gcc
+AR = $(CROSS)ar
+RANLIB =ranlib
+MINGW=1
+else
 CC ?= gcc
 AR ?= ar
+RANLIB?=ranlib
+endif
 
-VERSION := $(shell cat phaseret_version)
+include ostools.mk
+
+# VERSION := $(shell cat phaseret_version)
 PACKAGE = phaseret-$(VERSION)
 
 PREFIX ?= /usr/local
@@ -12,13 +22,22 @@ INCDIR = $(PREFIX)/include
 LIBSOURCES = $(wildcard src/*.c)
 LIBOBJECTS = $(addprefix obj/,$(notdir $(LIBSOURCES:.c=.o)))
 
+CFLAGS=-std=c11 -pedantic -Wall -Wextra -DNDEBUG -I./include/phaseret -Ithirdparty $(OPTFLAGS)
+
 STATIC = libphaseret.a
-SHARED = libphaseret.so
+ifdef MINGW
+	SHARED = libphaseret.dll
+	EXTRALFLAGS = -Wl,--out-implib,$@.a -static-libgcc
+else
+	CFLAGS += -fPIC
+	SHARED = libphaseret.so
+endif
 export TARGET=$(addprefix build/,$(STATIC))
 SO_TARGET= $(addprefix build/,$(SHARED))
 
-CFLAGS=-std=c11 -pedantic -Wall -Wextra -DNDEBUG -I./include/phaseret $(OPTFLAGS)
-export LIBS=-lm -lfftw3
+FFTWLIB ?= -lfftw3
+
+export LIBS=-lm $(FFTWLIB)
 
 lib: $(TARGET) $(SO_TARGET)
 
@@ -27,33 +46,34 @@ all: lib matlab octave
 dev: CFLAGS=-std=c11 -g -O0 -Wall -Wall -Wextra -I./include/phaseret $(OPTFLAGS)
 dev: all octave
 
-$(TARGET): CFLAGS += -fPIC
 $(TARGET): obj build $(LIBOBJECTS)
-	ar rvu $@ $(LIBOBJECTS)
-	ranlib $@
+	$(AR) rvu $@ $(LIBOBJECTS)
+	$(RANLIB) $@
 
 $(SO_TARGET): $(TARGET) $(LIBOBJECTS)
-	$(CC) -shared -Wl,--no-undefined -o $@ $(LIBOBJECTS) $(LIBS)
+	$(CC) -shared -Wl,--no-undefined -o $@ $(LIBOBJECTS) $(EXTRALFLAGS) $(LIBS)
 
 obj/%.o: src/%.c obj
 	$(CC) -c $(CFLAGS) $< -o $@
 
 build:
-	@mkdir -p build
-	@mkdir -p bin
+	$(MKDIR) build
+	$(MKDIR) bin
 
 obj:
-	@mkdir -p obj
+	$(MKDIR) obj
 
 matlab: $(TARGET)
-	make -C mex matlab
+	$(MAKE) -C mex matlab
 
 octave: $(TARGET)
-	make -C mex octave
+	$(MAKE) -C mex octave
 
 clean:
-	@rm -rf build bin obj
-	make -C mex clean
+	$(RMDIR) build
+	$(RMDIR) bin
+	$(RMDIR) obj
+	$(MAKE) -C mex clean
 
 .PHONY: doc doxy mat2doc mat2docmat clean octave matlab cleandoc cleandoxy cleanmat2doc
 doc: doxy mat2doc

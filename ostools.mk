@@ -11,6 +11,7 @@ RM = del /Q /F
 CP = copy /Y
 MKDIR = md
 RMDIR = rmdir /S /Q
+MAKE = mingw32-make
 PS2 = \\
 PS = $(strip $(PS2))
 CC = gcc
