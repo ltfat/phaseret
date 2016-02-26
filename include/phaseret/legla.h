@@ -1,22 +1,11 @@
 /** \addtogroup legla
  *  @{
  */
-#include <stdlib.h>
-#include <stdalign.h>
-#include <string.h>
-#include <math.h>
-#include <complex.h>
-#ifndef M_PI
-#define M_PI 3.14159265358979323846264338327
-#endif
-
+#include "config.h"
 
 #if ! ( defined(mex_h) || defined(MEX_H) )
 typedef int mwSignedIndex;
 #endif
-
-
-#define ALIGNBYTES 32 /* 4 doubles */
 
 typedef enum
 {
