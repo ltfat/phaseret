@@ -19,7 +19,7 @@ function [c,relres,iter,f]=glareal(s,g,a,M,varargin)
 %   `glareal(s,g,a,M)` attempts to find coefficients *c*
 %   their abs. value is::
 %
-%     s = abs(c);
+%     s = abs(c)
 %
 %   using the Griffin-Lim algorithm.
 %

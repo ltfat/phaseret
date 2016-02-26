@@ -105,7 +105,7 @@ definput.keyvals.relthr = 0.1;
 definput.keyvals.kernsize = [];
 definput.keyvals.printstep=10;
 definput.keyvals.coefmod = [];
-[flags,kv,Ls]=ltfatarghelper({'Ls','tol','maxit'},definput,varargin);
+[flags,kv,Ls]=ltfatarghelper({'Ls','maxit'},definput,varargin);
 
 if ~isempty(kv.coefmod) && isa(kv.coefmod,'function_handle')
     error('%s: coefmod must be anonymous function.',upper(mfilename))
