@@ -10,6 +10,12 @@ thisdir = fileparts(which(mfilename));
 do_clean = 0;
 do_compilelib = 1;
 do_compilemex = 1;
+makecmd = 'make';
+fftwlibs = '';
+
+if ispc && ~isoctave()
+    makecmd = 'mingw32-make';
+end
 
 if nargin>0
     if strcmpi(target,'clean')
@@ -20,32 +26,52 @@ if nargin>0
 end
 
 try
-    cd([thisdir,filesep,'..']);
-    
+
     if do_compilelib
+        cd([thisdir,filesep,'..']);
         disp('********* Compiling library **********');
-        [status,res] = system('make lib');
+        [status,res] = system([makecmd,' static']);
         if status ~=0
             error(res);
         end
     end
-    
+
     if do_compilemex
+        cd([thisdir,filesep,'..',filesep,'mex']);
+
         disp('********* Compiling MEX files **********');
-        if exist('OCTAVE_VERSION','builtin') == 0
-            [status,res] = system('make matlab');
+        if ~isoctave()
+            if ispc
+                [status,res] = system([makecmd,' -f Makefile_mingw matlab',...
+                ' MATLABROOT="',matlabroot,'" ARCH=',computer('arch'),...
+                ' EXT=',mexext]);
+            else
+                [status,res] = system([makecmd,' matlab']);
+            end
         else
-            [status,res] = system('make octave');
+            [status,res] = system([makecmd, ' octave']);
         end
         if status ~=0
             error(res);
         end
     end
-    
+
     if do_clean
+        cd([thisdir,filesep,'..',filesep,'mex']);
         disp('********* Cleaning MEX files **********');
-        [status,res] = system('make clean');
-         if status ~=0
+        if ispc && ~isoctave()
+            [status,res] = system([makecmd,' -f Makefile_mingw clean']);
+        else
+            [status,res] = system([makecmd,' clean']);
+        end
+        if status ~=0
+            error(res);
+        end
+
+        cd([thisdir,filesep,'..']);
+        disp('********* Cleaning lib **********');
+        [status,res] = system([makecmd,' cleanlib']);
+        if status ~=0
             error(res);
         end
     end
@@ -57,3 +83,7 @@ end
 
 
 cd(currdir);
+
+
+function isoct=isoctave()
+isoct = exist('OCTAVE_VERSION','builtin') ~= 0;

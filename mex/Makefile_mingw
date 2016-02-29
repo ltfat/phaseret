@@ -20,7 +20,7 @@ ifndef ARCH
   ARCH=win64
 endif
 
-ifndef DFFTW
+ifndef FFTWLIB
    FFTWLIB=-lfftw3-3
 endif
 
@@ -40,7 +40,7 @@ endif
 
 MEXCOMPFLAGS=-I"$(MATLABROOT)\extern\include" 
 MEXLINKFLAGS=-static-libgcc -Wl,--dll -L"$(MATLABROOT)\bin\$(ARCH)" \
-			 -lmex -lmx -l:$(TARGETUP) $(DFFTW)
+			 -lmex -lmx $(TARGETUP) 
 
 matlab: $(MEXTARGETS)
 	
@@ -50,5 +50,6 @@ matlab: $(MEXTARGETS)
 
 clean: 
 	del /Q /F *.$(EXT)
+	del /Q /F *.o
 
 .PHONY: all clean

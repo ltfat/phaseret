@@ -32,25 +32,25 @@ else
 	CFLAGS += -fPIC
 	SHARED = libphaseret.so
 endif
-export TARGET=$(addprefix build/,$(STATIC))
+TARGET=$(addprefix build/,$(STATIC))
 SO_TARGET= $(addprefix build/,$(SHARED))
 
 FFTWLIB ?= -lfftw3
 
-export LIBS=-lm $(FFTWLIB)
+LIBS=-lm $(FFTWLIB)
 
 lib: $(TARGET) $(SO_TARGET)
 
 all: lib matlab octave
 
 dev: CFLAGS=-std=c11 -g -O0 -Wall -Wall -Wextra -I./include/phaseret $(OPTFLAGS)
-dev: all octave
+dev: all 
 
 $(TARGET): obj build $(LIBOBJECTS)
 	$(AR) rvu $@ $(LIBOBJECTS)
 	$(RANLIB) $@
 
-$(SO_TARGET): $(TARGET) $(LIBOBJECTS)
+$(SO_TARGET): obj build $(LIBOBJECTS)
 	$(CC) -shared -Wl,--no-undefined -o $@ $(LIBOBJECTS) $(EXTRALFLAGS) $(LIBS)
 
 obj/%.o: src/%.c obj
@@ -58,7 +58,6 @@ obj/%.o: src/%.c obj
 
 build:
 	$(MKDIR) build
-	$(MKDIR) bin
 
 obj:
 	$(MKDIR) obj
@@ -69,13 +68,18 @@ matlab: $(TARGET)
 octave: $(TARGET)
 	$(MAKE) -C mex octave
 
-clean:
+cleanlib:
 	$(RMDIR) build
-	$(RMDIR) bin
 	$(RMDIR) obj
+
+clean: cleanlib
 	$(MAKE) -C mex clean
 
-.PHONY: doc doxy mat2doc mat2docmat clean octave matlab cleandoc cleandoxy cleanmat2doc
+static: $(TARGET)
+
+shared: $(SO_TARGET)
+
+.PHONY: doc doxy mat2doc mat2docmat clean cleanlib octave matlab cleandoc cleandoxy cleanmat2doc static shared
 doc: doxy mat2doc
 
 cleanmat2doc:
