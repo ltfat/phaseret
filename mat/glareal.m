@@ -137,7 +137,7 @@ gnum = gabwin(g,a,M,L);
 gd = gabdual(g,a,M,L);
 
 fwdtra = @(f)  comp_sepdgtreal(f,gnum,a,M,flags.do_timeinv);
-backtra = @(c) comp_isepdgtreal(c,gd,a,M,flags.do_timeinv);
+backtra = @(c) comp_isepdgtreal(c,gd,L,a,M,flags.do_timeinv);
 
 % Do explicit coefmod
 if ~isempty(kv.coefmod)
@@ -183,7 +183,7 @@ elseif flags.do_fgla
         end
 
         % Phase update
-        tnew = s.*exp(i*angle(backtra(fiter)));
+        tnew = s.*exp(1i*angle(fwdtra(fiter)));
 
         % The acceleration step
         c = tnew + kv.alpha*(tnew-told);
