@@ -64,11 +64,12 @@ end
 
 
 function num = verstr2num(verstr)
-vercell = strsplit(verstr,'.');
+vercell = textscan(verstr,'%s','Delimiter','.');
+vercell = vercell{1};
 vercell = vercell(~cellfun(@isempty,vercell));
 vercell = vercell(end:-1:1);
 num = 0;
 for ii=1:numel(vercell)
-     num = num + 100^ii*str2double(vercell{ii});
+     num = num + 1000^ii*str2double(vercell{ii});
 end
 
