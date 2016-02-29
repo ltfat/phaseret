@@ -2,8 +2,8 @@
 #include "legla.h"
 
 /*
- Calling convention                   0         1 2 3 
- cout = comp_leglaupdaterealsinglecol(c,kernsmall,s,M)
+ Calling convention                   0         1 2 3           4
+ cout = comp_leglaupdaterealsinglecol(c,kernsmall,s,M,do_onthefly)
  *
  * kernsmall size is kernh x kernw
  * c size is M2 x kernw
@@ -34,8 +34,7 @@ mexFunction(int nlhs, mxArray *plhs[],
         ci = mxCalloc(M2*N,sizeof*ci);
     }
 
-
-
+    int do_onthefly = (int)mxGetScalar(prhs[4]);
 
     kernr = mxGetPr(prhs[1]);
     kerni = mxGetPi(prhs[1]);
@@ -56,7 +55,8 @@ mexFunction(int nlhs, mxArray *plhs[],
     coutr = mxGetPr(plhs[0]);
     couti = mxGetPi(plhs[0]);
 
-    leglaupdate_plan_col plan = leglaupdate_init_col( M, kernh, kernw, EXT_UPDOWN | MOD_FRAMEWISE );
+    leglaupdate_mod modflag = do_onthefly?MOD_COEFFICIENTWISE:MOD_FRAMEWISE;
+    leglaupdate_plan_col plan = leglaupdate_init_col( M, kernh, kernw, EXT_UPDOWN | modflag );
 
     double* kr = mxMalloc(plan.kernw*plan.kernwskip);
     double* ki = mxMalloc(plan.kernw*plan.kernwskip);

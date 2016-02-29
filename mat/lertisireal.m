@@ -71,6 +71,21 @@ function [c,relres,iter,f]=lertisireal(s,g,a,M,varargin)
 %                       used. 
 %                       The default value is 0.3.
 %
+%   Variant of the algorithm:
+%
+%     'trunc'      The projection kernel is used directly.
+%                  This is the default.
+%
+%     'modtrunc'   Modified phase update is done by setting the central
+%                  sample of the projection kernel to zero.
+%
+%   Phase update scheme:
+%
+%     'framewise'  Phase is updated for each frame.
+%                  This is the default.
+%
+%     'onthefly'   The phase is updated for each coefficient immediatelly.
+%
 %   Parameters of modifications:
 %
 %     'energy'     Process the lookahead frames in the order of their
@@ -106,6 +121,7 @@ definput.keyvals.lookahead = [];
 definput.keyvals.kernsize = [];
 definput.flags.phase={'freqinv','timeinv'};
 definput.flags.algvariant={'trunc','modtrunc'};
+definput.flags.updatescheme={'framewise','onthefly'};
 [flags,kv,Ls]=ltfatarghelper({'Ls','maxit'},definput,varargin);
 
 if ~isnumeric(kv.maxit) || any(kv.maxit<=0) || any(rem(kv.maxit,1))
@@ -167,8 +183,6 @@ end;
 % Dual window
 gd = gabdual(g,a,M,L);
 
-
-
 % Prepare truncated projection kernels
 projfncBase = @(c) dgt(idgt(c,gd,a),g,a,M);
 projfncSpec = @(c) dgt(idgt(c,gd,a),gd,a,M);
@@ -188,6 +202,10 @@ ctmpSpec1 = zeros(M,N);
 ctmpSpec1(1,[2:kernw+1]) = 1;
 kernSpec1 = projfncSpec(ctmpSpec1);
 
+if flags.do_modtrunc
+    kernSpec1(1,1) = 0;
+end
+
 % Just shrink the kernel to the size of look ahead
 kernsmallSpec1 = middlepad2(kernSpec1,[kernh, kernw]);
 
@@ -195,6 +213,10 @@ kernsmallSpec1 = middlepad2(kernSpec1,[kernh, kernw]);
 ctmpSpec2 = zeros(M,N);
 ctmpSpec2(1,[1:kernw+1]) = 1;
 kernSpec2 = projfncSpec(ctmpSpec2);
+
+if flags.do_modtrunc
+    kernSpec2(1,1) = 0;
+end
 
 % Just shrink the kernel to the size of look ahead
 kernsmallSpec2 = middlepad2(kernSpec2,[kernh,kernw]);
@@ -274,7 +296,7 @@ for n=1:N
     indxRange = indx + (-kernw2:kernw2);
     
     cbuf(:,indx) = comp_leglaupdaterealsinglecol(cbuf(:,indxRange),...
-                         kernact,abs(cfull(:,nextnewframeidx)),M);
+                         kernact,abs(cfull(:,nextnewframeidx)),M,flags.do_onthefly);
 
     
     %% 2) Other lookahead frames and the submit frame
@@ -284,7 +306,7 @@ for n=1:N
        indxRange = indx + (-kernw2:kernw2);
        
        cbuf(:,indx) = comp_leglaupdaterealsinglecol(cbuf(:,indxRange),...
-                         kernact,abs(cfull(:,mod(n-1+nback,N)+1)),M);
+                         kernact,abs(cfull(:,mod(n-1+nback,N)+1)),M,flags.do_onthefly);
     end
     
     % Determine order of frames for the next iterations
@@ -299,7 +321,7 @@ for n=1:N
         for nback = frameorder
             % Last frame gets (another) special analysis window
             if flags.do_asymwin && nback == kv.lookahead
-                kernact = kernelsSpec1Small(:,:,mod(n-1 + kv.lookahead,kNo)+1);
+                kernact = kernelsSpec2Small(:,:,mod(n-1 + kv.lookahead,kNo)+1);
             else
                 % Pick the right kernel
                 kernact = kernelsSmall(:,:,mod(n-1 + nback,kNo)+1);
@@ -309,7 +331,7 @@ for n=1:N
             indxRange = indx + (-kernw2:kernw2);
             
             cbuf(:,indx) = comp_leglaupdaterealsinglecol(cbuf(:,indxRange),...
-                              kernact,abs(cfull(:,mod(n-1+nback,N)+1)),M);
+                              kernact,abs(cfull(:,mod(n-1+nback,N)+1)),M,flags.do_onthefly);
         end
     end
     
