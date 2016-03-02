@@ -20,6 +20,7 @@
 extern "C" {
 #endif
 
+// Not storing state between calls
 typedef struct
 {
     double* frame; //!< Time domain buffer
@@ -53,9 +54,15 @@ void
 rtisilaphaseupdate(rtisilaupdate_plan* p, const double* sframe, double* frameupd);
 
 /** Create a RTISILA Update Plan.
- * \param[in,out] p         RTISILA Update Plan, p.fftframe contains
- * \param[in]     sframe    Target spectrum magnitude
- * \param[out]    frameupd  Updated frame
+ * \param[in]     g          Analysis window
+ * \param[in]     specg1     Analysis window used in the first iteration
+ *                           for the newest lookahead frame
+ * \param[in]     specg2     Analysis window used in the other iterations
+ *                           for the newest lookahead frame
+ * \param[in]     gd         Synthesis window
+ * \param[in]     a          Hop size
+ * \param[in]     M          FFT length, also length of all the windows
+ *                           (possibly zero-padded).
  * \returns RTISILA Update Plan
  */
 rtisilaupdate_plan*
@@ -106,7 +113,7 @@ rtisilaupdate_execute(rtisilaupdate_plan* p, const double* frames, int N,
  * \param[in]     gd         Synthesis window
  * \param[in]     a          Hop size
  * \param[in]     M          FFT length, also length of all the windows
- *                           (possibly zero middlepadded).
+ *                           (possibly zero-padded).
  * \param[in]     N          Number of frames N = lookback + 1 + lookahead
  * \param[in]     s          Target magnitude, N frames M samples long
  * \param[in]     lookahead  Number of lookahead frames
@@ -119,14 +126,12 @@ rtisilaupdate(const double* frames,
               int a, int M, int N, const double* s, int lookahead, int maxit,
               double* frames2);
 
-/** Do maxit iterations of RTISI-LA for a single frame
+/** Do RTISI-LA for a complete magnitude spectrogram and compensate delay
  *
- * This function just creates a plan, executes it and destroys it.
+ * This function just creates a plan, executes it for each col in s and c 
+ * and destroys it.
  *
- * <em>Note the function can be run inplace i.e. frames and frames2 can
- * point to the same memory location.</em>
- *
- * \param[in]     c          N frames M samples long
+ * \param[in]     s          Magnitude spectrogram  M2 x N array
  * \param[in]     g          Analysis window
  * \param[in]     specg1     Analysis window used in the first iteration
  *                           for the newest lookahead frame
@@ -135,17 +140,75 @@ rtisilaupdate(const double* frames,
  * \param[in]     gd         Synthesis window
  * \param[in]     a          Hop size
  * \param[in]     M          FFT length, also length of all the windows
- *                           (possibly zero middlepadded).
+ *                           (possibly zero-padded).
  * \param[in]     L          Transform length
- * \param[in]     s          Target magnitude, N frames M samples long
  * \param[in]     lookahead  Number of lookahead frames
  * \param[in]     maxit      Number of iterations
- * \param[out]    frames2    N output frames M samples long
+ * \param[out]    c          Reconstructed coefficients M2 x N array
  */
 void
-rtisila(const double* c,
-        const double* g, const double* specg1, const double* specg2, const double* gd,
-        int a, int M, int L, const double* s, int lookahead, int maxit, double* c2);
+rtisilaoffline(const double* s,
+               const double* g, const double* specg1, const double* specg2, const double* gd,
+               int a, int M, int L, int lookahead, int maxit, complex double* c);
+
+/** Plan for rtisila
+ *  
+ *  Serves for storing state between calls to rtisila_execute.
+ */
+typedef struct
+{
+    int maxLookahead;
+    int lookahead;
+    int lookback;
+    int noFrames;
+    int maxit;
+    double* frames; //!< Buffer for time-domain frames
+    double* s; //!< Buffer for target magnitude
+    rtisilaupdate_plan* updateplan;
+} rtisila_plan;
+
+
+/** Create a RTISILA Plan.
+ * \param[in]     g            Analysis window
+ * \param[in]     specg1       Analysis window used in the first iteration
+ *                             for the newest lookahead frame
+ * \param[in]     specg2       Analysis window used in the other iterations
+ *                             for the newest lookahead frame
+ * \param[in]     gd           Synthesis window
+ * \param[in]     a            Hop size
+ * \param[in]     M            FFT length, also length of all the windows
+ *                             (possibly zero-padded).
+ * \param[in]     lookahead    Number of lookahead frames
+ * \param[in]     maxLookahead Maximum number of lookahead frames
+ * \param[in]     maxit        Number of iterations. The number of per-frame 
+ *                             iterations is (lookahead+1) * maxit. 
+ * \returns RTISILA Plan
+ */
+rtisila_plan*
+rtisila_init(const double *g, const double* specg1,
+             const double* specg2, const double* gd,
+             int a, int M, int lookahead, int maxLookahead, int maxit);
+
+/** Destroy a RTISILA Plan.
+ * \param[in] p  RTISILA Plan
+ */
+void
+rtisila_done(rtisila_plan* p);
+
+
+/** Execute RTISILA plan for a single frame
+ *  
+ *  The function is intedned to be called for consecutive stream of frames
+ *  as it reuses some data from the previous frames stored in the plan.
+ *
+ *  c is lagging behind s by lookahead frames.
+ *
+ * \param[in]       p   RTISILA plan   
+ * \param[in]       s   Target magnitude
+ * \param[out]      c   Reconstructed coefficients
+ */
+void
+rtisila_execute(rtisila_plan* p, const double* s, double complex* c);
 
 
 #ifdef __cplusplus

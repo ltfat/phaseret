@@ -1,8 +1,8 @@
-function [c,relres,iter,f]=glareal(s,g,a,M,varargin)
-%GLAREAL Griffin-Lim Algorithm for real signals
-%   Usage: c = glareal(s,g,a,M)
-%          c = glareal(s,g,a,M,Ls)
-%          [c,relres,iter,f] = glareal(...)
+function [c,relres,iter,f]=gla(s,g,a,M,varargin)
+%GLA Griffin-Lim Algorithm for real signals
+%   Usage: c = gla(s,g,a,M)
+%          c = gla(s,g,a,M,Ls)
+%          [c,relres,iter,f] = gla(...)
 %
 %   Input parameters:
 %         s       : Initial coefficients.
@@ -16,14 +16,14 @@ function [c,relres,iter,f]=glareal(s,g,a,M,varargin)
 %         iter    : Number of iterations done.
 %         c       : Coefficients with the reconstructed phase
 %
-%   `glareal(s,g,a,M)` attempts to find coefficients *c*
+%   `gla(s,g,a,M)` attempts to find coefficients *c*
 %   their abs. value is::
 %
 %     s = abs(c)
 %
 %   using the Griffin-Lim algorithm.
 %
-%   `[f,relres,iter,c]=glareal(...)` additionally returns an array
+%   `[f,relres,iter,c]=gla(...)` additionally returns an array
 %   of residuals `relres`, the number of iterations done `iter` and the
 %   coefficients *c* with the reconstructed phase. The relationship between
 %   *f* and *c* is::
@@ -32,7 +32,7 @@ function [c,relres,iter,f]=glareal(s,g,a,M,varargin)
 %
 %   where *gd* is the canonical dual window obtained by |gabdual|.
 %
-%   `glareal` takes the following additional parameters:
+%   `gla` takes the following additional parameters:
 %
 %   Initial phase guess:
 %

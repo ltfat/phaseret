@@ -1,8 +1,8 @@
-function [c,relres,iter,f]=rtisireal(s,g,a,M,varargin)
-%RTISIREAL Real-Time Iterative Spectrogram Inversion (RTISI) for real signals
-%   Usage: f = rtisireal(s,g,a,M)
-%          f = rtisireal(s,g,a,M,Ls)
-%          [f,relres,iter,c] = rtisireal(...)
+function [c,relres,iter,f]=rtisila(s,g,a,M,varargin)
+%RTISILA Real-Time Iterative Spectrogram Inversion (RTISI) for real signals
+%   Usage: f = rtisila(s,g,a,M)
+%          f = rtisila(s,g,a,M,Ls)
+%          [f,relres,iter,c] = rtisila(...)
 %
 %   Input parameters:
 %         s       : Modulus of coefficients.
@@ -16,14 +16,14 @@ function [c,relres,iter,f]=rtisireal(s,g,a,M,varargin)
 %         iter    : Number of per-frame iterations done.
 %         c       : Coefficients with the reconstructed phase.
 %
-%   `rtisireal(s,g,a,M)` attempts to find Gabor coefficients *c* such
+%   `rtisila(s,g,a,M)` attempts to find Gabor coefficients *c* such
 %   that::
 %
 %     s = abs(c);
 %
 %   using the Real-Time Iterative Spectrogram Inversion with Look Ahead.
 %
-%   `[c,relres,iter,f]=rtisireal(...)` additionally returns the final
+%   `[c,relres,iter,f]=rtisila(...)` additionally returns the final
 %   of residual `relres`, the number of per-frame iterations done `iter` and the
 %   coefficients *c* with the reconstructed phase. The relationship between
 %   *f* and *c* is::
@@ -32,14 +32,14 @@ function [c,relres,iter,f]=rtisireal(s,g,a,M,varargin)
 %
 %   where *gd* is the canonical dual window obtained by |gabdual|.
 %
-%   `rtisireal` takes the following addition arguments:
+%   `rtisila` takes the following addition arguments:
 %
 %   Algorithm parameters:
 %
 %     'lookahead',lookahead  Number of lookahead frames. The default value
 %                            is `ceil(M/a)-1`.
 %
-%   See also:  lertisireal, idgtreal, dgtreal
+%   See also:  lertisila, idgtreal, dgtreal
 %
 %   References: zhbewy07
 %

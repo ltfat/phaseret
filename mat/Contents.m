@@ -10,22 +10,23 @@
 %   .. math:: c\left(m+1,n+1\right)=\sum_{l=0}^{L-1}f(l+1)\overline{g(l-an+1)}e^{-2\pi \mi lm/M}
 %            
 %  Implementation of offline algorithms
-%    glareal     - Griffin-Lim Algorithm
-%    leglareal   - Le Rouxs Griffin-Lim algorithm Modifications
+%    gla     - Griffin-Lim Algorithm
+%    legla   - Le Rouxs Griffin-Lim algorithm Modifications
 %    pghi        - Phase Gradient Heap Integration
 %    decolbfgs   - Decorsiere's phase reconstruction algorithm
 %
 %  Implementation of online algorithms
-%    spsireal     - Single Pass Spectrogram Inversion (SPSI)
-%    rtisireal    - Real-Time Iterative Spectrogram Inversion (RTISI and RTISI-LA)
-%    lertisireal  - |rtisireal| using Le Roux's phase updates
+%    spsi     - Single Pass Spectrogram Inversion (SPSI)
+%    rtisila    - Real-Time Iterative Spectrogram Inversion (RTISI and RTISI-LA)
+%    lertisila  - |rtisila| using Le Roux's phase updates
 %    rtpghi       - Real-Time Phase Gradient Integration
 %
 %  Auxilary functions
-%    winwidthatheight  - Get window width at specified height
-%    findbestgauss     - Find parameters of a Gaussian window closest to a given one
-%    magnitudeerr      - Computes spectral convergence
-%    magnitudeerrdb    - |magnitudeerr| in dB
+%    winwidthatheight   - Get window width at specified height
+%    findbestgauss      - Find parameters of a Gaussian window closest to a given one
+%    findwindowconstant - Find Cg and gamma parameters for |pghi| and |rtpghi|
+%    magnitudeerr       - Computes spectral convergence
+%    magnitudeerrdb     - |magnitudeerr| in dB
 %
 %  Plots
 %    plotdgtrealphasediff - Plots phase difference
@@ -36,7 +37,7 @@
 %
 %  Block-processing demos
 %    demo_blockproc_phaseret    - Comparison of SPSI, RTPGHI and RTISI-LA algorithms, reconstruction only
-%    demo_blockproc_phaseretmix - Comparison of SPSI, RTPGHI and RTISI-LA algorithms mixing
+%    demo_blockproc_phaseretmix - Comparison of SPSI, RTPGHI and RTISI-LA algorithms, delay line mixing
 %
 %  Note that LTFAT 2.1.2 or newer is required in order to run functions and
 %  scripts.

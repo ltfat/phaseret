@@ -36,14 +36,7 @@ Compatibility
 -------------
 
 The library internally uses complex numbers from ISO C99
-[complex.h](http://en.cppreference.com/w/c/numeric/complex) and
-[aligned_malloc](http://en.cppreference.com/w/c/memory/aligned_alloc)
- defined in ISO C11, therefore it must be compiled with a
-fairly modern compiler.
-
-When linking the library however, none of the above is required. It is not
-required to supply memory aligned output arrays and the complex data type
-in the headers will become a length 2 array.
+[complex.h](http://en.cppreference.com/w/c/numeric/complex).
 
 Such format is binary compatible with the complex class from C++.
 One can cast pointers back and forth in the following way:

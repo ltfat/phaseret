@@ -95,7 +95,7 @@ formatkernel(double* kernr, double* kerni,
         mwSignedIndex kernwskip, double* kernmodr, double* kernmodi);
 
 /* Util */
-mwSignedIndex gcd(mwSignedIndex m, mwSignedIndex n);
-mwSignedIndex lcm(mwSignedIndex m, mwSignedIndex n);
+int phaseret_gcd(int m, int n);
+int phaseret_lcm(int m, int n);
 
 /** @}*/

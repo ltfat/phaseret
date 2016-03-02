@@ -1,8 +1,8 @@
-function [c,relres,iter,f]=leglareal(s,g,a,M,varargin)
-%LEGLAREAL Le Roux's Griffin-Lim Algorithm for real signals
-%   Usage: c = leglareal(s,g,a,M)
-%          c = leglareal(s,g,a,M,Ls)
-%          [c,relres,iter,f] = leglareal(...)
+function [c,relres,iter,f]=legla(s,g,a,M,varargin)
+%LEGLA Le Roux's Griffin-Lim Algorithm for real signals
+%   Usage: c = legla(s,g,a,M)
+%          c = legla(s,g,a,M,Ls)
+%          [c,relres,iter,f] = legla(...)
 %
 %   Input parameters:
 %         s       : Array of initial coefficients.
@@ -16,14 +16,14 @@ function [c,relres,iter,f]=leglareal(s,g,a,M,varargin)
 %         iter    : Number of iterations done.
 %         c       : Coefficients with the reconstructed phase
 %
-%   `leglareal(s,g,a,M)` attempts to find a signal *f* with has *s* as
+%   `legla(s,g,a,M)` attempts to find a signal *f* with has *s* as
 %   the abs. value of the Gabor coefficients such as::
 %
 %     s = abs(dgtreal(f,g,a,M));
 %
 %   using Le Rouxs modifications of the Griffin-Lim algorithm.
 %
-%   `[f,relres,iter,c]=leglareal(...)` additionally returns an array
+%   `[f,relres,iter,c]=legla(...)` additionally returns an array
 %   of residuals `relres`, the number of iterations done `iter` and the
 %   coefficients *c* with the reconstructed phase. The relationship between
 %   *f* and *c* is::
@@ -32,7 +32,7 @@ function [c,relres,iter,f]=leglareal(s,g,a,M,varargin)
 %
 %   where *gd* is the canonical dual window obtained by |gabdual|.
 %
-%   `leglareal` takes the following additional parameters:
+%   `legla` takes the following additional parameters:
 %
 %   Initial phase guess:
 %
@@ -181,7 +181,7 @@ if flags.do_legla
         end
 
         % Do the leGLA phase update
-        c = comp_leglaupdatereal(c,kernsmall,s,a,M,flags.do_onthefly);
+        c = comp_leglaupdate(c,kernsmall,s,a,M,flags.do_onthefly);
         
         % Apply coefficient restriction
         if ~isempty(kv.coefmod)
@@ -204,7 +204,7 @@ elseif flags.do_flegla
         end
 
         % Do the leGLA phase update
-        tnew = comp_leglaupdatereal(c,kernsmall,s,a,M,flags.do_onthefly);
+        tnew = comp_leglaupdate(c,kernsmall,s,a,M,flags.do_onthefly);
         
         % Apply coefficient restriction
         if ~isempty(kv.coefmod)

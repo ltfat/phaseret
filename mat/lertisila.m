@@ -1,8 +1,8 @@
-function [c,relres,iter,f]=lertisireal(s,g,a,M,varargin)
-%LERTISIREAL RTISI for real signals using Le Roux's truncated updates
-%   Usage: c = lertisireal(s,g,a,M)
-%          c = lertisireal(s,g,a,M,Ls)
-%          [c,relres,iter,f] = lertisireal(...)
+function [c,relres,iter,f]=lertisila(s,g,a,M,varargin)
+%LERTISILA RTISI for real signals using Le Roux's truncated updates
+%   Usage: c = lertisila(s,g,a,M)
+%          c = lertisila(s,g,a,M,Ls)
+%          [c,relres,iter,f] = lertisila(...)
 %
 %   Input parameters:
 %         s       : Array of initial coefficients.
@@ -16,7 +16,7 @@ function [c,relres,iter,f]=lertisireal(s,g,a,M,varargin)
 %         iter    : Number of per-frame iterations done.
 %         c       : Coefficients with the reconstructed phase.
 %
-%   `lertisireal(s,g,a,M)` attempts to find Gabor coefficients *c* such
+%   `lertisila(s,g,a,M)` attempts to find Gabor coefficients *c* such
 %   that::
 %
 %     s = abs(c);
@@ -24,7 +24,7 @@ function [c,relres,iter,f]=lertisireal(s,g,a,M,varargin)
 %   using the Real-Time Iterative Spectrogram Inversion with Look Ahead
 %   and Le Roux's truncated phase updates.
 %   
-%   `[c,relres,iter,f]=lertisireal(...)` additionally returns an array
+%   `[c,relres,iter,f]=lertisila(...)` additionally returns an array
 %   of residuals `relres`, the number of per-frame iterations done `iter` 
 %   and the coefficients *c* with the reconstructed phase. The relationship
 %   between *f* and *c* is::
@@ -33,7 +33,7 @@ function [c,relres,iter,f]=lertisireal(s,g,a,M,varargin)
 %
 %   where *gd* is the canonical dual window obtained by |gabdual|.
 %
-%   `lertisireal` takes the following addition arguments:
+%   `lertisila` takes the following addition arguments:
 %
 %   Algorithm parameters:
 %
@@ -295,7 +295,7 @@ for n=1:N
     indx = kv.lookahead+kv.lookahead+1;
     indxRange = indx + (-kernw2:kernw2);
     
-    cbuf(:,indx) = comp_leglaupdaterealsinglecol(cbuf(:,indxRange),...
+    cbuf(:,indx) = comp_leglaupdatesinglecol(cbuf(:,indxRange),...
                          kernact,abs(cfull(:,nextnewframeidx)),M,flags.do_onthefly);
 
     
@@ -305,7 +305,7 @@ for n=1:N
        indx = kv.lookahead+nback+1;
        indxRange = indx + (-kernw2:kernw2);
        
-       cbuf(:,indx) = comp_leglaupdaterealsinglecol(cbuf(:,indxRange),...
+       cbuf(:,indx) = comp_leglaupdatesinglecol(cbuf(:,indxRange),...
                          kernact,abs(cfull(:,mod(n-1+nback,N)+1)),M,flags.do_onthefly);
     end
     
@@ -330,7 +330,7 @@ for n=1:N
             indx = kv.lookahead+nback+1;
             indxRange = indx + (-kernw2:kernw2);
             
-            cbuf(:,indx) = comp_leglaupdaterealsinglecol(cbuf(:,indxRange),...
+            cbuf(:,indx) = comp_leglaupdatesinglecol(cbuf(:,indxRange),...
                               kernact,abs(cfull(:,mod(n-1+nback,N)+1)),M,flags.do_onthefly);
         end
     end

@@ -56,7 +56,7 @@ leglaupdate_init(double* s, mwSignedIndex a, mwSignedIndex M,
     // N
     plan->N = (plan->plan_col.flags & EXT_UPDOWN) ? N - (kernw - 1) : N;
 
-    plan->kernelNo = lcm(M, a) / a;
+    plan->kernelNo = phaseret_lcm(M, a) / a;
 
     int M2 = M / 2 + 1;
 
@@ -440,14 +440,14 @@ formatkernel(double* kernr, double* kerni,
 }
 
 
-mwSignedIndex lcm(mwSignedIndex m, mwSignedIndex n)
+int phaseret_lcm(int m, int n)
 {
-    return m / gcd(m, n) * n;
+    return m / phaseret_gcd(m, n) * n;
 }
 
-mwSignedIndex gcd(mwSignedIndex m, mwSignedIndex n)
+int phaseret_gcd(int m, int n)
 {
-    mwSignedIndex tmp;
+    int tmp;
 
     while (m)
     {

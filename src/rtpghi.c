@@ -1,13 +1,139 @@
 #include "rtpghi.h"
 #include "float.h"
 
-struct _rtpghiplan
+rtpghi_plan*
+rtpghi_init(double gamma, int a, int M, double tol, int do_causal)
 {
-    int* mask;
-    struct heapinttask_d* hit;
-    int do_causal;
-    double* phase;
-};
+    int M2 = M / 2 + 1;
+
+    struct heapinttask_d* hit = heapinttask_init_d( M2, 2, 2 * M2 , NULL, 1);
+    double* slog = calloc(3 * M2 , sizeof * slog);
+    double* s = calloc(2 * M2 , sizeof * slog);
+    double* phase = calloc(2 * M2,  sizeof * phase);
+    double* tgrad = calloc(3 * M2,  sizeof * tgrad);
+    double* fgrad = calloc(2 * M2,  sizeof * fgrad);
+
+    int randphaseLen = 10 * M2;
+    double* randphase = malloc(randphaseLen * sizeof * randphase);
+
+    for (int ii = 0; ii < randphaseLen; ii++)
+        randphase[ii] = 2 * M_PI * ((double)rand()) / RAND_MAX;
+
+    int* mask = malloc(2 * M2 * sizeof * mask);
+
+    for (int ii = 0; ii < M2; ++ii)
+    {
+        mask[ii] = 1;
+        mask[ii + M2] = 0;
+    }
+
+    // This way, we can write to the constant parameters of the structure
+    rtpghi_plan pdummy =
+    {
+        .hit = hit, .do_causal = do_causal, .logtol = log(tol + DBL_MIN), .tol = tol,
+        .slog = slog, .tgrad = tgrad, .fgrad = fgrad, .phase = phase, .M = M, .a = a, .gamma = gamma,
+        .randphase = randphase, .randphaseLen = randphaseLen, .randphaseId = 0, .s = s,
+        .mask = mask
+    };
+
+    rtpghi_plan* p = malloc(sizeof * p);
+    memcpy(p, &pdummy, sizeof * p);
+    return p;
+}
+
+
+void
+rtpghi_execute(rtpghi_plan* p, const double* s, complex double* c)
+{
+    // n, n-1, n-2 frames
+    // s is n-th
+    int M2 = p->M / 2 + 1;
+
+    // store log(s)
+    shiftcolsleft(p->slog, M2, 3, NULL);
+
+    // Store current s
+    shiftcolsleft(p->s, M2, 2, s);
+    rtpghilog(s, M2, p->slog + 2 * M2);
+
+    // Compute and store tgrad for n
+    shiftcolsleft(p->tgrad, M2, 3, NULL);
+    rtpghitgrad(p->slog + 2 * M2, p->a, p->M, p->gamma, p->tgrad + 2 * M2);
+
+    // Compute fgrad for n or n-1
+    rtpghifgrad(p->slog, p->a, p->M, p->gamma, p->do_causal, p->fgrad + M2);
+
+    heapinttask_resetmask_d(p->hit,
+                            p->mask, p->do_causal ? p->slog + M2 : p->slog, p->logtol);
+
+    heapint_execute_d(p->hit,
+                      p->do_causal ? p->tgrad + M2 : p->tgrad, p->fgrad, p->phase);
+
+    shiftcolsleft(p->phase, M2, 2, NULL);
+
+    // Fill in the missing phase from the precomputed random array
+    for (int ii = 0; ii < M2; ii++)
+    {
+        if (p->hit->donemask[M2 + ii] == 5)
+        {
+            p->phase[ii] = p->randphase[p->randphaseId++];
+            p->randphaseId %= p->randphaseLen;
+        }
+    }
+
+    // Combine phase with magnitude
+    rtpghimagphase(p->do_causal ? p->s + M2 : p->s, p->phase, M2, c);
+}
+
+
+void
+rtpghi_done(rtpghi_plan* p)
+{
+    heapinttask_done_d(p->hit);
+    free(p->slog);
+    free(p->s);
+    free(p->mask);
+    free(p->phase);
+    free(p->tgrad);
+    free(p->fgrad);
+    free(p->randphase);
+    free(p);
+}
+
+void
+rtpghioffline(const double* s, double gamma, int a, int M, int L, double tol,
+              int do_causal, complex double* c)
+{
+    int N = L / a;
+    int M2 = M / 2 + 1;
+    rtpghi_plan* p = rtpghi_init(gamma, a, M, tol, do_causal);
+
+    if (do_causal)
+    {
+        for (int n = 0; n < N; ++n)
+        {
+            const double* sncol = s + n * M2;
+            complex double* cncol = c + n * M2;
+            rtpghi_execute(p, sncol, cncol);
+        }
+    }
+    else
+    {
+        rtpghi_execute(p, s, c);
+
+        for (int n = 0, nahead = 1; nahead < N; ++n, ++nahead)
+        {
+            const double* sncol = s + nahead * M2;
+            complex double* cncol = c + n * M2;
+            rtpghi_execute(p, sncol, cncol);
+        }
+
+        rtpghi_execute(p, NULL, c + (N - 1) * M2);
+    }
+
+    rtpghi_done(p);
+}
+
 
 void
 rtpghifgrad(const double* logs, int a, int M, double gamma,
@@ -22,6 +148,7 @@ rtpghifgrad(const double* logs, int a, int M, double gamma,
     if (do_causal)
     {
         const double* scol1 = logs + M2;
+
         for (int m = 0; m < M2; ++m)
             fgrad[m] = fgradmul * (3.0 * scol2[m] - 4.0 * scol1[m] + scol0[m]);
     }
@@ -60,5 +187,5 @@ void
 rtpghimagphase(const double* s, const double* phase, int L, complex double* c)
 {
     for (int l = 0; l < L; l++)
-        c[l] = s[l]*cexp(I*phase[l]);
+        c[l] = s[l] * cexp(I * phase[l]);
 }

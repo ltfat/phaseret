@@ -213,7 +213,7 @@ while flag && p.flag
             end
         elseif algno==1
             % Do SPSI
-            [cnativeout,startphase] = comp_spsireal(s,a,M,startphase);
+            [cnativeout,startphase] = comp_spsi(s,a,M,startphase);
         elseif algno==2
             % Do RTISI-LA
             for ii=1:size(s,2)

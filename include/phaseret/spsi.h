@@ -22,11 +22,11 @@
  *  \param[out] c M x N array of coefficients
  */
 void
-spsireal(const double* s, int a, int M, int N, double* initphase, complex double* c);
+spsi(const double* s, int a, int M, int N, double* initphase, complex double* c);
 
 /** Masked SPSI algorithm implementation
  *
- *  Works as spsireal() except arg(c[ii])=phase[ii] if mask[ii] evaluates to true.
+ *  Works as spsi() except arg(c[ii])=phase[ii] if mask[ii] evaluates to true.
  *
  *  \param[in] s  M x N arrays, target magnitude
  *  \param[in] a  Hop factor
@@ -40,12 +40,12 @@ spsireal(const double* s, int a, int M, int N, double* initphase, complex double
  *  \param[out] c M x N array of coefficients
  */
 void
-maskedspsireal(const double* s, int a, int M, int N,
+maskedspsi(const double* s, int a, int M, int N,
                const double* mask, const double* phase, double* initphase, complex double* c);
 
 
 void
-spsirealupdate(const double* scol, int a, int M, double* tmpphase);
+spsiupdate(const double* scol, int a, int M, double* tmpphase);
 
 #endif /* _spsi_h */
 /** \} */

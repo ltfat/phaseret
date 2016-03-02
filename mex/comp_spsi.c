@@ -1,14 +1,14 @@
 /** \addtogroup mex
  *  \{
  *  \file
- *  \brief MEX file interface for spsireal()
+ *  \brief MEX file interface for spsi()
  *
  *  **This is a computaional routine. The input arguments are not checked for correctness!!**
  *
  *  Matlab calling convention:
  *  --------------------------
  *
- *      [c,endphase] = comp_spsireal(s,a,M[,startphase])
+ *      [c,endphase] = comp_spsi(s,a,M[,startphase])
  *
  *  Input arg.   | Description
  *  ------------ | -------------------------------------------------------------
@@ -53,7 +53,7 @@ mexFunction(int nlhs, mxArray* plhs[],
 
     double complex* cc = mxMalloc( M2 * N * sizeof * cc);
 
-    spsireal(s, a, M, N, initphase, cc);
+    spsi(s, a, M, N, initphase, cc);
 
     complex2split(cc, M2 * N, cr, ci);
 

@@ -29,7 +29,9 @@ phaseretmex;
 ```
 from within Matlab/Octave command line. Note that
 the [FFTW library](http://fftw.org/) has to be installed
-(by e.g. `apt-get install libfftw3-dev` on Debian-based systems).
+(by e.g. `apt-get install libfftw3-dev` on Debian-based systems or manually
+by downloading the archive from [here](http://fftw.org/install/windows.html) and placing
+libfftw3-3.dll to the mex/ subdirectory on Windows).
 
 To start the toolbox automatically add the following lines
 ```
@@ -58,8 +60,17 @@ In addition to the [FFTW3 library](http://fftw.org/), libphaseret depends on
 
 ## Instalation and usage
 
+The following installs the library to /usr/local/lib and phaseret.h to /usr/local/include/
+
 ```
-make LIBLTFATPATH=/path/to/libltfat
+make
+sudo make install
+```
+
+The path can be changed by calling 
+
+```
+sudo make install PREFIX=/custom/path
 ```
 
 Note that the compiled library is part of pre-compiled packages for Windows
@@ -76,7 +87,7 @@ If you use this toolbox/library in your research, please cite
 
 > Zdenek Prusa, Peter Soendergaard: TBD.
 
-and relevant references found in help of the individual files.
+and/or relevant references found in help of the individual files.
 
 # License
 PhaseReT is distributed under terms of

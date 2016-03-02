@@ -22,7 +22,7 @@ INCDIR = $(PREFIX)/include
 LIBSOURCES = $(wildcard src/*.c)
 LIBOBJECTS = $(addprefix obj/,$(notdir $(LIBSOURCES:.c=.o)))
 
-CFLAGS=-std=c11 -pedantic -Wall -Wextra -DNDEBUG -I./include/phaseret -Ithirdparty $(OPTFLAGS)
+CFLAGS=-std=c99 -pedantic -O2 -Wall -Wextra -DNDEBUG -I./include/phaseret -Ithirdparty $(OPTFLAGS)
 
 STATIC = libphaseret.a
 ifdef MINGW
@@ -37,13 +37,13 @@ SO_TARGET= $(addprefix build/,$(SHARED))
 
 FFTWLIB ?= -lfftw3
 
-LIBS=-lm $(FFTWLIB)
+LIBS=-lltfat  $(FFTWLIB) -lm
 
 lib: $(TARGET) $(SO_TARGET)
 
 all: lib matlab octave
 
-dev: CFLAGS=-std=c11 -g -O0 -Wall -Wall -Wextra -I./include/phaseret $(OPTFLAGS)
+dev: CFLAGS=-std=c99 -g -O0 -Wall -Wall -Wextra -I./include/phaseret $(OPTFLAGS)
 dev: all 
 
 $(TARGET): obj build $(LIBOBJECTS)

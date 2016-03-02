@@ -1,4 +1,4 @@
-function [chat,endphase] = comp_spsireal(s,a,M,startphase)
+function [chat,endphase] = comp_spsi(s,a,M,startphase)
 M2 = floor(M/2) + 1;
 N = size(s,2);
 

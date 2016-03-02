@@ -45,6 +45,10 @@ function [atheight,minorm] = findbestgauss( gnum , varargin)
 definput.keyvals.atheightrange = [];
 [~,~,atheightrange]=ltfatarghelper({'atheightrange'},definput,varargin);
 
+if ~isvector(gnum) || ~isnumeric(gnum)
+    error('%s: Window must be numeric. See FIRWIN and GABWIN.',upper(mfilename))
+end
+
 if isempty(atheightrange)
     atheightrange = 0.01:0.001:0.8;
 end
@@ -53,12 +57,12 @@ w = winwidthatheight(gnum, atheightrange);
 
 L = 10*numel(gnum);
 
-gnum = fir2long(gnum,L);
+gnum = fir2long(normalize(gnum,'inf'),L);
 norms = zeros(size(atheightrange));
 tfrs = zeros(size(atheightrange));
 for ii=1:numel(atheightrange)
     [gausstmp,tfrs(ii)] = pgauss(L,'inf','width',w(ii),'atheight',atheightrange(ii));
-    norms(ii) = norm(gnum-gnum(1)*gausstmp);
+    norms(ii) = norm(gnum-gausstmp);
 end
 
 [~,idx]=min(norms);

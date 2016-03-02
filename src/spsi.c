@@ -2,7 +2,7 @@
 #include "float.h"
 
 void
-spsireal(const double* s, int a, int M, int N,  double* initphase,
+spsi(const double* s, int a, int M, int N,  double* initphase,
          complex double* c)
 {
     int M2 = M / 2 + 1;
@@ -20,7 +20,7 @@ spsireal(const double* s, int a, int M, int N,  double* initphase,
         const double* scol = s + n * M2;
         complex double* ccol = c + n * M2;
 
-        spsirealupdate(scol, a, M, tmpphase);
+        spsiupdate(scol, a, M, tmpphase);
 
         for (int m = 0; m < M2; m++)
             ccol[m] = scol[m] * cexp(I * tmpphase[m]);
@@ -31,7 +31,7 @@ spsireal(const double* s, int a, int M, int N,  double* initphase,
 }
 
 void
-maskedspsireal(const double* s, int a, int M, int N,
+maskedspsi(const double* s, int a, int M, int N,
                const double* mask, const double* phase, double* initphase, complex double* c)
 {
     int M2 = M / 2 + 1;
@@ -51,7 +51,7 @@ maskedspsireal(const double* s, int a, int M, int N,
         const double* maskcol = mask + n * M2;
         const double* phasecol = phase + n * M2;
 
-        spsirealupdate(scol, a, M, tmpphase);
+        spsiupdate(scol, a, M, tmpphase);
 
         /* Overwrite with known phase */
         for (int m = 0; m < M2; m++)
@@ -66,7 +66,7 @@ maskedspsireal(const double* s, int a, int M, int N,
 }
 
 void
-spsirealupdate(const double* scol, int a, int M, double* tmpphase)
+spsiupdate(const double* scol, int a, int M, double* tmpphase)
 {
     int M2 = M / 2 + 1;
 
@@ -74,7 +74,7 @@ spsirealupdate(const double* scol, int a, int M, double* tmpphase)
     {
         if (scol[m] > scol[m - 1] && scol[m] > scol[m + 1])
         {
-            double p; int binup, bindown;
+            double p; int binup = m, bindown = m;
             double alpha = log(scol[m - 1] + DBL_MIN);
             double beta = log(scol[m] + DBL_MIN);
             double gamma = log(scol[m + 1] + DBL_MIN);
@@ -84,6 +84,7 @@ spsirealupdate(const double* scol, int a, int M, double* tmpphase)
                 p = 0.5 * (alpha - gamma) / denom;
             else
                 p = 0;
+
 
             double instf = m + p;
             double peakPhase = tmpphase[m] + 2.0 * M_PI * a * instf / M;

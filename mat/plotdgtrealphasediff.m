@@ -17,7 +17,7 @@ function plotdgtrealphasediff(phase1,phase2,s,thr,a,M,varargin)
 %   pi.
 %
 %   Further, the function accepts any flags and key-value pairs from 
-%   |plotdgtral|. Positional arguments are not recognized.
+%   |plotdgtreal|. Positional arguments are not recognized.
 %
 
 % AUTHOR: Zdenek Prusa

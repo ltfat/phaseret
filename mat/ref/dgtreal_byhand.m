@@ -1,4 +1,6 @@
 function [c,Ls,gnum]=dgtreal_byhand(f,g,a,M)
+% This works like dgtreal (timeinv) but only for FIR windows.
+
 [Ls,W] = size(f);
 L=dgtlength(Ls,a,M);
 N = L/a;

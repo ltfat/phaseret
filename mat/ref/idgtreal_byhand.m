@@ -1,4 +1,5 @@
 function [f,gnum] = idgtreal_byhand(coef,g,a,M)
+% This works like idgtreal (timeinv) but only for FIR windows.
 
 [~,N,W] = size(coef);
 L=N*a;

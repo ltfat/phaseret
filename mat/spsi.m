@@ -1,7 +1,7 @@
-function chat  = spsireal(s,a,M,varargin)
-%SPSIREAL Single Pass Spectrogram Inversion (SPSI) for real signals
-%   Usage:  c=spsireal(s,a,M);
-%           c=spsireal(s,a,M,mask,phase);   
+function chat  = spsi(s,a,M,varargin)
+%SPSI Single Pass Spectrogram Inversion (SPSI) for real signals
+%   Usage:  c=spsi(s,a,M);
+%           c=spsi(s,a,M,mask,phase);   
 %
 %   Input parameters:
 %         s     : $M2 \times N$ array of modulus of Gabor coefficients.
@@ -10,11 +10,11 @@ function chat  = spsireal(s,a,M,varargin)
 %   Output parameters:
 %         chat   : $M2 \times N$ array of coefficients with reconstructed phase.
 %
-%   `c=spsireal(s,a,M)` returns array of coefficients *c* with reconstructed 
+%   `c=spsi(s,a,M)` returns array of coefficients *c* with reconstructed 
 %   frequency invariant phase (the default convention in |dgtreal|) such 
 %   that the they can be directly used in |idgtreal|.
 %
-%   `c=spsireal(s,a,M,'timeinv')` returns coefficients with time invariant
+%   `c=spsi(s,a,M,'timeinv')` returns coefficients with time invariant
 %   phase. To reconstruct the signal function |idgtreal| must be called
 %   with 'timeinv' i.e::
 %   
@@ -77,9 +77,9 @@ if M2~=M2user
 end
 
 if isempty(mask)
-    chat = comp_spsireal(s,a,M);
+    chat = comp_spsi(s,a,M);
 else
-    chat = comp_maskedspsireal(s,a,M,mask,phase);
+    chat = comp_maskedspsi(s,a,M,mask,phase);
 end
 
 if ~flags.do_timeinv

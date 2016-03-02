@@ -1,14 +1,14 @@
 /** \addtogroup mex
  *  \{
  *  \file
- *  \brief MEX file interface for maskedspsireal()
+ *  \brief MEX file interface for maskedspsi()
  *
  *  **This is a computaional routine. The input arguments are not checked for correctness!!**
  *
  *  Matlab calling convention:
  *  --------------------------
  *
- *      [c,endphase] = comp_maskedspsireal(s,a,M,mask,phase[,startphase])
+ *      [c,endphase] = comp_maskedspsi(s,a,M,mask,phase[,startphase])
  *
  *  Input arg.   | Description
  *  ------------ | -------------------------------------------------------------
@@ -57,7 +57,7 @@ mexFunction(int nlhs, mxArray* plhs[],
 
     double complex* cc = mxMalloc( M2 * N * sizeof * cc);
 
-    maskedspsireal(s, a, M, N, mask, phase, initphase, cc);
+    maskedspsi(s, a, M, N, mask, phase, initphase, cc);
 
     complex2split(cc, M2 * N, cr, ci);
 

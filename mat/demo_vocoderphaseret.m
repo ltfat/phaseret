@@ -18,19 +18,20 @@
 %
 
 % Load a signal
-[f,fs]= wavload('serj.wav'); Ls= numel(f);
+[f,fs]= gspi; Ls= numel(f);
+f = f(:,1);
 
 % Choose either pitch shift in semitones (even nonintegers) ...
 semitoneshift = -6;
 % ... or the time scale ratio directly
 timescalerat = 1/(2^(semitoneshift/(12)));
 
-% Window used
-g = 'gauss';
 % Number of frequency channels
 M = 2048;
 % Analysis hop factor
-a = 128;
+a = 256;
+% Window used
+g = {'blackman',M};
 % Synthesis hop factor
 newa = floor23(a/timescalerat);
 
@@ -42,7 +43,7 @@ L = dgtlength(Ls,Lsmallest,M);
 f = postpad(f,L);
 
 % Analysis
-c = dgtreal(f,g,a,M,'timeinv');
+[c,~,gnum] = dgtreal(f,g,a,M,'timeinv');
 
 % Adjust to compatible size
 N = size(c,2);
@@ -51,15 +52,20 @@ c = postpad(c,newN,'dim',2);
 
 % Phase reconstruction
 tol = [1e-1,1e-10];
-[chatint] = pghi(abs(c),g,newa,M,tol,'timeinv');
+gl = numel(gnum);
+[chatint] = pghi(abs(c),0.17954*gl^2,newa,M,tol,'timeinv');
 
 % Synthesis
 fscale = idgtreal(chatint,{'dual',g},newa,M,'timeinv');
+fscale = fscale(1:floor(numel(f)*newa/a));
 
 % Resample to the original duration (more or less)
 fshift = resample(fscale,a,newa);
 
+
 disp('To play the original run: soundsc(f,fs)');
 disp('To play the time stretched/compressed version run: soundsc(fscale,fs)');
 disp('To play the pitch shifted version run: soundsc(fshift,fs)');
+
+
 

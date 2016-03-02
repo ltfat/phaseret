@@ -174,3 +174,93 @@ rtisilaupdatecoef(const double* frames,
     memcpy(c, p->fftframe, (M / 2 + 1)*sizeof * p->fftframe);
     rtisilaupdate_done(p);
 }
+
+
+
+rtisila_plan*
+rtisila_init(const double* g, const double* specg1,
+             const double* specg2, const double* gd,
+             int a, int M, int lookahead, int maxLookahead, int maxit)
+{
+    int M2 = M / 2 + 1;
+    rtisilaupdate_plan* updplan = rtisilaupdate_init(g, specg1, specg2, gd, a, M);
+    int lookback = ceil((double) M / a) - 1;
+    double* frames = calloc(M * (lookback + 1 + maxLookahead), sizeof * frames);
+    double* s   = calloc(M2 * (1 + maxLookahead), sizeof * s);
+
+    rtisila_plan* p = malloc(sizeof * p);
+    rtisila_plan pdummy =
+    {
+        .updateplan = updplan, .lookahead = lookahead, .lookback = lookback,
+        .noFrames = lookback + 1 + maxLookahead, .maxLookahead = maxLookahead,
+        .maxit = maxit,
+        .s = s, .frames = frames
+
+    };
+    memcpy(p, &pdummy, sizeof * p);
+    return p;
+}
+
+void
+rtisila_done(rtisila_plan* p)
+{
+    free(p->s);
+    free(p->frames);
+    rtisilaupdate_done(p->updateplan);
+}
+
+void
+rtisila_execute(rtisila_plan* p, const double* s, double complex* c)
+{
+    int M = p->updateplan->M;
+    int M2 = M / 2 + 1;
+    int noFrames = p->lookback + 1 + p->lookahead;
+
+    // Shift frames buffer
+    shiftcolsleft(p->frames, M, noFrames, 0);
+
+    // Shift scols buffer
+    shiftcolsleft(p->s, M2, p->lookahead + 1, s);
+
+    rtisilaupdate_execute(p->updateplan, p->frames, noFrames, p->s, p->lookahead,
+                          p->maxit, p->frames);
+
+    // Read back the coefficients
+    memcpy(c, p->updateplan->fftframe, M2 * sizeof * c);
+}
+
+
+void
+rtisilaoffline(const double* s,
+               const double* g, const double* specg1, const double* specg2, const double* gd,
+               int a, int M, int L, int lookahead, int maxit, complex double* c)
+{
+    int N = L / a;
+    int M2 = M / 2 + 1;
+    // Just limit lookahead to something sensible
+    lookahead = lookahead > N ? N : lookahead;
+
+    rtisila_plan* p = rtisila_init(g, specg1, specg2, gd, a, M, lookahead,
+                                   lookahead, maxit);
+
+    for (int n = 0; n < lookahead; ++n)
+    {
+        const double* sncol = s + n * M2;
+        rtisila_execute(p, sncol, c);
+    }
+
+    for (int n = 0, nahead = lookahead; nahead < N; ++n, ++nahead)
+    {
+        const double* sncol = s + nahead * M2;
+        complex double* cncol = c + n * M2;
+        rtisila_execute(p, sncol, cncol);
+    }
+
+    for (int n = N - lookahead; n < N; ++n)
+    {
+        complex double* cncol = c + n * M2;
+        rtisila_execute(p, NULL, cncol);
+    }
+
+    rtisila_done(p);
+}

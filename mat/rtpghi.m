@@ -1,5 +1,48 @@
-function [c,newphase,tgrad,fgrad]=rtpghi(s,lambdaL,a,M,varargin)
+function [c,newphase,tgrad,fgrad]=rtpghi(s,gamma,a,M,varargin)
 %RTPGHI Real-Time Phase Gradient Integration
+%   Usage:  c=rtpghi(s,gamma,a,M);
+%           c=rtpghi(s,gamma,a,M,tol);
+%           c=rtpghi(c,gamma,a,M,tol,mask);
+%           c=rtpghi(c,gamma,a,M,tol,mask,usephase);
+%           [c,newphase,usedmask,tgrad,fgrad] = rtpghi(...);
+%
+%   Input parameters:
+%         s        : Initial coefficients.
+%         gamma    : Window width factor.
+%         a        : Hop factor.
+%         M        : Number of channels.
+%         tol      : Relative tolerance.
+%         mask     : Mask for selecting known phase.
+%         usephase : Explicit known phase.
+%   Output parameters:
+%         c        : Coefficients with the constructed phase.
+%         newphase : Just the (unwrapped) phase.
+%         usedmask : Mask for selecting coefficients with the new phase.
+%         tgrad    : Relative time phase derivative.
+%         fgrad    : Relative frequency phase derivative.
+% 
+%   `rtpghi(s,gamma,a,M)` creates complex DGT coefficients from their
+%   absolute values *s* using the Real-Time Phase Gradient Heap Integration
+%   algorithm. *s* must have been obtained as::
+%
+%       c = dgtreal(f,g,a,M);
+%       s = abs(c);
+%
+%   and the algorithm attempts to recover *c*. Parameter *gamma* is window 
+%   *g* specific and it can be computed using:
+%
+%   .. gamma = Cg*gl^2
+%
+%   .. math:: \gamma = C_g \mathit{gl}^2
+%
+%   where *gl* is the window length and *Cg* is a window specific constant. 
+%   Both *Cg* and *gamma* can be obtained by calling |findwindowconstant|.
+%
+%   This function works entirely simiral to |pghi| except it is using
+%   the real-time version of the algorithm. Please see help of |pghi| 
+%   (resp. |constructphasereal| from LTFAT) for more details.
+%
+%   See also: dgtreal, idgtreal, rtpghi
 %
 %   References: ltfatnote040 ltfatnote043
 %
@@ -34,8 +77,8 @@ end
 abss = abs(s);
 
 if flags.do_timeinv
-    fgradmul = @(fgrad) -lambdaL/(a*M)*fgrad;
-    tgradmul = @(tgrad) bsxfun(@plus,a*M/lambdaL*tgrad, 2*pi*a*(0:M2-1)'/M);
+    fgradmul = @(fgrad) -gamma/(a*M)*fgrad;
+    tgradmul = @(tgrad) bsxfun(@plus,a*M/gamma*tgrad, 2*pi*a*(0:M2-1)'/M);
 elseif flags.do_freqinv
     error('%s: FIXME: Not implementet yet.',upper(mfilename));
 end

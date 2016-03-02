@@ -15,7 +15,7 @@ if nargin < 1
     verbose = 1;
 end
 
-requiredLTFAT = '2.1.1';
+requiredLTFAT = '2.1.2';
 pgausspath = which('comp_pgauss');
 thispath = fileparts(which(mfilename));
 basepath = thispath(1:end-4);
