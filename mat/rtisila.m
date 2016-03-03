@@ -24,7 +24,7 @@ function [c,relres,iter,f]=rtisila(s,g,a,M,varargin)
 %   using the Real-Time Iterative Spectrogram Inversion with Look Ahead.
 %
 %   `[c,relres,iter,f]=rtisila(...)` additionally returns the final
-%   of residual `relres`, the number of per-frame iterations done `iter` and the
+%   residual `relres`, the number of per-frame iterations done `iter` and the
 %   coefficients *c* with the reconstructed phase. The relationship between
 %   *f* and *c* is::
 %
@@ -38,6 +38,11 @@ function [c,relres,iter,f]=rtisila(s,g,a,M,varargin)
 %
 %     'lookahead',lookahead  Number of lookahead frames. The default value
 %                            is `ceil(M/a)-1`.
+%
+%     'maxit',maxit          Number of RTISILA iterations. The default
+%                            value is 5. The total number
+%                            of per-frame iteratins is `(lookahead+1)*maxit`.
+%                           
 %
 %   See also:  lertisila, idgtreal, dgtreal
 %
@@ -70,21 +75,27 @@ definput.flags.phase={'freqinv','timeinv'};
 complainif_notposint(kv.maxit,'maxit',mfilename);
 
 % Default number of lookahead frames.
-% The kernel size in the horizontal direction is 2*kv.lookahead + 1
 if isempty(kv.lookahead)
-    kv.lookahead = ceil(M/a)-1;
-else
-    if kv.lookahead < 0 || kv.lookahead > N - 1
-        error('%s: lookahead must be in range [0-%d]',upper(mfilename),N-1);
-    end
+    kv.lookahead = min([ceil(M/a)-1,N-1]);
+end
+
+if kv.lookahead < 0 || kv.lookahead > N - 1
+    error('%s: lookahead must be in range [0-%d]',upper(mfilename),N-1);
+end
+
+% Analysis window (as array)
+gnum = gabwin(g,a,M);
+
+if numel(gnum) > M
+    error(['%s: The algorithm does not work for non-painless Gabor ',...
+           'system, that is when numel(g)>M.'],upper(mfilename))
 end
 
 abss = abs(s);
 norm_s = norm(abss,'fro');
 
-lookback = ceil(M/a) - 1;
-% Analysis window (as array)
-gnum = gabwin(g,a,M);
+lookback = max([ceil(M/a) - 1, kv.lookahead]);
+
 % Synthesis window
 gd = gabdual(g,a,M,L);
 % ... as array
@@ -148,11 +159,17 @@ iter = kv.maxit*kv.lookahead;
 % end
 % c = dgtreal(f,g,a,M,flags.phase);
 
-f = idgtreal(c,gd,a,M,'timeinv');
+if ~flags.do_timeinv
+    c = phaseunlockreal(c,a,M);
+end
+
+f = idgtreal(c,gd,a,M,flags.phase);
 
 if nargout>1
     relres = norm(dgtreal(f,g,a,M,'timeinv')-abss,'fro')/norm_s;
 end
+
+
 
 % Cur or extend and reformat f
 f = comp_sigreshape_post(f,Ls,0,[0; W]);
