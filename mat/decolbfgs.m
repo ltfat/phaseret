@@ -34,12 +34,27 @@ function [c,relres,iter,f]=decolbfgs(s,g,a,M,varargin)
 % AUTHOR: Zdenek Prusa
 %
 
+definput.flags.phase={'freqinv','timeinv'};
+definput.keyvals.p=2/3;
+definput.keyvals.tol=1e-6;
+definput.keyvals.maxit=100;
+definput.keyvals.Ls=[];
+definput.keyvals.p=2;
+definput.keyvals.printstep=10;
+definput.flags.print={'quiet','print'};
+definput.flags.startphase={'input','zero','rand'};
+[flags,kv,Ls]=ltfatarghelper({'Ls','maxit'},definput,varargin);
 
-F = frame('dgtreal',g,a,M,'timeinv');
+F = frame('dgtreal',g,a,M,flags.phase);
 
 sframe = framenative2coef(F,s);
 
-[f,relres,iter,c]=frsynabs(F,sframe,'bfgs');
+[f,relres,iter] = frsynabs(F,sframe,'bfgs','p',kv.p,'tol',kv.tol,'maxit',kv.maxit,...
+    flags.startphase,flags.print,'printstep',kv.printstep);
 
-c = framecoef2native(F,c);
+c = framecoef2native(F,frana(F,f));
+
+
+f = postpad(f,Ls);
+
 
