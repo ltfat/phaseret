@@ -135,7 +135,7 @@ relres=zeros(kv.maxit,1);
 gnum = gabwin(g,a,M,L);
 gd = gabdual(g,a,M,L);
 
-projfncBase = @(c) dgt(idgt(c,gd,a,flags.phase),g,a,M,flags.phase);
+projfncBase = @(c) dgt(idgt(c,gd,a),g,a,M);
 ctmp = zeros(M,N); ctmp(1) = 1;
 kern = projfncBase(ctmp);
 clear ctmp;
@@ -155,7 +155,7 @@ else
 end
 
 % Projection kernel
-projfnc = @(c) comp_dgtreal(comp_idgtreal(c,gd,a,M,[0 1],flags.do_timeinv),gnum,a,M,[0 1],flags.do_timeinv);
+projfnc = @(c) comp_dgtreal(comp_idgtreal(c,gd,a,M,[0 1],0),gnum,a,M,[0 1],0);
 
 if flags.do_modtrunc
     kern(1,1) = 0;
@@ -225,8 +225,14 @@ elseif flags.do_flegla
     end
 end
 
-f = idgtreal(c,gd,a,M,Ls,flags.phase);
+f = idgtreal(c,gd,a,M,Ls);
 f = comp_sigreshape_post(f,Ls,0,[0; W]);
+
+if flags.do_timeinv
+    c = phaselockreal(c,a,M);
+end
+
+
 
 function f=involute2(f)
 f = involute(f,1);
