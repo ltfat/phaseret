@@ -54,7 +54,8 @@ function [c,relres,iter,f]=gla(s,g,a,M,varargin)
 %     'timemod',timemod   Anonymous function in a form timemod = @(f) ...;
 %                         altering the time-domain signal in each iteration.
 %                         This is usefull when e.g. the time support of the
-%                         signal is known.
+%                         signal is known. 
+%                         Note that `numel(f)= size(s,2)*a`.
 %
 %   Algorithm acceleration:
 %
@@ -87,9 +88,6 @@ function [c,relres,iter,f]=gla(s,g,a,M,varargin)
 
 %   AUTHOR: Zdenek Prusa, Peter Soendergaard
 
-[~,N,W] = size(s);
-L = N*a;
-
 definput.keyvals.Ls=[];
 definput.keyvals.tol=1e-6;
 definput.keyvals.maxit=100;
@@ -110,6 +108,15 @@ end
 
 if ~isempty(kv.timemod) && isa(kv.timemod,'function_handle')
     error('%s: timemod must be anonymous function.',upper(mfilename))
+end
+
+[M2,N,W] = size(s);
+L = N*a;
+
+M2true = floor(M/2) + 1;
+
+if M2true ~= M2
+    error('%s: Mismatch between *M* and the size of *s*.',thismfilename);
 end
 
 if flags.do_input
@@ -151,14 +158,16 @@ if flags.do_gla
         if ~isempty(kv.timemod)
             fiter = kv.timemod(fiter);
         end
+        
+        c = fwdtra(fiter);
+        
+        relres(iter) = norm(abs(c)-s,'fro')/norm_s;
 
-        c = s.*exp(1i*angle(fwdtra(fiter)));
+        c = s.*exp(1i*angle(c));
 
         if ~isempty(kv.coefmod)
             c = kv.coefmod(c);
         end
-
-        relres(iter) = norm(abs(c)-s,'fro')/norm_s;
 
         if relres(iter)<kv.tol
             relres=relres(1:iter);
@@ -181,9 +190,13 @@ elseif flags.do_fgla
         if ~isempty(kv.timemod)
             fiter = kv.timemod(fiter);
         end
+        
+        c = fwdtra(fiter);
+                
+        relres(iter)=norm(abs(c)-s,'fro')/norm_s;
 
         % Phase update
-        tnew = s.*exp(1i*angle(fwdtra(fiter)));
+        tnew = s.*exp(1i*angle(c));
 
         % The acceleration step
         c = tnew + kv.alpha*(tnew-told);
@@ -194,8 +207,6 @@ elseif flags.do_fgla
         end
 
         told = tnew;
-
-        relres(iter)=norm(abs(c)-s,'fro')/norm_s;
 
         if relres(iter)<kv.tol
             relres=relres(1:iter);
