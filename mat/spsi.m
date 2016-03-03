@@ -54,6 +54,13 @@ definput.keyvals.mask = [];
 definput.keyvals.phase = [];
 [flags,kv,mask,phase]=ltfatarghelper({'mask','phase'},definput,varargin);
 
+M2 = size(s,1); 
+M2user = floor(M/2) + 1;
+
+if M2~=M2user
+    error('%s: Size of s does not comply with M.',upper(mfilename));
+end
+
 if ~isempty(mask)
     if isempty(phase)
         error('%s: mask and phase must be both defined.',upper(mfilename));
@@ -67,13 +74,11 @@ if ~isempty(mask)
     % Sanitize mask (anything other than 0 is true)
     mask = cast(mask,'double');
     mask(mask~=0) = 1;
-end
-
-M2 = size(s,1); 
-M2user = floor(M/2) + 1;
-
-if M2~=M2user
-    error('%s: Size of s does not comply with M.',upper(mfilename));
+    
+    if ~flags.do_timeinv
+        % Convert to frequency invariant phase
+        phase = angle(phaselockreal(exp(1i*phase),a,M));
+    end
 end
 
 if isempty(mask)
@@ -83,21 +88,7 @@ else
 end
 
 if ~flags.do_timeinv
-    % Convert to frequency invariant phase
-    N = size(chat,2);
-    L = N*a;
-    b = L/M;
-    M2=floor(M/2)+1;
-    N=size(chat,2);
-
-    TimeInd = (0:(N-1))/N;
-    FreqInd = (0:(M2-1))*b;
-
-    phase = FreqInd'*TimeInd;
-    phase = exp(-2*1i*pi*phase);
-
-    % Handle multisignals
-    chat = bsxfun(@times,chat,phase);
+    chat = phaseunlockreal(chat,a,M);
 end
 
 
