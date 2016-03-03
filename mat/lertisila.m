@@ -37,11 +37,14 @@ function [c,relres,iter,f]=lertisila(s,g,a,M,varargin)
 %
 %   Algorithm parameters:
 %
-%     'lookahead',la   Number of lookahead frames. 
-%                      The default value is `ceil(M/a)-1`.
+%     'lookahead',lookahead   Number of lookahead frames. 
+%                             The default value is `ceil(M/a)-1`.
 %
-%     'kernsize',ks    The truncated dimensions [heigh,width] of the kernel.
-%                      The default value is `2*lookahead+1` for both.
+%     'freqneighs',fneighs  Number of neighboring frequency bins used
+%                           in the truncated projection. The default
+%                           value is `lookahead`.
+%                           The total kernel size is 
+%                           `2*(fneighs) + 1, 2*(lookahead) + 1`
 %
 %     'asymwin'        Use asymetric window for the newest lookahead
 %                      frame.
@@ -118,7 +121,7 @@ definput.flags.startphase={'zhu','input','zero','rand','unwrap'};
 definput.flags.frameorder={'plain','energy'};
 definput.flags.asymwin={'asymwin','regwin'};
 definput.keyvals.lookahead = [];
-definput.keyvals.kernsize = [];
+definput.keyvals.freqneighs = [];
 definput.flags.phase={'freqinv','timeinv'};
 definput.flags.algvariant={'trunc','modtrunc'};
 definput.flags.updatescheme={'framewise','onthefly'};
@@ -138,28 +141,23 @@ else
     end
 end
 
-% Default kernel size in the frequency direction
-if isempty(kv.kernsize)
-    kv.kernsize = [2*(kv.lookahead) + 1, 2*(kv.lookahead) + 1];
+lookback = max([kv.lookahead,ceil(M/a)-1]);
+if isempty(kv.freqneighs)
+    kv.freqneighs = lookback;
 end
+
+
+kernsize = [2*(kv.freqneighs) + 1, 2*(lookback) + 1];
+
+% TODO: Check for reasonable size of the kernel
 
 % Kernel dimensions
 % !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-kernh = kv.kernsize(1);
-kernw = kv.kernsize(2);
+kernh = kernsize(1);
+kernw = kernsize(2);
 % !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-if kernh < 1 || kernh > M2
-   error(['%s: Kernel size in the frequency direction must be',...
-          ' in range [1-%d]'],upper(mfilename),M2); 
-end
-
-if kernw > 2*(kv.lookahead) + 1
-    error(['%s: Kernel size in the time dimension must not be bigger',...
-           ' than 2*(lookahead) + 1'],upper(mfilename));
-end
-
-if any(mod(kv.kernsize,2)==0)
+if any(mod(kernsize,2)==0)
     error('%s: Kernel size must be odd.',upper(mfilename));
 end
 
@@ -224,7 +222,7 @@ kernsmallSpec2 = middlepad2(kernSpec2,[kernh,kernw]);
 cfull = c;
 c = zeros(size(cfull));
 
-cbuf = zeros(M2,3*(kv.lookahead) + 1);
+cbuf = zeros(M2,3*(lookback) + 1);
 
 % Precompute modulated kernels
 kNo = lcm(M,a)/a;
@@ -242,7 +240,7 @@ for k = 0:kNo-1
 end
 
 % Buffer initialization
-cbuf(:,1:2*kv.lookahead+1) = cfull(:,mod( -1 + (-kv.lookahead:kv.lookahead), N)+1);
+cbuf(:,1:kv.lookahead + lookback+1) = cfull(:,mod( -1 + (-lookback:kv.lookahead), N)+1);
 
 kernw2 = floor(kernw/2);
 
@@ -292,7 +290,7 @@ for n=1:N
         kernact = kernelsSmall(:,:,mod(n-1 + kv.lookahead,kNo)+1);
     end
 
-    indx = kv.lookahead+kv.lookahead+1;
+    indx = lookback+kv.lookahead+1;
     indxRange = indx + (-kernw2:kernw2);
     
     cbuf(:,indx) = comp_leglaupdatesinglecol(cbuf(:,indxRange),...
@@ -302,7 +300,7 @@ for n=1:N
     %% 2) Other lookahead frames and the submit frame
     for nback = kv.lookahead-1:-1:0
        kernact = kernelsSmall(:,:,mod(n-1 + nback,kNo)+1);
-       indx = kv.lookahead+nback+1;
+       indx = lookback+nback+1;
        indxRange = indx + (-kernw2:kernw2);
        
        cbuf(:,indx) = comp_leglaupdatesinglecol(cbuf(:,indxRange),...
@@ -327,7 +325,7 @@ for n=1:N
                 kernact = kernelsSmall(:,:,mod(n-1 + nback,kNo)+1);
             end
             
-            indx = kv.lookahead+nback+1;
+            indx = lookback+nback+1;
             indxRange = indx + (-kernw2:kernw2);
             
             cbuf(:,indx) = comp_leglaupdatesinglecol(cbuf(:,indxRange),...
@@ -336,7 +334,7 @@ for n=1:N
     end
     
     % Submit a frame
-    c(:,n) = cbuf(:,kv.lookahead + 1);
+    c(:,n) = cbuf(:,lookback + 1);
 end
 
 relres = norm(abs(projfncBaseReal(c))-abss,'fro')/norm_s;
@@ -346,21 +344,7 @@ f = idgtreal(c,gd,a,M,Ls);
 f = comp_sigreshape_post(f,Ls,0,[0; W]);
 
 if flags.do_timeinv
-    % Convert to time invariant phase
-    N = size(c,2);
-    L = N*a;
-    b = L/M;
-    M2=floor(M/2)+1;
-    N=size(chat,2);
-
-    TimeInd = (0:(N-1))/N;
-    FreqInd = (0:(M2-1))*b;
-
-    phase = FreqInd'*TimeInd;
-    phase = exp(2*1i*pi*phase);
-
-    % Handle multisignals
-    c = bsxfun(@times,c,phase);
+    c = phaselockreal(c,a,M);
 end
 
 % M/a periodic in n
