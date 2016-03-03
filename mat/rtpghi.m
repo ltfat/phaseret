@@ -54,7 +54,7 @@ thismfilename = upper(mfilename);
 complainif_notposint(a,'a',thismfilename);
 complainif_notposint(M,'M',thismfilename);
 
-definput.keyvals.tol=[1e-1,1e-10];
+definput.keyvals.tol=[1e-10];
 definput.keyvals.mask=[];
 definput.keyvals.lambda = [];
 definput.keyvals.g = [];
@@ -80,7 +80,8 @@ if flags.do_timeinv
     fgradmul = @(fgrad) -gamma/(a*M)*fgrad;
     tgradmul = @(tgrad) bsxfun(@plus,a*M/gamma*tgrad, 2*pi*a*(0:M2-1)'/M);
 elseif flags.do_freqinv
-    error('%s: FIXME: Not implementet yet.',upper(mfilename));
+    fgradmul = @(fgrad) bsxfun(@plus,-gamma/(a*M)*fgrad, -2*pi*a*(0:N-1)/M);
+    tgradmul = @(tgrad) a*M/gamma*tgrad;    
 end
 
 logs=log(abss+realmin);
