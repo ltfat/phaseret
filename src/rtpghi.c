@@ -51,10 +51,10 @@ rtpghi_execute(rtpghi_plan* p, const double* s, complex double* c)
 
     // store log(s)
     shiftcolsleft(p->slog, M2, 3, NULL);
+    shiftcolsleft(p->s, M2, 2, s);
+    rtpghilog(p->s + M2, M2, p->slog + 2 * M2);
 
     // Store current s
-    shiftcolsleft(p->s, M2, 2, s);
-    rtpghilog(s, M2, p->slog + 2 * M2);
 
     // Compute and store tgrad for n
     shiftcolsleft(p->tgrad, M2, 3, NULL);
@@ -64,7 +64,7 @@ rtpghi_execute(rtpghi_plan* p, const double* s, complex double* c)
     rtpghifgrad(p->slog, p->a, p->M, p->gamma, p->do_causal, p->fgrad + M2);
 
     heapinttask_resetmask_d(p->hit,
-                            p->mask, p->do_causal ? p->slog + M2 : p->slog, p->logtol);
+                            p->mask, p->do_causal ? p->slog + M2 : p->slog, p->logtol, 1);
 
     heapint_execute_d(p->hit,
                       p->do_causal ? p->tgrad + M2 : p->tgrad, p->fgrad, p->phase);
