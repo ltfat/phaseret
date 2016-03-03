@@ -36,6 +36,7 @@ end
 
 addpath(thispath);
 addpath(fullfile(basepath,'mex'));
+addpath(fullfile(thispath,'tests'));
 
 if verbose
     fprintf('PHASERET version %s. Copyright 2016 Zdenek Prusa.\n',phaseretver);
