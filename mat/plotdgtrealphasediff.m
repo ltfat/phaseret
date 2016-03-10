@@ -1,5 +1,6 @@
 function plotdgtrealphasediff(phase1,phase2,s,thr,a,M,varargin)
 %PLOTDGTREALPHASEDIFF Plot DGTREAL phase difference
+%   Usage: plotdgtrealphasediff(phase1,phase2,s,thr,a,M)
 %
 %   Input parameters:
 %         phase1  : First phase.  
@@ -17,7 +18,8 @@ function plotdgtrealphasediff(phase1,phase2,s,thr,a,M,varargin)
 %   pi.
 %
 %   Further, the function accepts any flags and key-value pairs from 
-%   |plotdgtreal|. Positional arguments are not recognized.
+%   |plotdgtreal|. Positional arguments are not recognized (they can 
+%   however be passed as key-value arguments).
 %
 
 % AUTHOR: Zdenek Prusa
