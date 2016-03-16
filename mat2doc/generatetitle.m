@@ -23,6 +23,7 @@ HEAPINTtime = toc;
 
 figure(1);
 plotdgtreal(s,a,M,'fs',fs,'dynrange',80);
+title('Spectrogram');
 print(gcf,'images/title_greasy.png','-r72','-dpng');
 
 fhatHeapint = idgtreal(chat,{'dual',g},a,M,numel(f),'timeinv');
@@ -31,8 +32,7 @@ EheapintF = magnitudeerrdb(s,nextprojc)
 
 figure(2);
 plotdgtrealphasediff(angle(c),angle(chat),s,thr2,a,M,'fs',fs);
-%colormap(graycm);
-ylim([0,8e3]);
+title('Phase difference');
 shg
 
 print(gcf,'images/title_greasy_diff.png','-r72','-dpng');
