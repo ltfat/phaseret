@@ -23,7 +23,7 @@ HEAPINTtime = toc;
 
 figure(1);
 plotdgtreal(s,a,M,'fs',fs,'dynrange',80);
-saveas(gcf,'images/title_greasy.png');
+print(gcf,'images/title_greasy.png','-r72','-dpng');
 
 fhatHeapint = idgtreal(chat,{'dual',g},a,M,numel(f),'timeinv');
 nextprojc = dgtreal(fhatHeapint,g,a,M,'timeinv');
@@ -35,7 +35,7 @@ plotdgtrealphasediff(angle(c),angle(chat),s,thr2,a,M,'fs',fs);
 ylim([0,8e3]);
 shg
 
-saveas(gcf,'images/title_greasy_diff.png');
+print(gcf,'images/title_greasy_diff.png','-r72','-dpng');
 
 
 
