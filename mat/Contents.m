@@ -7,7 +7,7 @@
 %   .. c(m+1,n+1) = sum f(l+1)*conj(g(l-a*n+1))*exp(-2*pi*i*m*(l-a*n)/M), 
 %   ..              l=0
 %
-%   .. math:: c\left(m+1,n+1\right)=\sum_{l=0}^{L-1}f(l+1)\overline{g(l-an+1)}e^{-2\pi \mi(l-an+1)m/M}
+%   .. math:: c\left(m+1,n+1\right)=\sum_{l=0}^{L-1}f(l+1)\overline{g(l-an+1)}e^{-2\pi \mi(l-an)m/M}
 %
 %   where $f$ is a signal of length $L$, $g$ is a window, $M$ is the number of
 %   FFT channels, $a$ is time hop factor and $m=0,\ldots,floor(M/2)$ and 
