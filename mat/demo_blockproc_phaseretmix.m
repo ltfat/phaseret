@@ -1,5 +1,5 @@
 function demo_blockproc_phaseretmix(source,varargin) %RUNASSCRIPT
-%DEMO_BLOCKPROC_PHASERETMIX Variable coefficients thresholding
+%DEMO_BLOCKPROC_PHASERETMIX Channel mixing using STFT phase reconstruction algorithms
 %   Usage: demo_blockproc_phaseretmix('gspi.wav')
 %          demo_blockproc_phaseretmix(...,'a',a)
 %

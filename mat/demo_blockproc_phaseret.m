@@ -1,5 +1,5 @@
 function demo_blockproc_phaseret(source,varargin) %RUNASSCRIPT
-%DEMO_BLOCKPROC_PHASERET Variable coefficients thresholding
+%DEMO_BLOCKPROC_PHASERET STFT phase reconstruction algorithms comarison
 %   Usage: demo_blockproc_phaseret('gspi.wav')
 %          demo_blockproc_phaseret(...,'a',a)` 
 %
