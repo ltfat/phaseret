@@ -43,7 +43,7 @@ if ~isvector(gnum)
     error('%s: Window must be numeric. See FIRWIN and GABWIN.',upper(mfilename))
 end
 
-if ~isvector(gnum) || ~isnumeric(gnum)
+if isempty(gl) || ~isvector(gnum) || ~isnumeric(gnum)
     gl = numel(gnum);
 end
 
