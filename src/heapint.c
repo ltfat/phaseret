@@ -39,7 +39,7 @@ LTFAT_NAME(heap_grow)(struct LTFAT_NAME(heap)* h, int factor)
 {
     h->totalheapsize *= factor;
     h->h = ltfat_realloc_and_copy(h->h,
-                                  h->totalheapsize * sizeof * h->h / 2,
+                                  h->totalheapsize * sizeof * h->h / factor,
                                   h->totalheapsize * sizeof * h->h);
 }
 
