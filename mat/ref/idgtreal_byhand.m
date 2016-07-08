@@ -3,16 +3,19 @@ function [f,gnum] = idgtreal_byhand(coef,g,a,M)
 
 [~,N,W] = size(coef);
 L=N*a;
-gnum = gabwin(g,a,M);
+gl = numel(g);
+gnum = g;
 
 f = zeros(L,W);
-cframes = bsxfun(@times,ifftreal(coef,M)*M,gnum);
+cframes = ifftreal(coef,M)*M;
 
 % This is substituting ifftshift
-idxrange = [0:floor(M/2),-ceil(M/2)+1:-1];
+idxrange = [0:ceil(gl/2)-1,-floor(gl/2):-1];
+idxrange2 = mod(idxrange,M) + 1;
+
 for w=1:W
     for n=0:N-1
         idx = mod(n*a + idxrange,L) + 1;
-        f(idx,w) = f(idx,w) + cframes(:,n+1,w);
+        f(idx,w) = f(idx,w) + cframes(idxrange2,n+1,w).*gnum;
     end
 end
