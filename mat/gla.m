@@ -16,10 +16,10 @@ function [c,relres,iter,f]=gla(s,g,a,M,varargin)
 %         iter    : Number of iterations done.
 %         c       : Coefficients with the reconstructed phase
 %
-%   `gla(s,g,a,M)` attempts to find coefficients *c*
-%   their abs. value is::
+%   `gla(s,g,a,M)` attempts to find coefficients *c* from
+%   their abs. value::
 %
-%     s = abs(c)
+%     s = abs(dgtreal(f,g,a,M))
 %
 %   using the Griffin-Lim algorithm.
 %
@@ -54,7 +54,7 @@ function [c,relres,iter,f]=gla(s,g,a,M,varargin)
 %     'timemod',timemod   Anonymous function in a form timemod = @(f) ...;
 %                         altering the time-domain signal in each iteration.
 %                         This is usefull when e.g. the time support of the
-%                         signal is known. 
+%                         signal is known.
 %                         Note that `numel(f)= size(s,2)*a`.
 %
 %   Algorithm acceleration:
@@ -158,9 +158,9 @@ if flags.do_gla
         if ~isempty(kv.timemod)
             fiter = kv.timemod(fiter);
         end
-        
+
         c = fwdtra(fiter);
-        
+
         relres(iter) = norm(abs(c)-s,'fro')/norm_s;
 
         c = s.*exp(1i*angle(c));
@@ -190,9 +190,9 @@ elseif flags.do_fgla
         if ~isempty(kv.timemod)
             fiter = kv.timemod(fiter);
         end
-        
+
         c = fwdtra(fiter);
-                
+
         relres(iter)=norm(abs(c)-s,'fro')/norm_s;
 
         % Phase update

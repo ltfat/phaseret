@@ -49,7 +49,7 @@ function [c,newphase,usedmask,tgrad,fgrad]=pghi(s,gamma,a,M,varargin)
 % AUTHOR: Zdenek Prusa
 
 if ~isscalar(gamma)
-    error('%s: gamma must eb scalar.',upper(mfilename));
+    error('%s: gamma must be scalar.',upper(mfilename));
 end
 
 N = size(s,2);
