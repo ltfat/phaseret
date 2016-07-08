@@ -165,6 +165,8 @@ typedef struct
     double* frames; //!< Buffer for time-domain frames
     double* s; //!< Buffer for target magnitude
     rtisilaupdate_plan* updateplan;
+    void** garbageBin;
+    int garbageBinSize;
 } rtisila_plan;
 
 
@@ -188,6 +190,22 @@ rtisila_plan*
 rtisila_init(const double *g, const double* specg1,
              const double* specg2, const double* gd,
              int a, int M, int lookahead, int maxLookahead, int maxit);
+
+/** Create a RTISILA Plan from a window.
+ * \param[in]     g            Analysis window
+ * \param[in]     gl           Window length
+ * \param[in]     a            Hop size
+ * \param[in]     M            FFT length, also length of all the windows
+ *                             (possibly zero-padded).
+ * \param[in]     lookahead    Number of lookahead frames
+ * \param[in]     maxLookahead Maximum number of lookahead frames
+ * \param[in]     maxit        Number of iterations. The number of per-frame 
+ *                             iterations is (lookahead+1) * maxit. 
+ * \returns RTISILA Plan
+ */
+rtisila_plan*
+rtisila_wininit(LTFAT_FIRWIN win, int gl, int a, int M,
+                int lookahead, int maxLookahead, int maxit);
 
 /** Destroy a RTISILA Plan.
  * \param[in] p  RTISILA Plan

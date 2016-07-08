@@ -65,16 +65,16 @@ leglaupdate_init(double* s, mwSignedIndex a, mwSignedIndex M,
     plan->ki = malloc( plan->kernelNo * sizeof(double*));
 
     plan->bufr = malloc(
-                               ((M2 + kernh - 1) * (plan->N + kernw - 1)) * sizeof * plan->bufr);
+                     ((M2 + kernh - 1) * (plan->N + kernw - 1)) * sizeof * plan->bufr);
     plan->bufi = malloc(
-                               ((M2 + kernh - 1) * (plan->N + kernw - 1)) * sizeof * plan->bufi);
+                     ((M2 + kernh - 1) * (plan->N + kernw - 1)) * sizeof * plan->bufi);
 
     for (int n = 0; n < plan->kernelNo; n++)
     {
         plan->kr[n] = malloc(
-                                    plan->plan_col.kernw * plan->plan_col.kernwskip);
+                          plan->plan_col.kernw * plan->plan_col.kernwskip);
         plan->ki[n] = malloc(
-                                    plan->plan_col.kernw * plan->plan_col.kernwskip);
+                          plan->plan_col.kernw * plan->plan_col.kernwskip);
         kernphasefi(kernr, kerni, kernh, kernw, plan->plan_col.kernwskip, n, a, M,
                     plan->kr[n], plan->ki[n]);
     }

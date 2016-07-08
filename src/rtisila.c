@@ -194,10 +194,37 @@ rtisila_init(const double* g, const double* specg1,
         .updateplan = updplan, .lookahead = lookahead, .lookback = lookback,
         .noFrames = lookback + 1 + maxLookahead, .maxLookahead = maxLookahead,
         .maxit = maxit,
-        .s = s, .frames = frames
+        .s = s, .frames = frames, .garbageBinSize = 0, .garbageBin = NULL
 
     };
     memcpy(p, &pdummy, sizeof * p);
+    return p;
+}
+
+rtisila_plan*
+rtisila_wininit(LTFAT_FIRWIN win, int gl, int a, int M,
+                int lookahead, int maxLookahead, int maxit)
+{
+    double* g = malloc(gl * sizeof * g);
+    double* gd = malloc(gl * sizeof * gd);
+    double* specg1 = malloc(gl * sizeof * g);
+    double* specg2 = malloc(gl * sizeof * gd);
+
+    firwin_d(win, gl, g);
+    gabdual_painless_d(g, gl, a, M, gd);
+
+    // TODO: Fill in specg1 specg2 
+
+    rtisila_plan* p = rtisila_init(g, specg1, specg2, gd, a, M, lookahead,
+                                   maxLookahead, maxit);
+
+    p->garbageBinSize = 4;
+    p->garbageBin = malloc(p->garbageBinSize * sizeof(void*));
+    p->garbageBin[0] = specg1;
+    p->garbageBin[1] = specg2;
+    p->garbageBin[2] = gd;
+    p->garbageBin[3] = g;
+
     return p;
 }
 
@@ -207,6 +234,14 @@ rtisila_done(rtisila_plan* p)
     free(p->s);
     free(p->frames);
     rtisilaupdate_done(p->updateplan);
+
+    if(p->garbageBinSize)
+    {
+        for (int ii = 0; ii < p->garbageBinSize; ii++)
+            free(p->garbageBin[ii]);
+    }
+
+    free(p);
 }
 
 void
