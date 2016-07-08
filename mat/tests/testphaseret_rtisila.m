@@ -1,4 +1,4 @@
-function test_failed=test_rtisila
+function test_failed=testphaseret_rtisila
 %TEST_CONSTRUCTPHASE  
 %
 test_failed = 0;
@@ -40,7 +40,7 @@ for pcId = 1:2
 
     fprintf('RTISILA %s W=%d E=%.2f %s\n',phaseconv,1,E,fail);
     
-    [chat]=rtisila(s,g,a,M,phaseconv,'maxit',10,'lookahead',10);
+    [chat]=rtisila(s,g,a,M,phaseconv,'maxit',10,'lookahead',2);
     
     E = magnitudeerrdb(s,proj(chat));
     fail = '';            

@@ -1,12 +1,12 @@
-function test_failed=test_lertisila
+function test_failed=testphaseret_lertisila
 %TEST_CONSTRUCTPHASE  
 %
 test_failed = 0;
 
 f = greasy;
-a = 256;
+a = 128;
 M = 1024;
-g = {'blackman',1024};
+g = {'blackman',512};
 
 for pcId = 1:2
     % Complex case

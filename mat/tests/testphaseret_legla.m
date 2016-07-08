@@ -16,7 +16,9 @@ for pcId = 1:2
     c = tra(f);
     s = abs(c);
     
-    [chat,relres,iter,f]=legla(s,g,a,M,phaseconv);
+    tic;
+    chat=legla(s,g,a,M,phaseconv);
+    toc;
     
     E = magnitudeerrdb(s,proj(chat));
     fail = '';            
