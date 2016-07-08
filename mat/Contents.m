@@ -23,7 +23,7 @@
 %
 %               [c,Ls]=dgtreal(f,g,a,M);
 %               [s] = abs(c);
-%               [crec] = phaserecalg(...);
+%               [crec] = phaserecalg(...,'timeinv');
 %               [fr]=idgtreal(crec,gd,a,M,Ls,'timeinv');
 %
 %  Implementation of offline algorithms
