@@ -1,4 +1,5 @@
-#include "rtpghi.h"
+#include "phaseret/rtpghi.h"
+#include "phaseret/config.h"
 #include "float.h"
 
 rtpghi_plan*
@@ -6,7 +7,7 @@ rtpghi_init(double gamma, int a, int M, double tol, int do_causal)
 {
     int M2 = M / 2 + 1;
 
-    struct heapinttask_d* hit = heapinttask_init_d( M2, 2, 2 * M2 , NULL, 1);
+    struct ltfat_heapinttask_d* hit = ltfat_heapinttask_init_d( M2, 2, 2 * M2 , NULL, 1);
     double* slog = calloc(3 * M2 , sizeof * slog);
     double* s = calloc(2 * M2 , sizeof * slog);
     double* phase = calloc(2 * M2,  sizeof * phase);
@@ -63,11 +64,11 @@ rtpghi_execute(rtpghi_plan* p, const double* s, complex double* c)
     // Compute fgrad for n or n-1
     rtpghifgrad(p->slog, p->a, p->M, p->gamma, p->do_causal, p->fgrad + M2);
 
-    heapinttask_resetmask_d(p->hit,
-                            p->mask, p->do_causal ? p->slog + M2 : p->slog, p->logtol, 1);
+    ltfat_heapinttask_resetmask_d(p->hit,
+                                  p->mask, p->do_causal ? p->slog + M2 : p->slog, p->logtol, 1);
 
-    heapint_execute_d(p->hit,
-                      p->do_causal ? p->tgrad + M2 : p->tgrad, p->fgrad, p->phase);
+    ltfat_heapint_execute_d(p->hit,
+                            p->do_causal ? p->tgrad + M2 : p->tgrad, p->fgrad, p->phase);
 
     shiftcolsleft(p->phase, M2, 2, NULL);
 
@@ -89,7 +90,7 @@ rtpghi_execute(rtpghi_plan* p, const double* s, complex double* c)
 void
 rtpghi_done(rtpghi_plan* p)
 {
-    heapinttask_done_d(p->hit);
+    ltfat_heapinttask_done_d(p->hit);
     free(p->slog);
     free(p->s);
     free(p->mask);

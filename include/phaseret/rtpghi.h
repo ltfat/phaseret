@@ -10,9 +10,10 @@
 
 #ifndef _rtpghi_h
 #define _rtpghi_h
-#include "config.h"
-#include "utils.h"
-#include "ltfat.h"
+
+#ifndef NOSYSTEMHEADERS
+#include <ltfat.h>
+#endif
 
 #ifdef __cplusplus
 extern "C" {
@@ -40,7 +41,7 @@ typedef struct
     double* randphase; //!< Precomputed array of random phase 
     int randphaseLen;
     int randphaseId;
-    struct heapinttask_d* hit;
+    struct ltfat_heapinttask_d* hit;
 } rtpghi_plan;
 
 

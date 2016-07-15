@@ -1,94 +1,151 @@
 #include "ltfat.h"
+#include "ltfat/macros.h"
 #include "phaseret/gla.h"
+#include "phaseret/utils.h"
+#include "dgtrealwrapper_private.h"
 
+struct gla_plan
+{
+    dgtreal_anasyn_plan* p;
+    gla_callback_status* status_callback;
+    void* status_callback_userdata;
+    gla_callback_cmod* cmod_callback;
+    void* cmod_callback_userdata;
+    gla_callback_fmod* fmod_callback;
+    void* fmod_callback_userdata;
+// Used just for fgla
+    int do_fast;
+    double alpha;
+    complex double* t;
+};
 
 int
-gla_long(double* s, double* g, int L, int W, int a, int M,
-         int iter, complex double* c)
+gla(const double s[], const double g[], const int gl, const int L, const int W,
+    const int a, const int M, const int iter, complex double c[])
+{
+    gla_plan* p = NULL;
+    gla_init(g, gl, L, W, a, M, 0.99, c, dgtreal_anasyn_auto, FFTW_ESTIMATE, &p);
+    gla_execute(p, s, iter);
+    gla_done(&p);
+}
+
+int
+gla_init(const double g[], const int gl, const int L, const int W,
+         const int a, const int M, const double alpha,
+         complex double c[], dgtreal_anasyn_hint hint, unsigned flags,
+         gla_plan** pout)
 {
     int N = L / a;
     int M2 = M / 2 + 1;
 
+    gla_plan* p = calloc(1, sizeof * p);
+    dgtreal_anasyn_init(g, gl, L, W, a, M, c, hint, flags, &p->p);
 
-    double* gd = malloc(L * sizeof * gd);
-    double* f = malloc(L * sizeof * f);
-
-    gabdual_long_d(g, L, 1, a, M, gd);
-
-    ltfat_dgtreal_long_plan_d* dgtPlan = NULL;
-    ltfat_idgtreal_long_plan_d* idgtPlan = NULL;
-
-    ltfat_idgtreal_long_init_d(c, gd, L, W, a, M, f, TIMEINV, FFTW_MEASURE,
-                               &idgtPlan);
-    ltfat_dgtreal_long_init_d(f, g, L, W, a, M, c, TIMEINV, FFTW_MEASURE, &dgtPlan);
-
-    free(gd);
-
-    ltfat_ensurecomplex_array_d(s, N * M2 * W, c);
-
-    for (int ii = 0; ii < iter; ii++)
+    if (alpha > 0.0)
     {
-        ltfat_idgtreal_long_execute(idgtPlan);
-        // Callback (userdata,f,L,W,f)
-        ltfat_dgtreal_long_execute(dgtPlan);
-        force_magnitude(c, s, N * M2 * W, c);
-        // Callback (userdata, c, M2, N, c)
+        p->do_fast = 1;
+        p->alpha = alpha;
+        p->t = malloc(M2 * N * W * sizeof * p->t);
     }
 
-    ltfat_dgt_long_done_d(&dgtPlan);
-    ltfat_idgt_long_done_d(&idgtPlan);
-
-
-    free(f);
+    *pout = p;
 }
 
 int
-fgla_long(double* s, double* g, int L, int W, int a, int M,
-          int iter, double alpha, complex double* c)
+gla_done(gla_plan** p)
 {
-    int N = L / a;
+    gla_plan* pp = *p;
+    dgtreal_anasyn_done(&pp->p);
+    if (pp->t) free(pp->t);
+    free(pp);
+    pp = NULL;
+}
+
+int
+gla_execute_newarray(gla_plan* p, const double s[], const int iter,
+                     complex double c[])
+{
+    // Shallow copy the plan and replace c
+    gla_plan p2 = *p;
+    dgtreal_anasyn_plan pp2 = *p2.p;
+    pp2.c = c;
+    p2.p = &pp2;
+    gla_execute(&p2, s, iter);
+}
+
+
+int
+gla_execute(gla_plan* p, const double s[], const int iter)
+{
+    dgtreal_anasyn_plan* pp = p->p;
+    int M = pp->M;
+    int L = pp->L;
+    int W = pp->W;
+    int a = pp->a;
     int M2 = M / 2 + 1;
-    double* gd = malloc(L * sizeof * gd);
-    double* f = malloc(L * W * sizeof * f);
-    complex double* t = malloc(M2 * N  * W * sizeof * t);
+    int N = L / a;
 
+    ltfat_ensurecomplex_array_d( s, N * M2 * W, pp->c);
 
-    gabdual_long_d(g, L, 1, a, M, gd);
-
-    ltfat_dgtreal_long_plan_d* dgtPlan = NULL;
-    ltfat_idgtreal_long_plan_d* idgtPlan = NULL;
-
-    ltfat_idgtreal_long_init_d(c, gd, L, W, a, M, f, TIMEINV, FFTW_MEASURE,
-                               &idgtPlan);
-    ltfat_dgtreal_long_init_d(f, g, L, W, a, M, c, TIMEINV, FFTW_MEASURE, &dgtPlan);
-
-    free(gd);
-
-    ltfat_ensurecomplex_array_d(s, N * M2 *  W, c);
-    memcpy(t, c, (N * M2 *  W) * sizeof * f );
+    if (p->do_fast)
+        memcpy(p->t, pp->c, (N * M2 * W) * sizeof * p->t );
 
     for (int ii = 0; ii < iter; ii++)
     {
-        ltfat_idgtreal_long_execute(idgtPlan);
-        ltfat_dgtreal_long_execute(dgtPlan);
-        force_magnitude(c, s, N * M2 * W, c);
-        fastupdate(c, t, alpha, N * M2 * W );
+        // Perform idgtreal
+        dgtreal_anasyn_execute_syn(pp, pp->c, pp->f);
+
+        // Optional signal modification
+        if (p->fmod_callback)
+            p->fmod_callback(p->fmod_callback_userdata, pp->f, L, W, a, M);
+
+        // Perform dgtreal
+        dgtreal_anasyn_execute_ana(pp, pp->f, pp->c);
+
+        force_magnitude(pp->c, s, N * M2 * W, pp->c);
+
+        if (p->do_fast)
+            fastupdate(pp->c, p->t, p->alpha, N * M2 * W );
+
+        // Optional coefficient modification
+        if (p->cmod_callback)
+            p->cmod_callback(p->cmod_callback_userdata, pp->c, L, W, a, M);
+
+        // Status callback, optional premature exit
+        if (p->status_callback)
+        {
+            int status = p->status_callback(pp, p->status_callback_userdata,
+                                            pp->c, L, W, a, M, &p->alpha, ii);
+            if (status > 0)
+                break;
+        }
     }
 
-    ltfat_dgt_long_done_d(&dgtPlan);
-    ltfat_idgt_long_done_d(&idgtPlan);
+}
 
 
-    free(f);
-    free(t);
+int
+gla_set_status_callback(gla_plan* p,
+                        gla_callback_status* callback, void* userdata)
+{
+    p->status_callback = callback;
+    p->status_callback_userdata = userdata;
 }
 
 int
-force_magnitude(complex double* cin, double* s, int L, complex double* cout)
+gla_set_cmod_callback(gla_plan* p,
+                      gla_callback_cmod* callback, void* userdata)
 {
-    for (int ii = 0; ii < L; ii++)
-        cout[ii] = s[ii] * cexp(I * carg(cin[ii]));
+    p->cmod_callback = callback;
+    p->cmod_callback_userdata = userdata;
+}
 
+int
+gla_set_fmod_callback(gla_plan* p,
+                      gla_callback_fmod* callback, void* userdata)
+{
+    p->fmod_callback = callback;
+    p->fmod_callback_userdata = userdata;
 }
 
 int
@@ -98,6 +155,6 @@ fastupdate(complex double* c, complex double* t, double alpha, int L)
     {
         complex double cold = c[ii];
         c[ii] = c[ii] + alpha * (c[ii] - t[ii]);
-        t[ii] = cold[ii];
+        t[ii] = cold;
     }
 }

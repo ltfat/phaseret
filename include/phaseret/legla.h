@@ -3,9 +3,17 @@
  */
 #include "config.h"
 
-#if ! ( defined(mex_h) || defined(MEX_H) )
-typedef int mwSignedIndex;
-#endif
+// #if ! ( defined(mex_h) || defined(MEX_H) )
+// typedef int mwSignedIndex;
+// #endif
+
+typedef struct legla_plan legla_plan;
+
+typedef struct
+{
+    int height;
+    int width;
+} phaseret_size;
 
 typedef enum
 {
@@ -28,12 +36,12 @@ typedef enum
 
 typedef struct
 {
-    mwSignedIndex kernh;
-    mwSignedIndex kernw;
-    mwSignedIndex kernwskip;
-    mwSignedIndex kernh2;
-    mwSignedIndex kernw2;
-    mwSignedIndex M;
+    int kernh;
+    int kernw;
+    int kernwskip;
+    int kernh2;
+    int kernw2;
+    int M;
     int flags;
 } leglaupdate_plan_col;
 
@@ -44,34 +52,35 @@ typedef struct
     double* bufr;
     double* bufi;
     double*  s;
-    mwSignedIndex a;
-    mwSignedIndex N;
-    mwSignedIndex kernelNo;
+    int a;
+    int N;
+    int kernelNo;
     leglaupdate_plan_col plan_col;
 } leglaupdate_plan;
 
 /* Planning */
 leglaupdate_plan*
-leglaupdate_init(double* s,mwSignedIndex a, mwSignedIndex M,
-        mwSignedIndex N, double* kernr, double* kerni,
-        mwSignedIndex kernh, mwSignedIndex kernw,
-        int flags);
+leglaupdate_init( int a, int M,
+                  int N, double* kernr, double* kerni,
+                  int kernh, int kernw,
+                  int flags);
 
 leglaupdate_plan_col
-leglaupdate_init_col(mwSignedIndex M,
-        mwSignedIndex kernh, mwSignedIndex kernw,
-        int flags);
+leglaupdate_init_col(int M,
+                     int kernh, int kernw,
+                     int flags);
 
 /* Executing */
 extern void
-leglaupdatereal_execute(leglaupdate_plan* plan,  double* cr, double* ci, double* coutr, double* couti);
+leglaupdatereal_execute(leglaupdate_plan* plan, const double* s, double* cr,
+                        double* ci, double* coutr, double* couti);
 
 void
 leglaupdatereal_execute_col(leglaupdate_plan_col* plan,
-        double* crColFirst, double* ciColFirst,
-        double* actKr, double* actKi,
-        double* sCol,
-        double* coutrCol, double* coutiCol);
+                            double* crColFirst, double* ciColFirst,
+                            double* actKr, double* actKi,
+                            double* sCol,
+                            double* coutrCol, double* coutiCol);
 
 /* Cleanup */
 void
@@ -79,20 +88,20 @@ leglaupdate_done(leglaupdate_plan* plan);
 
 /*  */
 void
-extendborders(leglaupdate_plan_col* plan, const double* cr, const double* ci, mwSignedIndex N, double* bufr, double* bufi);
+extendborders(leglaupdate_plan_col* plan, const double* cr, const double* ci, int N, double* bufr, double* bufi);
 
 /* Modulate kernel */
 void
-kernphasefi(double* kernr, double* kerni, mwSignedIndex kernh, mwSignedIndex kernw,
-        mwSignedIndex kernwskip,
-        mwSignedIndex n, mwSignedIndex a, mwSignedIndex M,
-        double* kernmodr, double* kernmodi);
+kernphasefi(double* kernr, double* kerni, int kernh, int kernw,
+            int kernwskip,
+            int n, int a, int M,
+            double* kernmodr, double* kernmodi);
 
 /* Format kernel */
 void
 formatkernel(double* kernr, double* kerni,
-        mwSignedIndex kernh, mwSignedIndex kernw,
-        mwSignedIndex kernwskip, double* kernmodr, double* kernmodi);
+             int kernh, int kernw,
+             int kernwskip, double* kernmodr, double* kernmodi);
 
 /* Util */
 int phaseret_gcd(int m, int n);
