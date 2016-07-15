@@ -24,9 +24,16 @@ gla(const double s[], const double g[], const int gl, const int L, const int W,
     const int a, const int M, const int iter, complex double c[])
 {
     gla_plan* p = NULL;
-    gla_init(g, gl, L, W, a, M, 0.99, c, dgtreal_anasyn_auto, FFTW_ESTIMATE, &p);
-    gla_execute(p, s, iter);
-    gla_done(&p);
+    int status = LTFATERR_SUCCESS;
+
+    CHECKSTATUS(
+        gla_init(g, gl, L, W, a, M, 0.99, c, dgtreal_anasyn_auto, FFTW_ESTIMATE, &p),
+        "Init failed");
+    CHECKSTATUS( gla_execute(p, s, iter), "Execute failed");
+
+error:
+    if (p) gla_done(&p);
+    return status;
 }
 
 int
@@ -35,30 +42,52 @@ gla_init(const double g[], const int gl, const int L, const int W,
          complex double c[], dgtreal_anasyn_hint hint, unsigned flags,
          gla_plan** pout)
 {
+    int status = LTFATERR_SUCCESS;
+    gla_plan* p = NULL;
     int N = L / a;
     int M2 = M / 2 + 1;
 
-    gla_plan* p = calloc(1, sizeof * p);
-    dgtreal_anasyn_init(g, gl, L, W, a, M, c, hint, flags, &p->p);
+    CHECKMEM( p = calloc(1, sizeof * p));
 
     if (alpha > 0.0)
     {
         p->do_fast = 1;
         p->alpha = alpha;
-        p->t = malloc(M2 * N * W * sizeof * p->t);
+        CHECKMEM( p->t = malloc(M2 * N * W * sizeof * p->t));
     }
 
+    CHECKSTATUS(
+        dgtreal_anasyn_init(g, gl, L, W, a, M, c, hint, flags, &p->p),
+        "dgtrealwrapper init failed");
+
     *pout = p;
+    return status;
+error:
+    if (p)
+    {
+        if (p->t) free(p->t);
+        free(p);
+    }
+    *pout = NULL;
+    return status;
 }
 
 int
 gla_done(gla_plan** p)
 {
+    int status = LTFATERR_SUCCESS;
+    CHECKNULL(p); CHECKNULL(*p);
     gla_plan* pp = *p;
-    dgtreal_anasyn_done(&pp->p);
+
+    CHECKSTATUS(
+        dgtreal_anasyn_done(&pp->p),
+        "dgtreal wrapper done failed");
+
     if (pp->t) free(pp->t);
     free(pp);
     pp = NULL;
+error:
+    return status;
 }
 
 int
