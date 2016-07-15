@@ -22,7 +22,7 @@ INCDIR = $(PREFIX)/include
 LIBSOURCES = $(wildcard src/*.c)
 LIBOBJECTS = $(addprefix obj/,$(notdir $(LIBSOURCES:.c=.o)))
 
-CFLAGS=-std=c99 -pedantic -O2 -Wall -Wextra -DNDEBUG -I./include/phaseret -Ithirdparty $(OPTFLAGS)
+CFLAGS=-std=c99 -pedantic -O2 -Wall -Wextra -DNDEBUG -I./include -Ithirdparty $(OPTFLAGS)
 
 STATIC = libphaseret.a
 ifdef MINGW
@@ -43,7 +43,7 @@ lib: $(TARGET) $(SO_TARGET)
 
 all: lib matlab octave
 
-dev: CFLAGS=-std=c99 -g -O0 -Wall -Wall -Wextra -I./include/phaseret $(OPTFLAGS)
+dev: CFLAGS=-std=c99 -g -O0 -Wall -Wall -Wextra -I./include $(OPTFLAGS)
 dev: all 
 
 $(TARGET): obj build $(LIBOBJECTS)
@@ -98,6 +98,10 @@ mat2doc: mat2docmat
 
 mat2docmat:
 	mat2doc . mat
+
+build/phaseret.h: build 
+	$(CC) -E -P -DNOSYSTEMHEADERS -nostdinc include/phaseret.h -o build/phaseret.h
+	sed -i '1 i\#include <ltfat.h>' build/phaseret.h
 
 install: lib
 	install -d $(DESTDIR)$(LIBDIR)

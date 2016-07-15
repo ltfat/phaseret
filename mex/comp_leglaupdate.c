@@ -51,11 +51,11 @@ mexFunction(int nlhs, mxArray* plhs[],
     coutr = mxGetPr(plhs[0]);
     couti = mxGetPi(plhs[0]);
 
-    leglaupdate_plan* plan = leglaupdate_init(s, a, M, N, kernr, kerni, kernh,
+    leglaupdate_plan* plan = leglaupdate_init(a, M, N, kernr, kerni, kernh,
                              kernw,
                              do_onthefly ? MOD_COEFFICIENTWISE : 0);
 
-    leglaupdatereal_execute(plan, cr, ci, coutr, couti);
+    leglaupdatereal_execute(plan, s, cr, ci, coutr, couti);
 
     leglaupdate_done(plan);
 

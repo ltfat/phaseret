@@ -2,7 +2,7 @@
  *  \{
  *  \file
  *  \brief MEX file interface for rtisilaupdate()
- *  
+ *
  *  **This is a computaional routine. The input arguments are not checked for correctness!!**
  *
  *  Matlab calling convention:
@@ -17,9 +17,9 @@
  *  specg1       | M el. vector, alternative analysis window for the first iteration of the newest lookahead frame.
  *  specg2       | M el. vector, alternative analyis window for second and other iterations of the newest lookahead frame.
  *  gd           | M el. vector, synthesis window
- *  a            | Hop factor 
+ *  a            | Hop factor
  *  M            | Number of channels (FFT length)
- *  s            | M2 x lookahead+1 matrix    
+ *  s            | M2 x lookahead+1 matrix
  *
  *  Output arg.  | Description
  *  -----------  | -------------------------------------------------------------
@@ -58,32 +58,37 @@ mexFunction(int nlhs, mxArray* plhs[],
     int lookahead = (int) mxGetScalar(prhs[8]);
     int maxit = (int) mxGetScalar(prhs[9]);
     int M2 = M / 2 + 1;
+    int gl = mxGetM(prhs[1]);
 
     plhs[0] = mxDuplicateArray(mxcframes);
     double* cframes2 = mxGetData(plhs[0]);
 
     double* cr = NULL;
     double* ci = NULL;
+    complex double* cout = NULL;
 
     if (nlhs > 1)
     {
         plhs[1] = mxCreateDoubleMatrix(M2, W, mxCOMPLEX);
         cr = mxGetData(plhs[1]);
         ci = mxGetImagData(plhs[1]);
+        cout = mxMalloc(M2 * sizeof * cout);
     }
 
-    rtisilaupdate_plan* p = rtisilaupdate_init(gnum, specg1, specg2, dgnum, a, M);
+    rtisilaupdate_plan* p = NULL;
+    rtisilaupdate_init(gnum, specg1, specg2, dgnum, gl, a, M, &p);
 
     for (int w = 0; w < W; w++)
     {
         rtisilaupdate_execute(p, cframes + w * M * N, N,
                               sframes + w * M2 * N,
-                              lookahead, maxit, cframes2 + w * M * N);
+                              lookahead, maxit, cframes2 + w * M * N,
+                              cout);
 
         if (nlhs > 1)
         {
             // Convert interleaved to split
-            double complex* cc = (double complex*) p->fftframe;
+            double complex* cc = cout;
             double* crChan = cr + w * M2;
             double* ciChan = ci + w * M2;
 
@@ -95,5 +100,9 @@ mexFunction(int nlhs, mxArray* plhs[],
         }
     }
 
-    rtisilaupdate_done(p);
+    if (nlhs > 1)
+        mxFree(cout);
+
+
+    rtisilaupdate_done(&p);
 }

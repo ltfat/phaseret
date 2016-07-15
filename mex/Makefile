@@ -23,7 +23,7 @@ matlab: $(MEXTARGETS)
 # and also only supresses warnings from mex (about old compiler) but not from
 # the compiler itself.
 %.mexa64 : %.c
-	$(MEX) CFLAGS='$(MYCFLAGS)' $<  $(TARGETUP) -lfftw3 -lm > /dev/null
+	$(MEX) CFLAGS='$(MYCFLAGS)' $<  $(TARGETUP) -lfftw3 -lltfat -lm > /dev/null
 
 # OCTAVE MEX files
 # := $(shell ...) runs shell immediatelly even if we do not use the octave
