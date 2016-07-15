@@ -1,5 +1,6 @@
 repr/Databases/*
-repr/texexport*/*
+repr
+build
 mat2doc_*
 html
 latex
