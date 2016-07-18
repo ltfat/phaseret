@@ -21,7 +21,7 @@
  *  \param[in]     newcol   (optional) Length height vector to be used as the last col.
  *                          If it is NULL, it is set to zeros. 
  */
-void
+int
 shiftcolsleft(double* cols, int height, int N, const double* newcol);
 
 int

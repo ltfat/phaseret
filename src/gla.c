@@ -94,19 +94,31 @@ int
 gla_execute_newarray(gla_plan* p, const double s[], const int iter,
                      complex double c[])
 {
+    int status = LTFATERR_SUCCESS;
+    CHECKNULL(p); CHECKNULL(s); CHECKNULL(c);
+    CHECK(LTFATERR_NOTPOSARG, iter>0,
+          "At least one iteration is requred. Passed %d.",iter);
     // Shallow copy the plan and replace c
     gla_plan p2 = *p;
     dgtreal_anasyn_plan pp2 = *p2.p;
     pp2.c = c;
     p2.p = &pp2;
-    gla_execute(&p2, s, iter);
+    return gla_execute(&p2, s, iter);
+error:
+    return status;
 }
 
 
 int
 gla_execute(gla_plan* p, const double s[], const int iter)
 {
+    int status = LTFATERR_SUCCESS;
+    CHECKNULL(p); CHECKNULL(s); 
+    CHECK(LTFATERR_NOTPOSARG, iter>0,
+          "At least one iteration is requred. Passed %d.",iter);
+
     dgtreal_anasyn_plan* pp = p->p;
+    CHECKNULL(pp->c);
     int M = pp->M;
     int L = pp->L;
     int W = pp->W;
@@ -122,14 +134,18 @@ gla_execute(gla_plan* p, const double s[], const int iter)
     for (int ii = 0; ii < iter; ii++)
     {
         // Perform idgtreal
-        dgtreal_anasyn_execute_syn(pp, pp->c, pp->f);
+        CHECKSTATUS( dgtreal_anasyn_execute_syn(pp, pp->c, pp->f),
+                     "idgtreal failed");
 
         // Optional signal modification
         if (p->fmod_callback)
-            p->fmod_callback(p->fmod_callback_userdata, pp->f, L, W, a, M);
+            CHECKSTATUS(
+                p->fmod_callback(p->fmod_callback_userdata, pp->f, L, W, a, M),
+                "fmod callback failed");
 
         // Perform dgtreal
-        dgtreal_anasyn_execute_ana(pp, pp->f, pp->c);
+        CHECKSTATUS( dgtreal_anasyn_execute_ana(pp, pp->f, pp->c),
+                     "dgtreal failed");
 
         force_magnitude(pp->c, s, N * M2 * W, pp->c);
 
@@ -138,7 +154,9 @@ gla_execute(gla_plan* p, const double s[], const int iter)
 
         // Optional coefficient modification
         if (p->cmod_callback)
-            p->cmod_callback(p->cmod_callback_userdata, pp->c, L, W, a, M);
+            CHECKSTATUS(
+                p->cmod_callback(p->cmod_callback_userdata, pp->c, L, W, a, M),
+                "cmod callback failed");
 
         // Status callback, optional premature exit
         if (p->status_callback)
@@ -147,9 +165,13 @@ gla_execute(gla_plan* p, const double s[], const int iter)
                                             pp->c, L, W, a, M, &p->alpha, ii);
             if (status > 0)
                 break;
+            else
+                CHECKSTATUS(status,"Status callback failed");
         }
     }
 
+error:
+    return status;
 }
 
 
@@ -157,24 +179,39 @@ int
 gla_set_status_callback(gla_plan* p,
                         gla_callback_status* callback, void* userdata)
 {
+    int status = LTFATERR_SUCCESS;
+    CHECKNULL(p); CHECKNULL(callback);
+
     p->status_callback = callback;
     p->status_callback_userdata = userdata;
+error:
+    return status;
 }
 
 int
 gla_set_cmod_callback(gla_plan* p,
                       gla_callback_cmod* callback, void* userdata)
 {
+    int status = LTFATERR_SUCCESS;
+    CHECKNULL(p); CHECKNULL(callback);
+
     p->cmod_callback = callback;
     p->cmod_callback_userdata = userdata;
+error:
+    return status;
 }
 
 int
 gla_set_fmod_callback(gla_plan* p,
                       gla_callback_fmod* callback, void* userdata)
 {
+    int status = LTFATERR_SUCCESS;
+    CHECKNULL(p); CHECKNULL(callback);
+
     p->fmod_callback = callback;
     p->fmod_callback_userdata = userdata;
+error:
+    return status;
 }
 
 int
@@ -186,4 +223,5 @@ fastupdate(complex double* c, complex double* t, double alpha, int L)
         c[ii] = c[ii] + alpha * (c[ii] - t[ii]);
         t[ii] = cold;
     }
+    return 0;
 }

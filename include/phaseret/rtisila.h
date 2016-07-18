@@ -71,7 +71,7 @@ rtisilaupdate_init(const double *g, const double* specg1,
 /** Destroy a RTISILA Update Plan.
  * \param[in] p  RTISILA Update Plan
  */
-void
+int
 rtisilaupdate_done(rtisilaupdate_plan** p);
 
 /** Do maxit iterations of RTISI-LA for a single frame
@@ -147,7 +147,7 @@ rtisilaupdate(const double* frames,
  */
 int
 rtisila_init(const double *g, const double* gd, const int gl, const int W,
-             int a, int M, int lookahead, int maxLookahead, int maxit,
+             int a, int M, int lookahead, int maxit,
              rtisila_state** p);
 
 /** Create a RTISILA Plan from a window.
@@ -164,8 +164,7 @@ rtisila_init(const double *g, const double* gd, const int gl, const int W,
  */
 int
 rtisila_init_win(LTFAT_FIRWIN win, int gl, int W, int a, int M,
-                 int lookahead, int maxLookahead, int maxit,
-                 rtisila_state** p);
+                 int lookahead, int maxit, rtisila_state** p);
 
 /** Execute RTISILA plan for a single frame
  *

@@ -1,6 +1,6 @@
 #include "phaseret/utils.h"
 
-void
+int
 shiftcolsleft(double* cols, int height, int N, const double* newcol)
 {
     for (int n = 0; n < N - 1; n++)
@@ -10,6 +10,8 @@ shiftcolsleft(double* cols, int height, int N, const double* newcol)
         memcpy(cols + (N - 1)*height, newcol, height * sizeof * cols);
     else
         memset(cols + (N - 1)*height, 0, height * sizeof * cols);
+
+return 0;
 }
 
 int
@@ -18,4 +20,5 @@ force_magnitude(complex double* cin, const double* s, int L, complex double* cou
     for (int ii = 0; ii < L; ii++)
         cout[ii] = s[ii] * cexp(I * carg(cin[ii]));
 
+    return 0;
 }

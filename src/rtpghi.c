@@ -1,5 +1,6 @@
 #include "phaseret/rtpghi.h"
 #include "phaseret/config.h"
+#include "phaseret/utils.h"
 #include "float.h"
 
 rtpghi_plan*

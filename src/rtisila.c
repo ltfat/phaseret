@@ -1,4 +1,5 @@
 #include "phaseret/rtisila.h"
+#include "phaseret/utils.h"
 #include "ltfat/macros.h"
 #include <math.h>
 
@@ -8,17 +9,18 @@ struct rtisilaupdate_plan
     fftw_complex* fftframe; //!< Frequency domain buffer
     fftw_plan fwdp; //!< Real FFT plan
     fftw_plan backp; //!< Real IFFT plan
-    double* g;
-    double* gd;
-    double* specg1;
-    double* specg2;
-    const int gl;
-    const int M;
-    const int a;
+    const double* g;
+    const double* gd;
+    const double* specg1;
+    const double* specg2;
+    int gl;
+    int M;
+    int a;
 };
 
 struct rtisila_state
 {
+    rtisilaupdate_plan* uplan;
     int maxLookahead;
     int lookahead;
     int lookback;
@@ -26,7 +28,6 @@ struct rtisila_state
     int W;
     double* frames; //!< Buffer for time-domain frames
     double* s; //!< Buffer for target magnitude
-    rtisilaupdate_plan* uplan;
     void** garbageBin;
     int garbageBinSize;
 };
@@ -156,38 +157,46 @@ rtisilaupdate_init(const double* g, const double* specg1, const double* specg2,
                    const double* gd, const int gl, int a, int M,
                    rtisilaupdate_plan** pout)
 {
-    rtisilaupdate_plan* p = fftw_malloc(sizeof * p);
-
+    int status = LTFATERR_SUCCESS;
+    rtisilaupdate_plan* p = NULL;
     int M2 = M / 2 + 1;
+
+    CHECKMEM( p = calloc(1,sizeof * p));
+
+    *p = (rtisilaupdate_plan) { .M=M, .a=a, .g=g, .gd=gd, .specg1=specg1,
+                                .specg2=specg2, .gl=gl };
     // Real input array for FFTREAL and output array for IFFTREAL
-    double*          frame = fftw_malloc(M * sizeof * frame);
+    CHECKMEM( p->frame = fftw_malloc(M * sizeof * p->frame));
     // Complex output array for FFTREAL and input array to IFFTREAL
-    // The array also holds the final coefficients of the submit frame
-    fftw_complex* fftframe = fftw_malloc(M2 * sizeof * fftframe);
+    CHECKMEM( p->fftframe = fftw_malloc(M2 * sizeof * p->fftframe));
 
     // FFTREAL plan
-    fftw_plan fwdp = fftw_plan_dft_r2c_1d(M, frame, fftframe, FFTW_MEASURE);
+    p->fwdp = fftw_plan_dft_r2c_1d(M, p->frame, p->fftframe, FFTW_MEASURE);
+    CHECKINIT(p->fwdp, "FFTW plan failed");
     // IFFTREAL plan
-    fftw_plan backp = fftw_plan_dft_c2r_1d(M, fftframe, frame, FFTW_MEASURE);
-
-    // This way, we can write to the constant parameters of the structure
-    rtisilaupdate_plan pdummy =
-    {
-        .M = M, .a = a,
-        .frame = frame, .fftframe = fftframe,
-        .g = g, .specg1 = specg1, .specg2 = specg2, .gd = gd,
-        .gl = gl, .fwdp = fwdp, .backp = backp
-    };
-
-    memcpy(p, &pdummy, sizeof * p);
+    p->backp = fftw_plan_dft_c2r_1d(M, p->fftframe, p->frame, FFTW_MEASURE);
+    CHECKINIT(p->backp, "FFTW plan failed");
 
     *pout = p;
-    return 0;
+    return status;
+error:
+    if(p)
+    {
+        if(p->frame) free(p->frame);
+        if(p->fftframe) free(p->fftframe);
+        if(p->fwdp) fftw_destroy_plan(p->fwdp);
+        if(p->backp) fftw_destroy_plan(p->backp);
+        free(p);
+    }
+    return status;
 }
 
-void
+int
 rtisilaupdate_done(rtisilaupdate_plan** p)
 {
+    int status = LTFATERR_SUCCESS;
+    CHECKNULL(p); CHECKNULL(*p);
+
     rtisilaupdate_plan* pp = *p;
     fftw_free(pp->frame);
     fftw_free(pp->fftframe);
@@ -195,6 +204,8 @@ rtisilaupdate_done(rtisilaupdate_plan** p)
     fftw_destroy_plan(pp->backp);
     fftw_free(pp);
     pp = NULL;
+error:
+    return status;
 }
 
 void
@@ -265,25 +276,40 @@ rtisilaupdatecoef(const double* frames,
 
 int
 rtisila_init(const double* g, const double* gd, const int gl, const int W,
-             int a, int M, int lookahead, int maxLookahead, int maxit,
-             rtisila_state** pout)
+             int a, int M, int lookahead, int maxit, rtisila_state** pout)
 {
+    int status = LTFATERR_SUCCESS;
+
+    rtisila_state* p = NULL;
+    double* wins = NULL;
+
+    CHECKNULL(g); CHECKNULL(gd); CHECKNULL(pout);
+    CHECK(LTFATERR_NOTPOSARG,gl>0,"gl must be positive");
+    CHECK(LTFATERR_NOTPOSARG,W>0,"W must be positive");
+    CHECK(LTFATERR_NOTPOSARG,a>0,"a must be positive");
+    CHECK(LTFATERR_NOTPOSARG,M>0,"M must be positive");
+    CHECK(LTFATERR_BADARG,lookahead>0,"lookahead >=0 failed");
+    CHECK(LTFATERR_NOTPOSARG,maxit>0,"maxit must be positive");
+
     int M2 = M / 2 + 1;
     int lookback = ceil((double) gl / a) - 1;
     int winsNo = (2 * lookback + 1);
-    rtisila_state* p = calloc(1, sizeof * p);
+    int maxLookahead = lookahead;
+    CHECKMEM( p = calloc(1, sizeof * p));
 
-    rtisilaupdate_init(NULL, NULL, NULL, NULL, gl, a, M, &p->uplan);
+    CHECKSTATUS(
+        rtisilaupdate_init(NULL, NULL, NULL, NULL, gl, a, M, &p->uplan),
+        "rtisiupdate ini failed");
 
-    p->uplan->g = malloc(gl * sizeof * p->uplan->g);
-    p->uplan->gd = malloc(gl * sizeof * p->uplan->gd);
-    p->uplan->specg1 = malloc(gl * sizeof * p->uplan->specg1);
-    p->uplan->specg2 = malloc(gl * sizeof * p->uplan->specg2);
+    CHECKMEM( p->uplan->g = malloc(gl * sizeof * p->uplan->g));
+    CHECKMEM( p->uplan->gd = malloc(gl * sizeof * p->uplan->gd));
+    CHECKMEM( p->uplan->specg1 = malloc(gl * sizeof * p->uplan->specg1));
+    CHECKMEM( p->uplan->specg2 = malloc(gl * sizeof * p->uplan->specg2));
 
     ltfat_fftshift_d(g, gl, p->uplan->g);
     ltfat_fftshift_d(gd, gl, p->uplan->gd);
 
-    double* wins = malloc(gl * winsNo * sizeof * wins);
+    CHECKMEM( wins = malloc(gl * winsNo * sizeof * wins));
 
     // Spec2
     ltfat_periodize_array_d(p->uplan->gd, gl, gl * winsNo, wins);
@@ -293,18 +319,18 @@ rtisila_init(const double* g, const double* gd, const int gl, const int W,
     memset(wins, 0, gl * sizeof * wins);
     overlaynthframe(wins, gl, winsNo, a, 0, p->uplan->specg1);
 
-    free(wins);
+    free(wins); wins = NULL;
 
-    p->frames = calloc(gl * (lookback + 1 + maxLookahead) * W,
-                       sizeof * p->frames);
-    p->s   = calloc( M2 * (1 + maxLookahead) * W, sizeof * p->s);
+    CHECKMEM( p->frames = calloc(gl * (lookback + 1 + maxLookahead) * W,
+                                 sizeof * p->frames));
+    CHECKMEM( p->s = calloc( M2 * (1 + maxLookahead) * W, sizeof * p->s));
 
     p->garbageBinSize = 4;
-    p->garbageBin = malloc(p->garbageBinSize * sizeof(void*));
-    p->garbageBin[0] = p->uplan->g;
-    p->garbageBin[1] = p->uplan->gd;
-    p->garbageBin[2] = p->uplan->specg1;
-    p->garbageBin[3] = p->uplan->specg2;
+    CHECKMEM( p->garbageBin = malloc(p->garbageBinSize * sizeof(void*)));
+    p->garbageBin[0] = (void*) p->uplan->g;
+    p->garbageBin[1] = (void*) p->uplan->gd;
+    p->garbageBin[2] = (void*) p->uplan->specg1;
+    p->garbageBin[3] = (void*) p->uplan->specg2;
 
     p->lookback = lookback;
     p->lookahead = lookahead;
@@ -313,35 +339,67 @@ rtisila_init(const double* g, const double* gd, const int gl, const int W,
     p->W = W;
 
     *pout = p;
+    return status;
+error:
+    if(wins) free(wins);
+    if(p)
+    {
+        if(p->uplan)
+        {
+            if(p->uplan->g) free((void*)p->uplan->g);
+            if(p->uplan->gd) free((void*)p->uplan->gd);
+            if(p->uplan->specg1) free((void*)p->uplan->specg1);
+            if(p->uplan->specg2) free((void*)p->uplan->specg2);
+            rtisilaupdate_done(&p->uplan);
+        }
+        if(p->s) free(p->s);
+        if(p->frames) free(p->frames);
+        free(p);
+    }
+    *pout = NULL;
+    return status;
 }
 
 int
 rtisila_init_win(LTFAT_FIRWIN win, int gl, int W, int a, int M,
-                 int lookahead, int maxLookahead, int maxit,
+                 int lookahead, int maxit,
                  rtisila_state** pout)
 {
-    double* g = malloc(gl * sizeof * g);
-    double* gd = malloc(gl * sizeof * gd);
+    double* g = NULL;
+    double* gd = NULL;
+    int status = LTFATERR_SUCCESS;
+
+    CHECKMEM( g = malloc(gl * sizeof * g));
+    CHECKMEM( gd = malloc(gl * sizeof * gd));
 
     // Analysis window
-    ltfat_firwin_d(win, gl, g);
-    ltfat_gabdual_painless_d(g, gl, a, M, gd);
+    CHECKSTATUS( ltfat_firwin_d(win, gl, g), "firwin failed");
+    CHECKSTATUS( ltfat_gabdual_painless_d(g, gl, a, M, gd),
+                 "gabdual failed");
 
-    rtisila_init(g, gd, gl, W, a, M, lookahead,
-                 maxLookahead, maxit, pout);
+    int initstatus = rtisila_init(g, gd, gl, W, a, M, lookahead,
+                                  maxit, pout);
 
-    free(g);
-    free(gd);
+    free(g); free(gd);
+    return initstatus;
+error:
+    if(g) free(g);
+    if(gd) free(gd);
+    return status;
 }
 
 int
 rtisila_done(rtisila_state** p)
 {
+    int status = LTFATERR_SUCCESS;
+    CHECKNULL(p); CHECKNULL(*p);
     rtisila_state* pp = *p;
+
+    CHECKSTATUS( rtisilaupdate_done(&pp->uplan),
+                 "rtisilaupdate done failed");
 
     free(pp->s);
     free(pp->frames);
-    rtisilaupdate_done(&pp->uplan);
 
     if (pp->garbageBinSize)
     {
@@ -353,6 +411,8 @@ rtisila_done(rtisila_state** p)
 
     free(pp);
     pp = NULL;
+error:
+    return status;
 }
 
 int
@@ -379,6 +439,8 @@ rtisila_execute(rtisila_state* p, const double* s, double complex* c)
         rtisilaupdate_execute(p->uplan, frameschan, noFrames, sframeschan,
                               p->lookahead, p->maxit, frameschan, cchan);
     }
+
+return LTFATERR_SUCCESS;
 }
 
 
@@ -388,13 +450,19 @@ rtisilaoffline(const double* s,
                const int gl, int a, int M, int L, int lookahead, int maxit,
                complex double* c)
 {
+    int status = LTFATERR_SUCCESS;
+    rtisila_state* p = NULL;
+
+    CHECKNULL(s); CHECKNULL(c);
     int N = L / a;
     int M2 = M / 2 + 1;
     // Just limit lookahead to something sensible
     lookahead = lookahead > N ? N : lookahead;
 
-    rtisila_state* p = NULL;
-    rtisila_init(g, gd, gl, 1, a, M, lookahead, lookahead, maxit, &p);
+    CHECKSTATUS(
+        rtisila_init(g, gd, gl, 1, a, M, lookahead, maxit, &p),
+        "rtisila init failed");
+
     memcpy(p->s + M2, s, lookahead * M2 * sizeof * p->s);
 
     for (int n = 0, nahead = lookahead; nahead < N; ++n, ++nahead)
@@ -408,8 +476,11 @@ rtisilaoffline(const double* s,
     {
         const double* sncol = s + nahead * M2;
         complex double* cncol = c + n * M2;
-        rtisila_execute(p, NULL, cncol);
+        rtisila_execute(p, sncol, cncol);
     }
 
     rtisila_done(&p);
+
+error:
+    return status;
 }
