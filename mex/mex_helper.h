@@ -22,4 +22,14 @@ complex2split(const complex double* in, int L, double* outr, double* outi)
 
 }
 
+void
+split2complex(const double* inr, const double* ini, int L, complex double* out)
+{
+    for (int ii = 0; ii < L; ++ii)
+    {
+        out[ii] = inr[ii] + I*ini[ii];
+    }
+
+}
+
 #endif
