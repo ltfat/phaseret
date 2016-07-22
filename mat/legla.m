@@ -11,22 +11,21 @@ function [c,relres,iter,f]=legla(s,g,a,M,varargin)
 %         M       : Number of channels
 %         Ls      : length of signal.
 %   Output parameters:
-%         f       : Signal.
+%         c       : Coefficients with the reconstructed phase
 %         relres  : Vector of residuals.
 %         iter    : Number of iterations done.
-%         c       : Coefficients with the reconstructed phase
+%         f       : Signal.
 %
-%   `legla(s,g,a,M)` attempts to find a signal *f* with has *s* as
-%   the abs. value of the Gabor coefficients such as::
+%   `legla(s,g,a,M)` attempts to find coefficients *c* from their abs. 
+%   value::
 %
 %     s = abs(dgtreal(f,g,a,M));
 %
 %   using Le Rouxs modifications of the Griffin-Lim algorithm.
 %
-%   `[f,relres,iter,c]=legla(...)` additionally returns an array
+%   `[c,relres,iter,f]=legla(...)` additionally returns an array
 %   of residuals `relres`, the number of iterations done `iter` and the
-%   coefficients *c* with the reconstructed phase. The relationship between
-%   *f* and *c* is::
+%   reconstructed signal *f*. The relationship between *f* and *c* is::
 %
 %     f = idgtreal(c,gd,a,M)
 %
@@ -43,9 +42,39 @@ function [c,relres,iter,f]=legla(s,g,a,M,varargin)
 %
 %     'rand'       Choose a random starting phase.
 %
+%   Enforcing prior information:
+%
+%     'coefmod',coefmod   Anonymous function in a form coefmod = @(c) ...;
+%                         altering coefficients in each iteration after
+%                         the phase update has been done.
+%                         This is usefull when e.g. phase of some of
+%                         the coefficients is known.
+%
+%   Projection kernel
+%   -----------------
+%   
+%   The algorithm employs a twisted convolution of coefficients with the
+%   truncated projection kernel. The full-size kernel is obtained as::
+%
+%     kern = dgt(gd,g,a,M)
+%
+%   where *gd* is canonical dual window obtained by |gabdual|. The
+%   following key-value pairs control the final kernel size:
+%
+%     'relthr',relthr    The kernel is truncated such that it contains 
+%                        coefficients with abs. values greater or equal 
+%                        to *relthr* times the biggest coefficient. 
+%                        The default value is 1e-3.
+%
+%     'kernsize',[height,width]  Define kernel size directly. When used,
+%                                *relthr* is ignored.
+%
+%   Additinally, the phase update strategy is controlled by the following
+%   flags:
+%
 %   Variant of the algorithm:
 %
-%     'trunc'      The projection kernel is used directly.
+%     'trunc'      The truncated projection kernel is used directly.
 %                  This is the default.
 %
 %     'modtrunc'   Modified phase update is done by setting the central
@@ -68,6 +97,7 @@ function [c,relres,iter,f]=legla(s,g,a,M,varargin)
 %
 %     'alpha',a    Parameter of the Fast Griffin-Lim algorithm. It is
 %                  ignored if not used together with 'flegla' flag.
+%                  The default value is 0.99.
 %
 %   Other:
 %
@@ -89,8 +119,11 @@ function [c,relres,iter,f]=legla(s,g,a,M,varargin)
 
 %   AUTHOR: Zdenek Prusa
 
-[~,N,W] = size(s);
-L = N*a;
+complainif_notenoughargs(nargin,4,mfilename);
+
+if ~isnumeric(s)
+    error('%s: s s must be numeric.',upper(mfilename));
+end
 
 definput.keyvals.Ls=[];
 definput.keyvals.maxit=100;
@@ -101,7 +134,7 @@ definput.flags.method={'legla','flegla'};
 definput.keyvals.alpha=0.99;
 definput.flags.print={'quiet','print'};
 definput.flags.phase={'freqinv','timeinv'};
-definput.keyvals.relthr = 0.1;
+definput.keyvals.relthr = 1e-3;
 definput.keyvals.kernsize = [];
 definput.keyvals.printstep=10;
 definput.keyvals.coefmod = [];
@@ -109,6 +142,10 @@ definput.keyvals.coefmod = [];
 
 if ~isempty(kv.coefmod) && isa(kv.coefmod,'function_handle')
     error('%s: coefmod must be anonymous function.',upper(mfilename))
+end
+
+if kv.relthr>1 && kv.relthr<0
+    error('%s: relthr must be in range [0,1].',upper(mfilename));
 end
 
 if flags.do_input
@@ -132,37 +169,41 @@ norm_s=norm(s,'fro');
 
 relres=zeros(kv.maxit,1);
 
-gnum = gabwin(g,a,M,L);
-gd = gabdual(g,a,M,L);
+[~,N,W] = size(s);
+L = N*a;
 
-projfncBase = @(c) dgt(idgt(c,gd,a),g,a,M);
-ctmp = zeros(M,N); ctmp(1) = 1;
-kern = projfncBase(ctmp);
+% Projection kernel, this has the side effect that it checks inputs
+projfnc = @(c) dgtreal(idgtreal(c,{'dual',g},a,M),g,a,M);
+ctmp = zeros(floor(M/2)+1,N); ctmp(1) = 1;
+kern = projfnc(ctmp);
 clear ctmp;
 
+% Replace projection with faster version
+gnum = gabwin(g,a,M,L);
+gd = gabdual(g,a,M,L);
+projfnc = @(c) comp_sepdgtreal(comp_isepdgtreal(c,gd,L,a,M,0),gnum,a,M,0);
+
 if isempty(kv.kernsize)
-    kv.kernsize = [2*ceil(M/a)-1,2*ceil(M/a)-1];
+    kv.kernsize = findsmallkernelsize(kern,kv.relthr);
 else
     if ~isnumeric(kv.kernsize) || numel(kv.kernsize)~=2
         error('%s: Kernel size must be a 2 element vector.',upper(mflename));
     end
-    if any(mod(kv.kernsize,2)==0)
-        error('%s: Kernel size must be odd.',upper(mfilename));
-    end
-    if any(kv.kernsize<=0)
+%     if any(mod(kv.kernsize,2)==0)
+%         error('%s: Kernel size must be odd.',upper(mfilename));
+%     end
+    if any(kv.kernsize<=0) || kv.kernsize(1)>M || kv.kernsize(2)>N
         error('%s: Invalid kernel size.',upper(mfilename));
     end
 end
 
-% Projection kernel
-projfnc = @(c) comp_dgtreal(comp_idgtreal(c,gd,a,M,[0 1],0),gnum,a,M,[0 1],0);
+% Shrink kernel
+kernsmall = postpad(kern,floor(kv.kernsize(1)/2)+1);
+kernsmall = middlepad(kernsmall,kv.kernsize(2),2);
 
 if flags.do_modtrunc
-    kern(1,1) = 0;
+    kernsmall(1,1) = 0;
 end
-
-kernsmall = middlepad2(kern,kv.kernsize);
-kernsmall = fftshift(involute2(kernsmall));
 
 % Do explicit coefmod
 if ~isempty(kv.coefmod)
@@ -233,11 +274,32 @@ if flags.do_timeinv
 end
 
 
+function ksize=findsmallkernelsize(kern,relthr)
+[M2,N] = size(kern);
+thr = relthr*max(abs(kern(:)));
 
-function f=involute2(f)
-f = involute(f,1);
-f = conj(involute(f,2));
+lastrow = 1;
+for n=1:N
+    newlastrow = find(abs(kern(:,n))>=thr,1,'last');
+    if newlastrow > lastrow
+        lastrow = newlastrow;
+    end
+end
 
-function f=middlepad2(f,L,varargin)
-f = middlepad(f,L(1),1,varargin{:});
-f = middlepad(f,L(2),2,varargin{:});
+lastcol1 = 1;
+lastcol2 = 1;
+for m=1:M2
+    newlastcol = find(abs(kern(m,1:ceil(end/2)))>=thr,1,'last');
+    if newlastcol > lastcol1
+        lastcol1 = newlastcol;
+    end
+    
+    newlastcol = find(abs(kern(m,end:-1:floor(end/2)))>=thr,1,'last');
+    if newlastcol > lastcol2
+        lastcol2 = newlastcol;
+    end
+end
+
+ksize = [2*lastrow-1, lastcol1 + lastcol2];
+
+
