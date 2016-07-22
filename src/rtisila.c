@@ -32,6 +32,23 @@ struct rtisila_state
     int garbageBinSize;
 };
 
+int
+rtisila_set_lookahead(rtisila_state* p, int lookahead)
+{
+    int status = LTFATERR_SUCCESS;
+    CHECKNULL(p);
+    CHECK(LTFATERR_BADARG, lookahead >= 0,
+          "Zero or more lookahead frames is required. Passed %d.", lookahead);
+
+    if (lookahead < p->lookahead)
+        p->lookahead = lookahead;
+
+    return p->lookahead;
+error:
+    return status;
+}
+
+
 void
 overlaynthframe(const double* frames, int gl, int N, int a, int n,
                 double* frame)
@@ -161,10 +178,13 @@ rtisilaupdate_init(const double* g, const double* specg1, const double* specg2,
     rtisilaupdate_plan* p = NULL;
     int M2 = M / 2 + 1;
 
-    CHECKMEM( p = calloc(1,sizeof * p));
+    CHECKMEM( p = calloc(1, sizeof * p));
 
-    *p = (rtisilaupdate_plan) { .M=M, .a=a, .g=g, .gd=gd, .specg1=specg1,
-                                .specg2=specg2, .gl=gl };
+    *p = (rtisilaupdate_plan)
+    {
+        .M = M, .a = a, .g = g, .gd = gd, .specg1 = specg1,
+         .specg2 = specg2, .gl = gl
+    };
     // Real input array for FFTREAL and output array for IFFTREAL
     CHECKMEM( p->frame = fftw_malloc(M * sizeof * p->frame));
     // Complex output array for FFTREAL and input array to IFFTREAL
@@ -180,12 +200,12 @@ rtisilaupdate_init(const double* g, const double* specg1, const double* specg2,
     *pout = p;
     return status;
 error:
-    if(p)
+    if (p)
     {
-        if(p->frame) free(p->frame);
-        if(p->fftframe) free(p->fftframe);
-        if(p->fwdp) fftw_destroy_plan(p->fwdp);
-        if(p->backp) fftw_destroy_plan(p->backp);
+        if (p->frame) free(p->frame);
+        if (p->fftframe) free(p->fftframe);
+        if (p->fwdp) fftw_destroy_plan(p->fwdp);
+        if (p->backp) fftw_destroy_plan(p->backp);
         free(p);
     }
     return status;
@@ -202,7 +222,7 @@ rtisilaupdate_done(rtisilaupdate_plan** p)
     fftw_free(pp->fftframe);
     fftw_destroy_plan(pp->fwdp);
     fftw_destroy_plan(pp->backp);
-    fftw_free(pp);
+    free(pp);
     pp = NULL;
 error:
     return status;
@@ -284,12 +304,12 @@ rtisila_init(const double* g, const double* gd, const int gl, const int W,
     double* wins = NULL;
 
     CHECKNULL(g); CHECKNULL(gd); CHECKNULL(pout);
-    CHECK(LTFATERR_NOTPOSARG,gl>0,"gl must be positive");
-    CHECK(LTFATERR_NOTPOSARG,W>0,"W must be positive");
-    CHECK(LTFATERR_NOTPOSARG,a>0,"a must be positive");
-    CHECK(LTFATERR_NOTPOSARG,M>0,"M must be positive");
-    CHECK(LTFATERR_BADARG,lookahead>0,"lookahead >=0 failed");
-    CHECK(LTFATERR_NOTPOSARG,maxit>0,"maxit must be positive");
+    CHECK(LTFATERR_NOTPOSARG, gl > 0, "gl must be positive");
+    CHECK(LTFATERR_NOTPOSARG, W > 0, "W must be positive");
+    CHECK(LTFATERR_NOTPOSARG, a > 0, "a must be positive");
+    CHECK(LTFATERR_NOTPOSARG, M > 0, "M must be positive");
+    CHECK(LTFATERR_BADARG, lookahead >= 0, "lookahead >=0 failed");
+    CHECK(LTFATERR_NOTPOSARG, maxit > 0, "maxit must be positive");
 
     int M2 = M / 2 + 1;
     int lookback = ceil((double) gl / a) - 1;
@@ -306,18 +326,18 @@ rtisila_init(const double* g, const double* gd, const int gl, const int W,
     CHECKMEM( p->uplan->specg1 = malloc(gl * sizeof * p->uplan->specg1));
     CHECKMEM( p->uplan->specg2 = malloc(gl * sizeof * p->uplan->specg2));
 
-    ltfat_fftshift_d(g, gl, p->uplan->g);
-    ltfat_fftshift_d(gd, gl, p->uplan->gd);
+    ltfat_fftshift_d(g, gl, (double*) p->uplan->g);
+    ltfat_fftshift_d(gd, gl, (double*) p->uplan->gd);
 
     CHECKMEM( wins = malloc(gl * winsNo * sizeof * wins));
 
     // Spec2
     ltfat_periodize_array_d(p->uplan->gd, gl, gl * winsNo, wins);
-    overlaynthframe(wins, gl, winsNo, a, 0, p->uplan->specg2);
+    overlaynthframe(wins, gl, winsNo, a, 0, (double*) p->uplan->specg2);
 
     // Spec1
     memset(wins, 0, gl * sizeof * wins);
-    overlaynthframe(wins, gl, winsNo, a, 0, p->uplan->specg1);
+    overlaynthframe(wins, gl, winsNo, a, 0, (double*) p->uplan->specg1);
 
     free(wins); wins = NULL;
 
@@ -341,19 +361,19 @@ rtisila_init(const double* g, const double* gd, const int gl, const int W,
     *pout = p;
     return status;
 error:
-    if(wins) free(wins);
-    if(p)
+    if (wins) free(wins);
+    if (p)
     {
-        if(p->uplan)
+        if (p->uplan)
         {
-            if(p->uplan->g) free((void*)p->uplan->g);
-            if(p->uplan->gd) free((void*)p->uplan->gd);
-            if(p->uplan->specg1) free((void*)p->uplan->specg1);
-            if(p->uplan->specg2) free((void*)p->uplan->specg2);
+            if (p->uplan->g) free((void*)p->uplan->g);
+            if (p->uplan->gd) free((void*)p->uplan->gd);
+            if (p->uplan->specg1) free((void*)p->uplan->specg1);
+            if (p->uplan->specg2) free((void*)p->uplan->specg2);
             rtisilaupdate_done(&p->uplan);
         }
-        if(p->s) free(p->s);
-        if(p->frames) free(p->frames);
+        if (p->s) free(p->s);
+        if (p->frames) free(p->frames);
         free(p);
     }
     *pout = NULL;
@@ -383,8 +403,8 @@ rtisila_init_win(LTFAT_FIRWIN win, int gl, int W, int a, int M,
     free(g); free(gd);
     return initstatus;
 error:
-    if(g) free(g);
-    if(gd) free(gd);
+    if (g) free(g);
+    if (gd) free(gd);
     return status;
 }
 
@@ -440,7 +460,7 @@ rtisila_execute(rtisila_state* p, const double* s, double complex* c)
                               p->lookahead, p->maxit, frameschan, cchan);
     }
 
-return LTFATERR_SUCCESS;
+    return LTFATERR_SUCCESS;
 }
 
 
@@ -472,7 +492,7 @@ rtisilaoffline(const double* s,
         rtisila_execute(p, sncol, cncol);
     }
 
-    for (int n = N - lookahead,nahead=0; n < N; ++n,++nahead)
+    for (int n = N - lookahead, nahead = 0; n < N; ++n, ++nahead)
     {
         const double* sncol = s + nahead * M2;
         complex double* cncol = c + n * M2;

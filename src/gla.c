@@ -13,6 +13,8 @@ struct gla_plan
     void* cmod_callback_userdata;
     gla_callback_fmod* fmod_callback;
     void* fmod_callback_userdata;
+// For storing magnitude
+    double* s;
 // Used just for fgla
     int do_fast;
     double alpha;
@@ -20,16 +22,17 @@ struct gla_plan
 };
 
 int
-gla(const double s[], const double g[], const int gl, const int L, const int W,
-    const int a, const int M, const int iter, complex double c[])
+gla(const complex double cinit[], const double g[], const int gl, const int L,
+    const int W,
+    const int a, const int M, const int iter, complex double cout[])
 {
     gla_plan* p = NULL;
     int status = LTFATERR_SUCCESS;
 
     CHECKSTATUS(
-        gla_init(g, gl, L, W, a, M, 0.99, c, dgtreal_anasyn_auto, FFTW_ESTIMATE, &p),
+        gla_init(g, gl, L, W, a, M, 0.99, cout, dgtreal_anasyn_auto, FFTW_ESTIMATE, &p),
         "Init failed");
-    CHECKSTATUS( gla_execute(p, s, iter), "Execute failed");
+    CHECKSTATUS( gla_execute(p, cinit, iter), "Execute failed");
 
 error:
     if (p) gla_done(&p);
@@ -48,6 +51,7 @@ gla_init(const double g[], const int gl, const int L, const int W,
     int M2 = M / 2 + 1;
 
     CHECKMEM( p = calloc(1, sizeof * p));
+    CHECKMEM( p->s = malloc(M2 * N * W * sizeof * p->t));
 
     if (alpha > 0.0)
     {
@@ -57,7 +61,7 @@ gla_init(const double g[], const int gl, const int L, const int W,
     }
 
     CHECKSTATUS(
-        dgtreal_anasyn_init(g, gl, L, W, a, M, c, hint, flags, &p->p),
+        dgtreal_anasyn_init(g, gl, L, W, a, M, c, hint, LTFAT_TIMEINV, flags, &p->p),
         "dgtrealwrapper init failed");
 
     *pout = p;
@@ -66,6 +70,7 @@ error:
     if (p)
     {
         if (p->t) free(p->t);
+        if (p->s) free(p->s);
         free(p);
     }
     *pout = NULL;
@@ -84,6 +89,7 @@ gla_done(gla_plan** p)
         "dgtreal wrapper done failed");
 
     if (pp->t) free(pp->t);
+    free(pp->s);
     free(pp);
     pp = NULL;
 error:
@@ -91,31 +97,30 @@ error:
 }
 
 int
-gla_execute_newarray(gla_plan* p, const double s[], const int iter,
-                     complex double c[])
+gla_execute_newarray(gla_plan* p, const complex double cinit[], const int iter,
+                     complex double cout[])
 {
     int status = LTFATERR_SUCCESS;
-    CHECKNULL(p); CHECKNULL(s); CHECKNULL(c);
-    CHECK(LTFATERR_NOTPOSARG, iter>0,
-          "At least one iteration is requred. Passed %d.",iter);
+    CHECKNULL(p); CHECKNULL(cinit); CHECKNULL(cout);
+    CHECK(LTFATERR_NOTPOSARG, iter > 0,
+          "At least one iteration is requred. Passed %d.", iter);
     // Shallow copy the plan and replace c
     gla_plan p2 = *p;
     dgtreal_anasyn_plan pp2 = *p2.p;
-    pp2.c = c;
+    pp2.c = cout;
     p2.p = &pp2;
-    return gla_execute(&p2, s, iter);
+    return gla_execute(&p2, cinit, iter);
 error:
     return status;
 }
 
-
 int
-gla_execute(gla_plan* p, const double s[], const int iter)
+gla_execute(gla_plan* p, const complex double cinit[], const int iter)
 {
     int status = LTFATERR_SUCCESS;
-    CHECKNULL(p); CHECKNULL(s); 
-    CHECK(LTFATERR_NOTPOSARG, iter>0,
-          "At least one iteration is requred. Passed %d.",iter);
+    CHECKNULL(p); CHECKNULL(cinit);
+    CHECK(LTFATERR_NOTPOSARG, iter > 0,
+          "At least one iteration is requred. Passed %d.", iter);
 
     dgtreal_anasyn_plan* pp = p->p;
     CHECKNULL(pp->c);
@@ -126,8 +131,15 @@ gla_execute(gla_plan* p, const double s[], const int iter)
     int M2 = M / 2 + 1;
     int N = L / a;
 
-    ltfat_ensurecomplex_array_d( s, N * M2 * W, pp->c);
+    // Store the magnitude
+    for (int ii = 0; ii < N * M2 * W; ii++)
+        p->s[ii] = cabs(cinit[ii]);
 
+    // Copy to the output array if we are not working inplace
+    if (cinit != pp->c)
+        memcpy(pp->c, cinit, (N * M2 * W) * sizeof * pp->c);
+
+    // Inicialize the "acceleration" array
     if (p->do_fast)
         memcpy(p->t, pp->c, (N * M2 * W) * sizeof * p->t );
 
@@ -147,8 +159,9 @@ gla_execute(gla_plan* p, const double s[], const int iter)
         CHECKSTATUS( dgtreal_anasyn_execute_ana(pp, pp->f, pp->c),
                      "dgtreal failed");
 
-        force_magnitude(pp->c, s, N * M2 * W, pp->c);
+        force_magnitude(pp->c, p->s, N * M2 * W, pp->c);
 
+        // The acceleration step
         if (p->do_fast)
             fastupdate(pp->c, p->t, p->alpha, N * M2 * W );
 
@@ -161,12 +174,12 @@ gla_execute(gla_plan* p, const double s[], const int iter)
         // Status callback, optional premature exit
         if (p->status_callback)
         {
-            int status = p->status_callback(pp, p->status_callback_userdata,
-                                            pp->c, L, W, a, M, &p->alpha, ii);
-            if (status > 0)
+            int retstatus = p->status_callback(pp, p->status_callback_userdata,
+                                               pp->c, L, W, a, M, &p->alpha, ii);
+            if (retstatus > 0)
                 break;
             else
-                CHECKSTATUS(status,"Status callback failed");
+                CHECKSTATUS(retstatus, "Status callback failed");
         }
     }
 

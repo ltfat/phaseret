@@ -1,15 +1,10 @@
-/** \addtogroup spsi
- *  \{
- *  \file
- *  \author Zdeněk Průša
- *  \date 1 Feb 2016
- *  \brief SPSI header
-
- *  
- */
 #ifndef _spsi_h
 #define _spsi_h
 #include "config.h"
+
+/** \addtogroup spsi
+ *  \{
+ */
 
 /** SPSI algorithm implementation
  *  \param[in] s  M x N arrays, target magnitude
@@ -44,8 +39,8 @@ maskedspsi(const double* s, int a, int M, int N,
                const double* mask, const double* phase, double* initphase, complex double* c);
 
 
+/** \} */
 void
 spsiupdate(const double* scol, int a, int M, double* tmpphase);
 
 #endif /* _spsi_h */
-/** \} */

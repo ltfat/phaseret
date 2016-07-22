@@ -23,11 +23,8 @@ extern "C" {
 #endif
 
 typedef struct rtisilaupdate_plan rtisilaupdate_plan;
-/** \addtogroup rtisila
- *  @{
- */
+
 typedef struct rtisila_state rtisila_state;
-/** @} */
 
 void
 overlaynthframe(const double* frames, int gl, int N, int a, int n, double* frame);
@@ -146,7 +143,7 @@ rtisilaupdate(const double* frames,
  * \returns RTISILA Plan
  */
 int
-rtisila_init(const double *g, const double* gd, const int gl, const int W,
+rtisila_init(const double g[], const double gd[], const int gl, const int W,
              int a, int M, int lookahead, int maxit,
              rtisila_state** p);
 
@@ -166,6 +163,20 @@ int
 rtisila_init_win(LTFAT_FIRWIN win, int gl, int W, int a, int M,
                  int lookahead, int maxit, rtisila_state** p);
 
+/** Change number of lookahead frames
+ *
+ * The number of frames can only be less or equal to the number of lookahead frames
+ * specified in the init function.
+ *
+ * \note This is not thread safe.
+ *
+ * \param[in] p          RTISILA Plan
+ * \param[in] lookahead  Number of lookahead frame
+ * \returns Number of lookahead frames set or error
+ */
+int
+    rtisila_set_lookahead(rtisila_state* p, int lookahead);
+
 /** Execute RTISILA plan for a single frame
  *
  *  The function is intedned to be called for consecutive stream of frames
@@ -178,7 +189,7 @@ rtisila_init_win(LTFAT_FIRWIN win, int gl, int W, int a, int M,
  * \param[out]      c   Reconstructed coefficients
  */
 int
-rtisila_execute(rtisila_state* p, const double* s, double complex* c);
+rtisila_execute(rtisila_state* p, const double s[], double complex c[]);
 
 /** Destroy a RTISILA Plan.
  * \param[in] p  RTISILA Plan
@@ -204,8 +215,8 @@ rtisila_done(rtisila_state** p);
  * \param[out]    c          Reconstructed coefficients M2 x N array
  */
 int
-rtisilaoffline(const double* s, const double* g,  const double* gd,
-               const int gl, int a, int M, int L, int lookahead, int maxit, complex double* c);
+rtisilaoffline(const double s[], const double g[], const double gd[],
+               const int gl, int a, int M, int L, int lookahead, int maxit, complex double c[]);
 /** @} */
 
 #ifdef __cplusplus

@@ -1,19 +1,9 @@
-/** \addtogroup pghi
- *  @{
- *
- * @file rtpghi.h
- * @author Zdeněk Průša
- * @date 1 Feb 2016
- * @brief PGHI header
- *
- */
-
 #ifndef _rtpghi_h
 #define _rtpghi_h
 
-#ifndef NOSYSTEMHEADERS
-#include <ltfat.h>
-#endif
+// #ifndef NOSYSTEMHEADERS
+// #include <ltfat.h>
+// #endif
 
 #ifdef __cplusplus
 extern "C" {
@@ -24,26 +14,11 @@ extern "C" {
  * Serves for storing state between calls to rtpghi_execute.
  *
  */
-typedef struct
-{
-    int M;
-    int a;
-    int* mask;
-    int do_causal;
-    double* slog;
-    double* s;
-    double* tgrad; //!< Time gradient buffer
-    double* fgrad; //!< Frequency gradient buffer
-    double* phase; //!< Buffer for keeping previously computed frame
-    double logtol;
-    double tol;
-    double gamma;
-    double* randphase; //!< Precomputed array of random phase 
-    int randphaseLen;
-    int randphaseId;
-    struct ltfat_heapinttask_d* hit;
-} rtpghi_plan;
+typedef struct rtpghi_state rtpghi_state;
 
+/** \addtogroup rtpghi
+ *  @{
+ */
 
 /** Create a RTPGHI Plan.
  * \param[in]     gamma        Window-specific constant Cg*gl^2
@@ -54,14 +29,22 @@ typedef struct
  * \param[in]     do_causal    Zero delay (1) or 1 frame delay version of the alg. 
  * \returns RTPGHI Plan
  */
-rtpghi_plan*
-rtpghi_init(double gamma, int a, int M, double tol, int do_causal);
+int
+rtpghi_init(double gamma, int W, int a, int M, double tol, int do_causal, rtpghi_state** pout);
 
-/** Destroy a RTPGHI Plan.
- * \param[in] p  RTPGHI Plan
+/** Change the version of the algorithm
+ *  
+ * Either to one-frame-delay version (do_causal==0) or to the 
+ * no-delay version (do_causal anything else). 
+ *
+ * \note This is not thread safe
+ *
+ * \param[in] p         RTPGHI plan
+ * \param[in] do_causal Causal flag
+ * \returns Status code
  */
-void
-rtpghi_done(rtpghi_plan* p);
+int
+rtpghi_set_causal(rtpghi_state* p, int do_causal);
 
 /** Execute RTPGHI plan for a single frame
  *  
@@ -75,8 +58,14 @@ rtpghi_done(rtpghi_plan* p);
  * \param[in]       s   Target magnitude
  * \param[out]      c   Reconstructed coefficients
  */
-void
-rtpghi_execute(rtpghi_plan* p, const double* s, complex double* c);
+int
+rtpghi_execute(rtpghi_state* p, const double s[], complex double c[]);
+
+/** Destroy a RTPGHI Plan.
+ * \param[in] p  RTPGHI Plan
+ */
+int
+rtpghi_done(rtpghi_state** p);
 
 /** Do RTPGHI for a complete magnitude spectrogram and compensate delay
  *
@@ -93,9 +82,10 @@ rtpghi_execute(rtpghi_plan* p, const double* s, complex double* c);
  * \param[in]     do_causal  Zero delay (1) or 1 frame delay version of the alg.
  * \param[out]    c          Reconstructed coefficients M2 x N array
  */
-void
-rtpghioffline(const double* s, double gamma, int a, int M, int L, double tol,
-              int do_causal, complex double* c);
+int
+rtpghioffline(const double s[], double gamma, int a, int M, int L, double tol,
+              int do_causal, complex double c[]);
+/** @}*/
 
 /** Compute phase frequency gradient by differentiation in time
  *
@@ -108,8 +98,8 @@ rtpghioffline(const double* s, double gamma, int a, int M, int L, double tol,
  * \param[out]    fgrad      Frequency gradient, array of length M2
  */
 void
-rtpghifgrad(const double* logs, int a, int M, double gamma,
-            int do_causal, double* fgrad);
+rtpghifgrad(const double logs[], int a, int M, double gamma,
+            int do_causal, double fgrad[]);
 
 /** Compute phase time gradient by differentiation in frequency
  *
@@ -120,8 +110,8 @@ rtpghifgrad(const double* logs, int a, int M, double gamma,
  * \param[out]    tgrad      Time gradient, array of length M2
  */
 void
-rtpghitgrad(const double* logs, int a, int M, double gamma,
-            double* tgrad);
+rtpghitgrad(const double logs[], int a, int M, double gamma,
+            double tgrad[]);
 
 /** Compute log of input
  * \param[in]   in  Input array of length L
@@ -129,7 +119,7 @@ rtpghitgrad(const double* logs, int a, int M, double gamma,
  * \param[out] out  Output array of length L  
  */
 void
-rtpghilog(const double* in, int L, double* out);
+rtpghilog(const double in[], int L, double out[]);
 
 /** Combine magnitude and phase to a complex array
  * \param[in]        s      Magnitude, array of length L
@@ -138,7 +128,7 @@ rtpghilog(const double* in, int L, double* out);
  * \param[out]       c      Output array of length L  
  */
 void
-rtpghimagphase(const double* s, const double* phase, int L, complex double* c);
+rtpghimagphase(const double s[], const double phase[], int L, complex double c[]);
 
 #ifdef __cplusplus
 }
@@ -147,4 +137,3 @@ rtpghimagphase(const double* s, const double* phase, int L, complex double* c);
 
 #endif /* _rtpghi_h */
 
-/** @}*/
