@@ -1,5 +1,5 @@
-\defgroup pghi Phase Gradient Heap Integration
-\addtogroup pghi
+\defgroup rtpghi Real-Time Phase Gradient Heap Integration
+\addtogroup rtpghi
 
 Algorithm Description
 ---------------------

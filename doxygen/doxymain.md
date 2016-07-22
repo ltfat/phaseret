@@ -1,7 +1,4 @@
-\mainpage
-
-Phase Retrieval Toolbox Library
-===============================
+\mainpage Phase Retrieval Toolbox Library
 
 General conventions
 -------------------
