@@ -265,7 +265,7 @@ rtisilaupdate_execute(rtisilaupdate_plan* p, const double* frames, int N,
     }
 
     if (c)
-        ltfat_fftrealcircshift_d(c, M, -(gl / 2) , c);
+        ltfat_fftrealcircshift_dc(c, M, -(gl / 2) , c);
 }
 
 void
