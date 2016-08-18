@@ -1,24 +1,24 @@
 clear all;
 f = greasy;
-a = 64;
-M = 512;
+a = 128;
+M = 1024;
 M2 = floor(M/2) + 1; 
-gl = 512;
+gl = 1024;
 L = dgtlength(numel(f),a,M);
 g = firwin('hann',gl);
 gd = long2fir(gabdual(g,a,M),gl);
 N = L/a;
-maxit = 100;
+
 
 corig = dgtreal(f,{'hann',gl},a,M,'timeinv');
 s = abs(corig);
-
 cout = zeros(2*M2,N);
 coutPtr = libpointer('doublePtr',cout);
-
-calllib('libphaseret','gla',s,g,gl,L,1,a,M,maxit,coutPtr);
+gamma = gl^2*0.25645;
+calllib('libphaseret','pghi',s,gamma,L,1,a,M,coutPtr);
 
 cout2 = interleaved2complex(coutPtr.Value);
+%cout2 = pghi(s,gamma,a,M,'timeinv');
 
 frec = idgtreal(cout2,{'dual',{'hann',gl}},a,M,'timeinv');
 

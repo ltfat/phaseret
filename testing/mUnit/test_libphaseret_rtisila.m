@@ -1,15 +1,15 @@
 clear all;
 f = greasy;
-a = 60;
-M = 512;
+a = 200;
+M = 1024;
 M2 = floor(M/2) + 1; 
-gl = 512;
+gl = 1024;
 L = dgtlength(numel(f),a,M);
 g = firwin('hann',gl);
 gd = long2fir(gabdual(g,a,M),gl);
 N = L/a;
-lookahead = 11;
-maxit = 32;
+lookahead = 5;
+maxit = 8;
 
 corig = dgtreal(f,{'hann',gl},a,M,'timeinv');
 s = abs(corig);
@@ -17,7 +17,7 @@ s = abs(corig);
 cout = zeros(2*M2,N);
 coutPtr = libpointer('doublePtr',cout);
 
-calllib('libphaseret','rtisilaoffline',s,g,gd,gl,a,M,L,lookahead,maxit,coutPtr);
+calllib('libphaseret','rtisilaoffline',s,g,L,gl,1,a,M,lookahead,maxit,coutPtr);
 
 cout2 = interleaved2complex(coutPtr.Value);
 

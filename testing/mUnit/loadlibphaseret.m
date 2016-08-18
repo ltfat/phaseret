@@ -14,13 +14,9 @@ if libisloaded(libname)
     end
 end
 
+warning('off');
 currdir = fileparts(mfilename('fullpath'));
 libpath = [currdir, filesep, '..', filesep, '..' , filesep,'build',filesep,lib];
 headerpath = [currdir, filesep, '..', filesep, '..' , filesep, 'build',filesep,'phaseret.h'];
 loadlibrary(libpath,headerpath,'mfilename','libphaseretprotofile.m');
-
-
-
-
-
-
+warning('on');
