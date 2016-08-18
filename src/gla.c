@@ -15,6 +15,8 @@ struct gla_plan
     void* fmod_callback_userdata;
 // For storing magnitude
     double* s;
+// Storing cinit
+    const complex double* cinit;
 // Used just for fgla
     int do_fast;
     double alpha;
@@ -22,7 +24,7 @@ struct gla_plan
 };
 
 int
-gla(const complex double cinit[], const double g[], const int gl, const int L,
+gla(const complex double cinit[], const double g[],  const int L, const int gl,
     const int W,
     const int a, const int M, const int iter, complex double cout[])
 {
@@ -30,9 +32,9 @@ gla(const complex double cinit[], const double g[], const int gl, const int L,
     int status = LTFATERR_SUCCESS;
 
     CHECKSTATUS(
-        gla_init(g, gl, L, W, a, M, 0.99, cout, dgtreal_anasyn_auto, FFTW_ESTIMATE, &p),
-        "Init failed");
-    CHECKSTATUS( gla_execute(p, cinit, iter), "Execute failed");
+        gla_init(cinit, g, L, gl, W, a, M, 0.99, cout,
+                 dgtreal_anasyn_auto, FFTW_ESTIMATE, &p), "Init failed");
+    CHECKSTATUS( gla_execute(p, iter), "Execute failed");
 
 error:
     if (p) gla_done(&p);
@@ -40,8 +42,8 @@ error:
 }
 
 int
-gla_init(const double g[], const int gl, const int L, const int W,
-         const int a, const int M, const double alpha,
+gla_init(const complex double cinit[], const double g[], const int L,
+         const int gl, const int W, const int a, const int M, const double alpha,
          complex double c[], dgtreal_anasyn_hint hint, unsigned flags,
          gla_plan** pout)
 {
@@ -50,6 +52,7 @@ gla_init(const double g[], const int gl, const int L, const int W,
     int N = L / a;
     int M2 = M / 2 + 1;
 
+    CHECK(LTFATERR_BADARG, alpha >= 0.0, "alpha cannot be negative");
     CHECKMEM( p = calloc(1, sizeof * p));
     CHECKMEM( p->s = malloc(M2 * N * W * sizeof * p->t));
 
@@ -63,6 +66,8 @@ gla_init(const double g[], const int gl, const int L, const int W,
     CHECKSTATUS(
         dgtreal_anasyn_init(g, gl, L, W, a, M, c, hint, LTFAT_TIMEINV, flags, &p->p),
         "dgtrealwrapper init failed");
+
+    p->cinit = cinit;
 
     *pout = p;
     return status;
@@ -102,28 +107,27 @@ gla_execute_newarray(gla_plan* p, const complex double cinit[], const int iter,
 {
     int status = LTFATERR_SUCCESS;
     CHECKNULL(p); CHECKNULL(cinit); CHECKNULL(cout);
-    CHECK(LTFATERR_NOTPOSARG, iter > 0,
-          "At least one iteration is requred. Passed %d.", iter);
     // Shallow copy the plan and replace c
     gla_plan p2 = *p;
     dgtreal_anasyn_plan pp2 = *p2.p;
     pp2.c = cout;
     p2.p = &pp2;
-    return gla_execute(&p2, cinit, iter);
+    p2.cinit = cinit;
+    return gla_execute(&p2, iter);
 error:
     return status;
 }
 
 int
-gla_execute(gla_plan* p, const complex double cinit[], const int iter)
+gla_execute(gla_plan* p, const int iter)
 {
     int status = LTFATERR_SUCCESS;
-    CHECKNULL(p); CHECKNULL(cinit);
+    CHECKNULL(p);
     CHECK(LTFATERR_NOTPOSARG, iter > 0,
           "At least one iteration is requred. Passed %d.", iter);
 
     dgtreal_anasyn_plan* pp = p->p;
-    CHECKNULL(pp->c);
+    CHECKNULL(pp->c); CHECKNULL(p->cinit);
     int M = pp->M;
     int L = pp->L;
     int W = pp->W;
@@ -133,11 +137,11 @@ gla_execute(gla_plan* p, const complex double cinit[], const int iter)
 
     // Store the magnitude
     for (int ii = 0; ii < N * M2 * W; ii++)
-        p->s[ii] = cabs(cinit[ii]);
+        p->s[ii] = cabs(p->cinit[ii]);
 
     // Copy to the output array if we are not working inplace
-    if (cinit != pp->c)
-        memcpy(pp->c, cinit, (N * M2 * W) * sizeof * pp->c);
+    if (p->cinit != pp->c)
+        memcpy(pp->c, p->cinit, (N * M2 * W) * sizeof * pp->c);
 
     // Inicialize the "acceleration" array
     if (p->do_fast)
@@ -180,6 +184,17 @@ gla_execute(gla_plan* p, const complex double cinit[], const int iter)
                 break;
             else
                 CHECKSTATUS(retstatus, "Status callback failed");
+
+            CHECK(LTFATERR_BADARG, p->alpha >= 0.0, "alpha cannot be negative");
+
+            if (p->alpha > 0.0 && !p->do_fast)
+            {
+                // The plan was not inicialized with acceleration but
+                // nonzero alpha was set in the status callback.
+                p->do_fast = 1;
+                CHECKMEM( p->t = malloc(M2 * N * W * sizeof * p->t));
+                memcpy(p->t, pp->c, (N * M2 * W) * sizeof * p->t );
+            }
         }
     }
 

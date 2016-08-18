@@ -15,6 +15,7 @@ struct legla_plan
     void* cmod_callback_userdata;
 // Storing magnitude
     double* s;
+    const complex double* cinit;
 // Used just for flegla
     int do_fast;
     double alpha;
@@ -40,66 +41,128 @@ struct leglaupdate_plan_col
     int flags;
 };
 
+#define legla_init_params_hash 968456
+
 int
-legla(const complex double cinit[], const double g[], const int gl, const int L,
-      const int W, const int a, const int M, const int iter, complex double cout[])
+legla_init_params_defaults(legla_init_params* params)
+{
+    int status = LTFATERR_SUCCESS;
+    CHECKNULL(params);
+
+    params->relthr = 1e-3;
+    params->ksize.width = 0;
+    params->ksize.height = 0;
+    params->hint = dgtreal_anasyn_auto;
+    params->dgtrealflags = FFTW_ESTIMATE;
+    params->leglaflags = MOD_COEFFICIENTWISE | MOD_MODIFIEDUPDATE;
+    params->private_hash_do_not_use = legla_init_params_hash;
+error:
+    return status;
+}
+
+int
+legla(const complex double cinit[], const double g[],  const int L,
+      const int gl, const int W, const int a, const int M, const int iter,
+      complex double cout[])
 {
     legla_plan* p = NULL;
     int status = LTFATERR_SUCCESS;
 
-    double Movera = ceil( (double)M / a);
-    phaseret_size ksize = {.width = 2 * Movera - 1, .height = 2 * Movera - 1 };
-
     CHECKSTATUS(
-        legla_init(g, gl, L, W, a, M, ksize, 0.99, cout, dgtreal_anasyn_auto,
-                   FFTW_ESTIMATE, MOD_COEFFICIENTWISE | MOD_MODIFIEDUPDATE, &p),
+        legla_init(cinit, g, gl, L, W, a, M, 0.99, cout, NULL, &p),
         "legla init failed");
 
-    CHECKSTATUS( legla_execute(p, cinit, iter), "legla execute failed");
+    CHECKSTATUS( legla_execute(p, iter), "legla execute failed");
 
 error:
     if (p) legla_done(&p);
     return status;
 }
 
+
 int
-legla_init(const double g[], const int gl, const int L, const int W,
-           const int a, const int M, phaseret_size ksize, const double alpha,
-           complex double c[], dgtreal_anasyn_hint hint, unsigned dgtrealflags,
-           unsigned leglaflags, legla_plan** pout)
+legla_init(const complex double cinit[], const double g[], const int L,
+           const int gl, const int W, const int a, const int M,
+           const double alpha, complex double c[],
+           legla_init_params* params, legla_plan** pout)
 {
     legla_plan* p = NULL;
+    legla_init_params pLoc;
+    phaseret_size ksize;
     complex double* kernsmall = NULL;
     int M2 = M / 2 + 1;
     int N = L / a;
+
     int status = LTFATERR_SUCCESS;
 
     CHECKNULL(c); CHECKNULL(pout);
     CHECK(LTFATERR_BADARG, alpha >= 0, "alpha must be bigger or equal to zero.");
-    CHECK(LTFATERR_BADARG,
-          ksize.width <= N && ksize.height <= M, "Kernel size is too big.");;
+
+    if (params)
+    {
+        CHECK(LTFATERR_CANNOTHAPPEN,
+              params->private_hash_do_not_use == legla_init_params_hash,
+              "params were not initialized with legla_init_params_defaults");
+        CHECK(LTFATERR_NOTINRANGE, params->relthr >= 0 && params->relthr <= 1,
+              "relthr must be in range [0-1]");
+
+        memcpy(&pLoc, params, sizeof * params);
+    }
+    else
+        legla_init_params_defaults(&pLoc);
+
+    ksize = pLoc.ksize;
+
+    CHECK(LTFATERR_BADSIZE, (ksize.width <= N && ksize.height <= M) ||
+          (ksize.width >= 0 && ksize.height >= 0),
+          "Bad kernel size {.width=%d,.height=%d}.", ksize.width, ksize.height);
+
+    if (pLoc.relthr == 0.0)
+    {
+        // Use kernel size directly
+        CHECK(LTFATERR_BADSIZE, ksize.width > 0 && ksize.height > 0,
+              "Bad kernel size {.width=%d,.height=%d}.", ksize.width, ksize.height);
+    }
+    else
+    {
+        CHECK(LTFATERR_BADSIZE, !(ksize.width == 0 && ksize.height > 0) ||
+              !(ksize.width > 0 && ksize.height == 0),
+              "Kernel size is zero in one direction {.width=%d,.height=%d}.",
+              ksize.width, ksize.height);
+
+        if (ksize.width == 0 && ksize.height == 0)
+        {
+            ksize.width = 2 * ceil(((double)M) / a) - 1;
+            ksize.height = 2 * ceil(((double)M) / a) - 1;
+        }
+    }
 
     CHECKMEM( p = calloc(1, sizeof * p));
     CHECKMEM( p->s = malloc(M2 * N * W * sizeof * p->s));
 
     CHECKSTATUS(
-        dgtreal_anasyn_init(g, gl, L, W, a, M, c, hint, LTFAT_FREQINV, dgtrealflags,
-                            &p->dgtplan),
-        "dgtreal anasyn init failed");
+        dgtreal_anasyn_init(g, gl, L, W, a, M, c, pLoc.hint, LTFAT_FREQINV,
+                            pLoc.dgtrealflags, &p->dgtplan), "dgtreal anasyn init failed");
 
     // Get the "impulse response" and crop it
     memset(c, 0, M2 * N * W * sizeof * c);
     c[0] = 1.0;
     dgtreal_anasyn_execute_proj(p->dgtplan, c, c);
+    phaseret_size bigsize = {.width = N, .height = M};
+
+    if ( pLoc.relthr != 0.0)
+        legla_findkernelsize(c, bigsize, pLoc.relthr, &ksize);
+
+    DEBUG("Kernel size: {.width=%d,.height=%d}", ksize.width, ksize.height);
 
     CHECKMEM( kernsmall =
                   malloc(ksize.width * (ksize.height / 2 + 1) * sizeof * kernsmall));
 
-    phaseret_size bigsize = {.width = N, .height = M};
     legla_big2small_kernel(c, bigsize, ksize, kernsmall);
 
-    CHECKINIT(
-        leglaupdate_init( kernsmall, ksize, L, W, a, M, leglaflags, &p->updateplan),
+    CHECKSTATUS(
+        leglaupdate_init( kernsmall, ksize, L, W, a, M, pLoc.leglaflags,
+                          &p->updateplan),
         "leglaupdate init failed");
 
     if (alpha > 0.0)
@@ -110,6 +173,7 @@ legla_init(const double g[], const int gl, const int L, const int W,
     }
 
     free(kernsmall);
+    p->cinit = cinit;
     *pout = p;
     return status;
 error:
@@ -133,6 +197,7 @@ legla_done(legla_plan** p)
     dgtreal_anasyn_done(&pp->dgtplan);
     leglaupdate_done(&pp->updateplan);
     free(pp->s);
+    if (pp->t) free(pp->t);
     free(pp);
     pp = NULL;
 error:
@@ -141,13 +206,15 @@ error:
 
 int
 legla_big2small_kernel(complex double* bigc, phaseret_size bigsize,
-                       phaseret_size smallsize, complex double* smallc)
+                       phaseret_size ksize, complex double* smallc)
 {
-    int kernh2 = smallsize.height / 2 + 1;
-    int kernw2 = smallsize.width / 2 + 1;
+    div_t wmod = div(ksize.width, 2);
+    div_t hmod = div(ksize.height, 2);
+    int kernh2 = hmod.quot + 1;
+
     int M2 = bigsize.height / 2 + 1;
 
-    for (int ii = 0; ii < kernw2; ii++)
+    for (int ii = 0; ii < wmod.quot + wmod.rem; ii++)
     {
         complex double* smallcCol = smallc + kernh2 * ii;
         complex double* bigcCol = bigc + M2 * ii;
@@ -155,9 +222,9 @@ legla_big2small_kernel(complex double* bigc, phaseret_size bigsize,
         memcpy(smallcCol, bigcCol, kernh2 * sizeof * smallcCol);
     }
 
-    for (int ii = 1; ii < kernw2; ii++)
+    for (int ii = 1; ii < wmod.quot + 1; ii++)
     {
-        complex double* smallcCol = smallc + kernh2 * ( smallsize.width - ii);
+        complex double* smallcCol = smallc + kernh2 * ( ksize.width - ii);
         complex double* bigcCol = bigc + M2 * ( bigsize.width - ii);
 
         memcpy(smallcCol, bigcCol, kernh2 * sizeof * smallcCol);
@@ -166,12 +233,44 @@ legla_big2small_kernel(complex double* bigc, phaseret_size bigsize,
 }
 
 int
-legla_execute(legla_plan* p, const complex double cinit[], const int iter)
+legla_findkernelsize(complex double* bigc, phaseret_size bigsize,
+                     double relthr, phaseret_size* ksize)
+
+{
+    double thr = relthr * cabs(bigc[0]);
+    int realHeight = bigsize.height / 2 + 1;
+    div_t wmod = div(ksize->width, 2);
+    div_t hmod = div(ksize->height, 2);
+
+    int lastrow = 0;
+    for (int n = 0; n < wmod.quot + wmod.rem - 1; n++)
+        for (int m = 1; m < hmod.quot + hmod.rem - 1; m++)
+            if ( cabs(bigc[n * realHeight + m]) > thr && m > lastrow )
+                lastrow = m;
+
+    ksize->height = 2 * lastrow + 1;
+    hmod = div(ksize->height, 2);
+
+    // Kernel is always symmetric in the horizontal direction
+    int lastcol = 0;
+    for (int m = 0; m <  hmod.quot + hmod.rem - 1; m++)
+        for (int n = 1; n < wmod.quot + wmod.rem - 1; n++)
+            if ( cabs(bigc[n * realHeight + m]) > thr && n > lastcol )
+                lastcol = n;
+
+    ksize->width = 2 * lastcol + 1;
+
+    return LTFATERR_SUCCESS;
+}
+
+int
+legla_execute(legla_plan* p, const int iter)
 {
     int status = LTFATERR_SUCCESS;
-    CHECKNULL(p); CHECKNULL(cinit);
+    CHECKNULL(p);
     CHECK(LTFATERR_NOTPOSARG, iter > 0, "At least one iteration is required");
     dgtreal_anasyn_plan* pp = p->dgtplan;
+    CHECKNULL(p->cinit);
     int M = pp->M;
     int L = pp->L;
     int W = pp->W;
@@ -181,15 +280,14 @@ legla_execute(legla_plan* p, const complex double cinit[], const int iter)
 
     // Store the magnitude
     for (int ii = 0; ii < N * M2 * W; ii++)
-        p->s[ii] = cabs(cinit[ii]);
+        p->s[ii] = cabs(p->cinit[ii]);
 
     // Copy to the output array if we are not working inplace
-    if (cinit != pp->c)
-        memcpy(pp->c, cinit, (N * M2 * W) * sizeof * pp->c);
+    if (p->cinit != pp->c)
+        memcpy(pp->c, p->cinit, (N * M2 * W) * sizeof * pp->c);
 
     if (p->do_fast)
         memcpy(p->t, pp->c, (N * M2 * W) * sizeof * p->t );
-
 
     for (int ii = 0; ii < iter; ii++)
     {
@@ -200,7 +298,9 @@ legla_execute(legla_plan* p, const complex double cinit[], const int iter)
 
         // Optional coefficient modification
         if (p->cmod_callback)
-            p->cmod_callback(p->cmod_callback_userdata, pp->c, L, W, a, M);
+            CHECKSTATUS(
+                p->cmod_callback(p->cmod_callback_userdata, pp->c, L, W, a, M),
+                "cmod callback failed");
 
         // Status callback, optional premature exit
         if (p->status_callback)
@@ -211,6 +311,18 @@ legla_execute(legla_plan* p, const complex double cinit[], const int iter)
                 break;
             else
                 CHECKSTATUS(status2, "status callback failed");
+
+            CHECK(LTFATERR_BADARG, p->alpha >= 0.0, "alpha cannot be negative");
+
+            if (p->alpha > 0.0 && !p->do_fast)
+            {
+                // The plan was not inicialized with acceleration but
+                // nonzero alpha was set in the status callback.
+                p->do_fast = 1;
+                CHECKMEM( p->t = malloc(M2 * N * W * sizeof * p->t));
+                memcpy(p->t, pp->c, (N * M2 * W) * sizeof * p->t );
+            }
+
         }
     }
 
@@ -220,19 +332,18 @@ error:
 
 int
 legla_execute_newarray(legla_plan* p, const complex double cinit[],
-                       const int iter,
-                       complex double cout[])
+                       const int iter, complex double c[])
 {
     int status = LTFATERR_SUCCESS;
-    CHECKNULL(p); CHECKNULL(cinit); CHECKNULL(cout);
-    CHECK(LTFATERR_NOTPOSARG, iter > 0,
-          "At least one iteration is requred. Passed %d.", iter);
+    CHECKNULL(p); CHECKNULL(cinit); CHECKNULL(c);
+
     // Shallow copy the plan and replace c
     legla_plan p2 = *p;
     dgtreal_anasyn_plan pp2 = *p2.dgtplan;
     pp2.c = cout;
     p2.dgtplan = &pp2;
-    return legla_execute(&p2, cinit, iter);
+    p2.cinit = cinit;
+    return legla_execute(&p2, iter);
 error:
     return status;
 }
@@ -371,23 +482,27 @@ void
 kernphasefi(const complex double kern[], phaseret_size ksize,
             int n, int a, int M, complex double kernmod[])
 {
-    int kernh2 = ksize.height / 2 + 1;
-    int kernw2 = ksize.width / 2;
+    /* int kernh2 = ksize.height / 2 + 1; */
+    /* int kernw2 = ksize.width / 2; */
+    div_t wmod = div(ksize.width, 2);
+    div_t hmod = div(ksize.height, 2);
+    int kernh2 = hmod.quot + 1;
     /*Modulate */
     /* double idx = - ( ksize.height - kernh2); */
 
-    for (int ii = 0; ii < kernh2; ii++)
+    for (int ii = 0; ii < hmod.quot + hmod.rem; ii++)
     {
         const complex double* kRow = kern + ii;
         complex double* kmodRow = kernmod + ii;
         double arg = -2.0 * M_PI * n * a / M * (ii);
 
         // fftshift
-        for (int jj = 0; jj < kernw2 + 1; jj++)
-            kmodRow[(jj + kernw2)*kernh2] = cexp(I * arg) * kRow[jj * kernh2];
+        for (int jj = 0; jj < wmod.quot + wmod.rem - 1; jj++)
+            kmodRow[(jj + wmod.quot)*kernh2] = cexp(I * arg) * kRow[jj * kernh2];
 
-        for (int jj = 0; jj < kernw2; jj++)
-            kmodRow[jj * kernh2] = cexp(I * arg) * kRow[(jj + kernw2 + 1) * kernh2];
+        for (int jj = 0; jj < wmod.quot; jj++)
+            kmodRow[jj * kernh2] = cexp(I * arg) * kRow[(jj + wmod.quot + wmod.rem) *
+                                   kernh2];
     }
 }
 
@@ -418,7 +533,7 @@ leglaupdate_execute(leglaupdate_plan* plan, const double s[],
     int M2 = p->M / 2 + 1;
     int N = plan->N;
     int W = plan->W;
-    int kernh2 = p->ksize2.height;
+    //int kernh2 = p->ksize2.height;
     //int kernw = p->ksize.width;
     int M2buf = M2 + p->ksize.height - 1;
     int do_onthefly = p->flags & MOD_COEFFICIENTWISE;
@@ -428,7 +543,7 @@ leglaupdate_execute(leglaupdate_plan* plan, const double s[],
     complex double** k = plan->k;
     complex double* buf = plan->buf;
 
-    int n, nfirst;
+    int nfirst;
 
     for (int w = 0; w < W; w++)
     {
@@ -439,7 +554,7 @@ leglaupdate_execute(leglaupdate_plan* plan, const double s[],
         extendborders(plan->plan_col, cChan, N, buf);
 
         /* Outside loop over columns */
-        for (n = kernh2 - 1, nfirst = 0; nfirst < N; n++, nfirst++)
+        for (nfirst = 0; nfirst < N; nfirst++)
         {
             /* Pick the right kernel */
             complex double* actK = k[nfirst % plan->kNo];

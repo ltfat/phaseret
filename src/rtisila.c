@@ -37,13 +37,11 @@ rtisila_set_lookahead(rtisila_state* p, int lookahead)
 {
     int status = LTFATERR_SUCCESS;
     CHECKNULL(p);
-    CHECK(LTFATERR_BADARG, lookahead >= 0,
-          "Zero or more lookahead frames is required. Passed %d.", lookahead);
+    CHECK(LTFATERR_BADARG, lookahead >= 0 && lookahead <= p->lookahead,
+          "lookahead can only be in range [0-%d] (passed %d).",
+          p->lookahead, lookahead);
 
-    if (lookahead < p->lookahead)
-        p->lookahead = lookahead;
-
-    return p->lookahead;
+    p->lookahead = lookahead;
 error:
     return status;
 }
@@ -295,7 +293,25 @@ rtisilaupdatecoef(const double* frames,
 }
 
 int
-rtisila_init(const double* g, const double* gd, const int gl, const int W,
+rtisila_reset(rtisila_state* p)
+{
+    int N, W, gl, M2;
+    int status = LTFATERR_SUCCESS;
+    CHECKNULL(p);
+
+    N = p->lookback + 1 + p->maxLookahead;
+    W = p->W;
+    M2 = p->uplan->M / 2 + 1;
+    gl = p->uplan->gl;
+
+    memset(p->s, 0, M2 * (1 + p->maxLookahead) * W * sizeof * p->s);
+    memset(p->frames, 0, gl * N * W * sizeof * p->frames);
+error:
+    return status;
+}
+
+int
+rtisila_init(const double* g, const int gl, const int W,
              int a, int M, int lookahead, int maxit, rtisila_state** pout)
 {
     int status = LTFATERR_SUCCESS;
@@ -303,16 +319,18 @@ rtisila_init(const double* g, const double* gd, const int gl, const int W,
     rtisila_state* p = NULL;
     double* wins = NULL;
 
-    CHECKNULL(g); CHECKNULL(gd); CHECKNULL(pout);
-    CHECK(LTFATERR_NOTPOSARG, gl > 0, "gl must be positive");
-    CHECK(LTFATERR_NOTPOSARG, W > 0, "W must be positive");
-    CHECK(LTFATERR_NOTPOSARG, a > 0, "a must be positive");
-    CHECK(LTFATERR_NOTPOSARG, M > 0, "M must be positive");
-    CHECK(LTFATERR_BADARG, lookahead >= 0, "lookahead >=0 failed");
-    CHECK(LTFATERR_NOTPOSARG, maxit > 0, "maxit must be positive");
+    CHECKNULL(g); CHECKNULL(pout);
+    CHECK(LTFATERR_BADSIZE, gl > 0, "gl must be positive (passed %d)", gl);
+    CHECK(LTFATERR_NOTPOSARG, W > 0, "W must be positive (passed %d)", W);
+    CHECK(LTFATERR_NOTPOSARG, a > 0, "a must be positive (passed %d)", a);
+    CHECK(LTFATERR_NOTPOSARG, M > 0, "M must be positive (passed %d)", M);
+    CHECK(LTFATERR_BADARG, lookahead >= 0,
+          "lookahead >=0 failed (passed %d)", lookahead);
+    CHECK(LTFATERR_NOTPOSARG, maxit > 0,
+          "maxit must be positive (passed %d)", maxit);
 
     int M2 = M / 2 + 1;
-    int lookback = ceil((double) gl / a) - 1;
+    int lookback = ceil(((double) gl) / a) - 1;
     int winsNo = (2 * lookback + 1);
     int maxLookahead = lookahead;
     CHECKMEM( p = calloc(1, sizeof * p));
@@ -326,8 +344,11 @@ rtisila_init(const double* g, const double* gd, const int gl, const int W,
     CHECKMEM( p->uplan->specg1 = malloc(gl * sizeof * p->uplan->specg1));
     CHECKMEM( p->uplan->specg2 = malloc(gl * sizeof * p->uplan->specg2));
 
+    CHECKSTATUS( ltfat_gabdual_painless_d(g, gl, a, M, (double*) p->uplan->gd),
+                 "gabdual failed");
+
     ltfat_fftshift_d(g, gl, (double*) p->uplan->g);
-    ltfat_fftshift_d(gd, gl, (double*) p->uplan->gd);
+    ltfat_fftshift_d(p->uplan->gd, gl, (double*) p->uplan->gd);
 
     CHECKMEM( wins = malloc(gl * winsNo * sizeof * wins));
 
@@ -382,29 +403,22 @@ error:
 
 int
 rtisila_init_win(LTFAT_FIRWIN win, int gl, int W, int a, int M,
-                 int lookahead, int maxit,
-                 rtisila_state** pout)
+                 int lookahead, int maxit, rtisila_state** pout)
 {
     double* g = NULL;
-    double* gd = NULL;
     int status = LTFATERR_SUCCESS;
 
     CHECKMEM( g = malloc(gl * sizeof * g));
-    CHECKMEM( gd = malloc(gl * sizeof * gd));
 
     // Analysis window
     CHECKSTATUS( ltfat_firwin_d(win, gl, g), "firwin failed");
-    CHECKSTATUS( ltfat_gabdual_painless_d(g, gl, a, M, gd),
-                 "gabdual failed");
 
-    int initstatus = rtisila_init(g, gd, gl, W, a, M, lookahead,
-                                  maxit, pout);
+    int initstatus = rtisila_init(g, gl, W, a, M, lookahead, maxit, pout);
 
-    free(g); free(gd);
+    free(g);
     return initstatus;
 error:
     if (g) free(g);
-    if (gd) free(gd);
     return status;
 }
 
@@ -438,11 +452,15 @@ error:
 int
 rtisila_execute(rtisila_state* p, const double* s, double complex* c)
 {
-    int M = p->uplan->M;
-    int gl = p->uplan->gl;
-    int M2 = M / 2 + 1;
-    int noFrames = p->lookback + 1 + p->lookahead;
-    int N = p->lookback + 1 + p->maxLookahead;
+    int M, gl, M2, noFrames, N;
+    int status = LTFATERR_SUCCESS;
+    CHECKNULL(p); CHECKNULL(s); CHECKNULL(c);
+
+    M = p->uplan->M;
+    gl = p->uplan->gl;
+    M2 = M / 2 + 1;
+    noFrames = p->lookback + 1 + p->lookahead;
+    N = p->lookback + 1 + p->maxLookahead;
 
     for (int w = 0; w < p->W; w++)
     {
@@ -460,47 +478,50 @@ rtisila_execute(rtisila_state* p, const double* s, double complex* c)
                               p->lookahead, p->maxit, frameschan, cchan);
     }
 
-    return LTFATERR_SUCCESS;
+error:
+    return status;
 }
 
 
 int
-rtisilaoffline(const double* s,
-               const double* g, const double* gd,
-               const int gl, int a, int M, int L, int lookahead, int maxit,
-               complex double* c)
+rtisilaoffline(const double s[], const double g[],
+               int L, int gl, int W, int a, int M,
+               int lookahead, int maxit, complex double c[])
 {
     int status = LTFATERR_SUCCESS;
     rtisila_state* p = NULL;
 
-    CHECKNULL(s); CHECKNULL(c);
+    CHECKNULL(s); CHECKNULL(g); CHECKNULL(c);
     int N = L / a;
     int M2 = M / 2 + 1;
     // Just limit lookahead to something sensible
     lookahead = lookahead > N ? N : lookahead;
 
     CHECKSTATUS(
-        rtisila_init(g, gd, gl, 1, a, M, lookahead, maxit, &p),
+        rtisila_init(g, gl, 1, a, M, lookahead, maxit, &p),
         "rtisila init failed");
 
-    memcpy(p->s + M2, s, lookahead * M2 * sizeof * p->s);
-
-    for (int n = 0, nahead = lookahead; nahead < N; ++n, ++nahead)
+    for (int w = 0; w < W; w++)
     {
-        const double* sncol = s + nahead * M2;
-        complex double* cncol = c + n * M2;
-        rtisila_execute(p, sncol, cncol);
+        rtisila_reset(p);
+
+        memcpy(p->s + M2 + w * N * M2, s + w * N * M2, lookahead * M2 * sizeof * p->s);
+
+        for (int n = 0, nahead = lookahead; nahead < N; ++n, ++nahead)
+        {
+            const double* sncol = s + nahead * M2 + w * N * M2;
+            complex double* cncol = c + n * M2 + w * N * M2;
+            rtisila_execute(p, sncol, cncol);
+        }
+
+        for (int n = N - lookahead, nahead = 0; n < N; ++n, ++nahead)
+        {
+            const double* sncol = s + nahead * M2 + w * N * M2;
+            complex double* cncol = c + n * M2 + w * N * M2;
+            rtisila_execute(p, sncol, cncol);
+        }
     }
-
-    for (int n = N - lookahead, nahead = 0; n < N; ++n, ++nahead)
-    {
-        const double* sncol = s + nahead * M2;
-        complex double* cncol = c + n * M2;
-        rtisila_execute(p, sncol, cncol);
-    }
-
-    rtisila_done(&p);
-
 error:
+    if (p) rtisila_done(&p);
     return status;
 }

@@ -9,7 +9,6 @@
 
 #ifndef _rtisila_h
 #define _rtisila_h
-// complex.h must be before fftw3.h. Then fftw_complex is complex double
 #ifndef NOSYSTEMHEADERS
 #include <complex.h>
 #include <math.h>
@@ -124,40 +123,63 @@ rtisilaupdate(const double* frames,
 
 /** \addtogroup rtisila
  *  @{
+ *
  */
 
 
-/** Create a RTISILA Plan.
- *
- * g and gd can be disposed of right after the function finishes.
+
+/** Create a RTISILA state.
  *
  * \param[in]     g            Analysis window
- * \param[in]     gd           Synthesis window
+ * \param[in]     gl           Window length
+ * \param[in]     W            Number of signal channels
  * \param[in]     a            Hop size
- * \param[in]     M            FFT length, also length of all the windows
- *                             (possibly zero-padded).
- * \param[in]     lookahead    Number of lookahead frames
- * \param[in]     maxLookahead Maximum number of lookahead frames
+ * \param[in]     M            Number of frequency channels (FFT length)
+ * \param[in]     lookahead    (Maximum) number of lookahead frames
  * \param[in]     maxit        Number of iterations. The number of per-frame
  *                             iterations is (lookahead+1) * maxit.
- * \returns RTISILA Plan
+ * \param[out]    p            RTISILA state 
+ * \returns 
+ * Status code              | Description
+ * -------------------------|--------------------------------------------
+ * LTFATERR_SUCCESS         | Indicates no error
+ * LTFATERR_NULLPOINTER     | \a p or \a g was NULL
+ * LTFATERR_BADARG          | \a lookahead was a negative number
+ * LTFATERR_BADSIZE         | \a gl was not positive
+ * LTFATERR_NOTPOSARG       | One of the following was not positive: \a W, \a a, \a M, \a maxit
+ * LTFATERR_NOTAFRAME       | System is not a frame. 
+ * LTFATERR_NOTPAINLESS 	| System is not painless. 
+ * LTFATERR_INITFAILED      | FFTW plan creation failed 
+ * LTFATERR_NOMEM           | Indentifies that heap allocation failed 
  */
 int
-rtisila_init(const double g[], const double gd[], const int gl, const int W,
+rtisila_init(const double g[], const int gl, const int W,
              int a, int M, int lookahead, int maxit,
              rtisila_state** p);
 
 /** Create a RTISILA Plan from a window.
- * \param[in]     g            Analysis window
+ * \param[in]     win          Analysis window
  * \param[in]     gl           Window length
+ * \param[in]     W            Number of signal channels
  * \param[in]     a            Hop size
- * \param[in]     M            FFT length, also length of all the windows
- *                             (possibly zero-padded).
- * \param[in]     lookahead    Number of lookahead frames
- * \param[in]     maxLookahead Maximum number of lookahead frames
+ * \param[in]     M            Number of frequency channels (FFT length)
+ * \param[in]     lookahead    (Maximum) number of lookahead frames
  * \param[in]     maxit        Number of iterations. The number of per-frame
  *                             iterations is (lookahead+1) * maxit.
- * \returns RTISILA Plan
+ * \param[out]    p            RTISILA state 
+ * \returns
+ * Status code              | Description
+ * -------------------------|--------------------------------------------
+ * LTFATERR_SUCCESS         | Indicates no error
+ * LTFATERR_CANNOTHAPPEN    | \a win is not a valid value from the \a LTFAT_FIRWIN enum
+ * LTFATERR_NULLPOINTER     | \a p or \a g was NULL
+ * LTFATERR_BADARG          | \a lookahead was a negative number
+ * LTFATERR_BADSIZE         | \a gl was not positive
+ * LTFATERR_NOTPOSARG       | One of the following was not positive: \a W, \a a, \a M, \a maxit
+ * LTFATERR_NOTAFRAME       | System is not a frame. 
+ * LTFATERR_NOTPAINLESS 	| System is not painless. 
+ * LTFATERR_INITFAILED      | FFTW plan creation failed 
+ * LTFATERR_NOMEM           | Indentifies that heap allocation failed 
  */
 int
 rtisila_init_win(LTFAT_FIRWIN win, int gl, int W, int a, int M,
@@ -166,57 +188,88 @@ rtisila_init_win(LTFAT_FIRWIN win, int gl, int W, int a, int M,
 /** Change number of lookahead frames
  *
  * The number of frames can only be less or equal to the number of lookahead frames
- * specified in the init function.
+ * specified in the init function.  
  *
  * \note This is not thread safe.
  *
  * \param[in] p          RTISILA Plan
  * \param[in] lookahead  Number of lookahead frame
- * \returns Number of lookahead frames set or error
+ * \returns
+ * Status code              | Description
+ * -------------------------|--------------------------------------------
+ * LTFATERR_SUCCESS         | Indicates no error
+ * LTFATERR_NULLPOINTER     | \a p was NULL
+ * LTFATERR_BADARG          | \a lookahead was a negative number or greater than max lookahead
  */
 int
-    rtisila_set_lookahead(rtisila_state* p, int lookahead);
+rtisila_set_lookahead(rtisila_state* p, int lookahead);
 
-/** Execute RTISILA plan for a single frame
+/** Execute RTISILA plan for a single time frame
  *
  *  The function is intedned to be called for consecutive stream of frames
- *  as it reuses some data from the previous frames stored in the plan.
+ *  as it reuses some data from the previous frames stored in the state.
  *
- *  c is lagging behind s by lookahead frames.
+ *  \a c is lagging behind \a s by \a lookahead frames.
+ *
+ *  M2=M/2+1
  *
  * \param[in]       p   RTISILA plan
- * \param[in]       s   Target magnitude
- * \param[out]      c   Reconstructed coefficients
+ * \param[in]       s   Target magnitude, size M2 x W
+ * \param[out]      c   Reconstructed coefficients, size M2 x W
+ * \returns
+ * Status code              | Description
+ * -------------------------|--------------------------------------------
+ * LTFATERR_SUCCESS         | Indicates no error
+ * LTFATERR_NULLPOINTER     | At least one of the following was NULL: \a p, \a s and \a c
  */
 int
 rtisila_execute(rtisila_state* p, const double s[], double complex c[]);
 
+/** Reset buffers of rtisila_state
+ *
+ * \returns
+ * Status code              | Description
+ * -------------------------|--------------------------------------------
+ * LTFATERR_SUCCESS         | Indicates no error
+ * LTFATERR_NULLPOINTER     | \a p or \a *p was NULL.
+ */
+int
+rtisila_reset(rtisila_state* p);
+
 /** Destroy a RTISILA Plan.
  * \param[in] p  RTISILA Plan
+ * \returns
+ * Status code              | Description
+ * -------------------------|--------------------------------------------
+ * LTFATERR_SUCCESS         | Indicates no error
+ * LTFATERR_NULLPOINTER     | \a p or \a *p was NULL.
  */
 int
 rtisila_done(rtisila_state** p);
-
 
 /** Do RTISI-LA for a complete magnitude spectrogram and compensate delay
  *
  * This function just creates a plan, executes it for each col in s and c
  * and destroys it.
  *
- * \param[in]     s          Magnitude spectrogram  M2 x N array
- * \param[in]     g          Analysis window
- * \param[in]     gd         Synthesis window
- * \param[in]     a          Hop size
- * \param[in]     M          FFT length, also length of all the windows
- *                           (possibly zero-padded).
+ * M2 = M/2 + 1, N = L/a
+ * The total number of per-frame iterations is: maxit x (lookahead + 1)
+ *
+ * \param[in]     s          Magnitude spectrogram, size M2 x N x W
+ * \param[in]     g          Analysis window, size gl x 1
  * \param[in]     L          Transform length
+ * \param[in]     gl         Window length
+ * \param[in]     W          Number of signal channels
+ * \param[in]     a          Hop size
+ * \param[in]     M          Number of frequency channels (FFT length)
  * \param[in]     lookahead  Number of lookahead frames
- * \param[in]     maxit      Number of iterations
+ * \param[in]     maxit      Number of per-frame iterations
  * \param[out]    c          Reconstructed coefficients M2 x N array
  */
 int
-rtisilaoffline(const double s[], const double g[], const double gd[],
-               const int gl, int a, int M, int L, int lookahead, int maxit, complex double c[]);
+rtisilaoffline(const double s[], const double g[],
+               int L, int gl, int W, int a, int M,
+               int lookahead, int maxit, complex double c[]);
 /** @} */
 
 #ifdef __cplusplus

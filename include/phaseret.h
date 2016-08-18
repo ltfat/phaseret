@@ -8,5 +8,6 @@
 #include "phaseret/spsi.h"
 #include "phaseret/utils.h"
 #include "phaseret/rtpghi.h"
+#include "phaseret/pghi.h"
 
 #endif

@@ -120,6 +120,10 @@ dgtreal_anasyn_init(const double g[], int gl, int L, int W, int a, int M,
     double* g2 = NULL;
     int g2l = 0;
 
+    int minL = ltfat_lcm(a, M);
+    CHECK(LTFATERR_BADTRALEN, !(L % minL),
+          "L must divisible by lcm(a,M)=%d.", minL);
+
     if (ispainless)
     {
         // The length of the dual window is guaranteed to be gl
@@ -134,10 +138,10 @@ dgtreal_anasyn_init(const double g[], int gl, int L, int W, int a, int M,
         g2l = L;
         CHECKMEM( g2 = malloc(L * sizeof * g2));
         ltfat_fir2long_d(g, gl, L, g2);
-        CHECKSTATUS( ltfat_gabdual_long_d(g, L, 1, a, M, g2),
+        CHECKSTATUS( ltfat_gabdual_long_d(g, L, a, M, g2),
                      "Gabdual long failed");
 #else
-        CHECK( LTFATERR_BADARG, 0, "Non-painless support was not compiled.");
+        CHECK( LTFATERR_NOTSUPPORTED, 0, "Non-painless support was not compiled.");
 #endif
     }
 
