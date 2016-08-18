@@ -6,9 +6,4 @@ Algorithm Description
 
 The implementation follows paper \cite zhbewy07. 
 
-Thread safety
--------------
-
-
-
 

@@ -4,9 +4,5 @@
 Algorithm Description
 ---------------------
 
-The implementation follows papers \cite griflim84 .
+The implementation follows papers \cite griflim84 \cite pebaso13
 
-Algorithm Acceleration
-----------------------
-
-\cite pebaso13
