@@ -6,6 +6,7 @@ a = 128;
 M = 1024;
 g = {'blackman',M};
 
+
 for pcId = 1:2
     % Complex case
     phaseconv = getat({'timeinv','freqinv'},pcId);
@@ -27,7 +28,7 @@ for pcId = 1:2
         fail = 'FAILED';
     end
 
-    fprintf('LEGLA %s W=%d E=%.2f %s\n',phaseconv,1,E,fail);
+    fprintf('LEGLA              %s W=%d E=%.2f %s\n',phaseconv,1,E,fail);
     
     [chat,relres,iter,f]=legla(s,g,a,M,phaseconv,'modtrunc');
     
@@ -38,7 +39,7 @@ for pcId = 1:2
         fail = 'FAILED';
     end
 
-    fprintf('LEGLA %s W=%d E=%.2f %s\n',phaseconv,1,E,fail);
+    fprintf('LEGLA modtrunc     %s W=%d E=%.2f %s\n',phaseconv,1,E,fail);
     
     [chat,relres,iter,f]=legla(s,g,a,M,phaseconv,'onthefly');
     
@@ -49,7 +50,7 @@ for pcId = 1:2
         fail = 'FAILED';
     end
 
-    fprintf('LEGLA %s W=%d E=%.2f %s\n',phaseconv,1,E,fail);
+    fprintf('LEGLA onthefly     %s W=%d E=%.2f %s\n',phaseconv,1,E,fail);
     
     [chat,relres,iter,f]=legla(s,g,a,M,phaseconv,'onthefly','modtrunc');
     
@@ -60,7 +61,7 @@ for pcId = 1:2
         fail = 'FAILED';
     end
 
-    fprintf('LEGLA %s W=%d E=%.2f %s\n',phaseconv,1,E,fail);
+    fprintf('LEGLA onthefly mt  %s W=%d E=%.2f %s\n',phaseconv,1,E,fail);
     
     [chat,relres,iter,f]=legla(s,g,a,M,phaseconv,'flegla');
     
@@ -71,7 +72,7 @@ for pcId = 1:2
         fail = 'FAILED';
     end
 
-    fprintf('FLEGLA %s W=%d E=%.2f %s\n',phaseconv,1,E,fail);   
+    fprintf('FLEGLA             %s W=%d E=%.2f %s\n',phaseconv,1,E,fail);   
     
     [chat,relres,iter,f]=legla(s,g,a,M,phaseconv,'flegla','modtrunc');
     
@@ -82,7 +83,7 @@ for pcId = 1:2
         fail = 'FAILED';
     end
 
-    fprintf('FLEGLA %s W=%d E=%.2f %s\n',phaseconv,1,E,fail);  
+    fprintf('FLEGLA modtrunc    %s W=%d E=%.2f %s\n',phaseconv,1,E,fail);  
     
     [chat,relres,iter,f]=legla(s,g,a,M,phaseconv,'flegla','onthefly');
     
@@ -93,7 +94,7 @@ for pcId = 1:2
         fail = 'FAILED';
     end
 
-    fprintf('FLEGLA %s W=%d E=%.2f %s\n',phaseconv,1,E,fail); 
+    fprintf('FLEGLA onthefly    %s W=%d E=%.2f %s\n',phaseconv,1,E,fail); 
     
     [chat,relres,iter,f]=legla(s,g,a,M,phaseconv,'flegla','onthefly','modtrunc');
     
@@ -104,7 +105,7 @@ for pcId = 1:2
         fail = 'FAILED';
     end
 
-    fprintf('FLEGLA %s W=%d E=%.2f %s\n',phaseconv,1,E,fail); 
+    fprintf('FLEGLA onthefly mt %s W=%d E=%.2f %s\n',phaseconv,1,E,fail); 
 end
 
 
