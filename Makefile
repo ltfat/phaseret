@@ -1,12 +1,16 @@
 ifdef CROSS
-CC = $(CROSS)gcc
-AR = $(CROSS)ar
-RANLIB =ranlib
-MINGW=1
+	CC = $(CROSS)gcc
+	AR = $(CROSS)ar
+	RANLIB =ranlib
+	buildprefix ?= build/$(CROSS)
+	objprefix ?= obj/$(CROSS)
+	MINGW=1
 else
-CC ?= gcc
-AR ?= ar
-RANLIB?=ranlib
+	CC ?= gcc
+	AR ?= ar
+	RANLIB?=ranlib
+	buildprefix ?= build
+	objprefix ?= obj
 endif
 
 include ostools.mk
@@ -20,9 +24,14 @@ INCDIR = $(PREFIX)/include
 
 # LIB
 LIBSOURCES = $(wildcard src/*.c)
-LIBOBJECTS = $(addprefix obj/,$(notdir $(LIBSOURCES:.c=.o)))
+LIBOBJECTS = $(addprefix $(objprefix)/,$(notdir $(LIBSOURCES:.c=.o)))
 
-CFLAGS=-std=c99 -pedantic -O2 -Wall -Wextra -DNDEBUG -I./include -Ithirdparty $(OPTFLAGS)
+# Base CFLAGS
+CFLAGS+=-Wall -std=c99 -Iinclude -Ithirdparty $(OPTCFLAGS)
+CXXFLAGS+=-Wall -std=c++11 -Iinclude -Ithirdparty $(OPTCFLAGS)
+
+# The following adds parameters to CFLAGS
+include comptarget.mk
 
 STATIC = libphaseret.a
 ifdef MINGW
@@ -32,8 +41,9 @@ else
 	CFLAGS += -fPIC
 	SHARED = libphaseret.so
 endif
-TARGET=$(addprefix build/,$(STATIC))
-SO_TARGET= $(addprefix build/,$(SHARED))
+
+TARGET=$(buildprefix)/$(STATIC)
+SO_TARGET=$(buildprefix)/$(SHARED)
 
 FFTWLIB ?= -lfftw3
 
@@ -43,24 +53,21 @@ lib: $(TARGET) $(SO_TARGET)
 
 all: lib matlab octave
 
-dev: CFLAGS=-std=c99 -g -O0 -Wall -Wall -Wextra -I./include $(OPTFLAGS)
-dev: all 
-
-$(TARGET): obj build $(LIBOBJECTS)
+$(TARGET): $(objprefix) $(buildprefix) $(LIBOBJECTS)
 	$(AR) rvu $@ $(LIBOBJECTS)
 	$(RANLIB) $@
 
-$(SO_TARGET): obj build $(LIBOBJECTS)
+$(SO_TARGET): $(objprefix) $(buildprefix) $(LIBOBJECTS)
 	$(CC) -shared -Wl,--no-undefined -o $@ $(LIBOBJECTS) $(EXTRALFLAGS) $(LIBS)
 
-obj/%.o: src/%.c obj
+$(objprefix)/%.o: src/%.c $(objprefix)
 	$(CC) -c $(CFLAGS) $< -o $@
 
-build:
-	$(MKDIR) build
+$(buildprefix):
+	$(MKDIR) $(buildprefix)
 
-obj:
-	$(MKDIR) obj
+$(objprefix):
+	$(MKDIR) $(objprefix)
 
 matlab: $(TARGET)
 	$(MAKE) -C mex matlab
@@ -69,8 +76,8 @@ octave: $(TARGET)
 	$(MAKE) -C mex octave
 
 cleanlib:
-	$(RMDIR) build
-	$(RMDIR) obj
+	$(RMDIR) $(buildprefix)
+	$(RMDIR) $(objprefix)
 
 clean: cleanlib
 	$(MAKE) -C mex clean
@@ -99,9 +106,12 @@ mat2doc: mat2docmat
 mat2docmat:
 	mat2doc . mat
 
-build/phaseret.h: build 
-	$(CC) -E -P -DNOSYSTEMHEADERS -nostdinc include/phaseret.h -o build/phaseret.h
-	sed -i '1 i\#include <ltfat.h>' build/phaseret.h
+$(buildprefix)/phaseret.h: $(buildprefix)
+	$(CC) -E -P -DNOSYSTEMHEADERS -nostdinc include/phaseret.h -o $(buildprefix)/phaseret.h
+	sed -i '1 i #ifndef _PHASERET_H' $(buildprefix)/phaseret.h
+	sed -i '1 a #define _PHASERET_H' $(buildprefix)/phaseret.h
+	sed -i '2 a #include <ltfat.h>' $(buildprefix)/phaseret.h
+	sed -i '$$ a #endif' $(buildprefix)/phaseret.h
 
 install: lib
 	install -d $(DESTDIR)$(LIBDIR)
