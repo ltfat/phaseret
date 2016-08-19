@@ -23,7 +23,7 @@ function [c,relres,iter,f]=gla(s,g,a,M,varargin)
 %
 %   using the Griffin-Lim algorithm.
 %
-%   `[f,relres,iter,c]=gla(...)` additionally returns an array
+%   `[c,relres,iter,f]=gla(...)` additionally returns an array
 %   of residuals `relres`, the number of iterations done `iter` and the
 %   coefficients *c* with the reconstructed phase. The relationship between
 %   *f* and *c* is::
