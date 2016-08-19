@@ -183,6 +183,7 @@ error:
         if (p->t) free(p->t);
         if (p->s) free(p->s);
         free(p);
+        *pout = NULL;
     }
     return status;
 }
@@ -202,65 +203,6 @@ legla_done(legla_plan** p)
     pp = NULL;
 error:
     return status;
-}
-
-int
-legla_big2small_kernel(complex double* bigc, phaseret_size bigsize,
-                       phaseret_size ksize, complex double* smallc)
-{
-    div_t wmod = div(ksize.width, 2);
-    div_t hmod = div(ksize.height, 2);
-    int kernh2 = hmod.quot + 1;
-
-    int M2 = bigsize.height / 2 + 1;
-
-    for (int ii = 0; ii < wmod.quot + wmod.rem; ii++)
-    {
-        complex double* smallcCol = smallc + kernh2 * ii;
-        complex double* bigcCol = bigc + M2 * ii;
-
-        memcpy(smallcCol, bigcCol, kernh2 * sizeof * smallcCol);
-    }
-
-    for (int ii = 1; ii < wmod.quot + 1; ii++)
-    {
-        complex double* smallcCol = smallc + kernh2 * ( ksize.width - ii);
-        complex double* bigcCol = bigc + M2 * ( bigsize.width - ii);
-
-        memcpy(smallcCol, bigcCol, kernh2 * sizeof * smallcCol);
-    }
-    return LTFATERR_SUCCESS;
-}
-
-int
-legla_findkernelsize(complex double* bigc, phaseret_size bigsize,
-                     double relthr, phaseret_size* ksize)
-
-{
-    double thr = relthr * cabs(bigc[0]);
-    int realHeight = bigsize.height / 2 + 1;
-    div_t wmod = div(ksize->width, 2);
-    div_t hmod = div(ksize->height, 2);
-
-    int lastrow = 0;
-    for (int n = 0; n < wmod.quot + wmod.rem - 1; n++)
-        for (int m = 1; m < hmod.quot + hmod.rem - 1; m++)
-            if ( cabs(bigc[n * realHeight + m]) > thr && m > lastrow )
-                lastrow = m;
-
-    ksize->height = 2 * lastrow + 1;
-    hmod = div(ksize->height, 2);
-
-    // Kernel is always symmetric in the horizontal direction
-    int lastcol = 0;
-    for (int m = 0; m <  hmod.quot + hmod.rem - 1; m++)
-        for (int n = 1; n < wmod.quot + wmod.rem - 1; n++)
-            if ( cabs(bigc[n * realHeight + m]) > thr && n > lastcol )
-                lastcol = n;
-
-    ksize->width = 2 * lastcol + 1;
-
-    return LTFATERR_SUCCESS;
 }
 
 int
@@ -331,6 +273,65 @@ error:
 }
 
 int
+legla_big2small_kernel(complex double* bigc, phaseret_size bigsize,
+                       phaseret_size ksize, complex double* smallc)
+{
+    div_t wmod = div(ksize.width, 2);
+    div_t hmod = div(ksize.height, 2);
+    int kernh2 = hmod.quot + 1;
+
+    int M2 = bigsize.height / 2 + 1;
+
+    for (int ii = 0; ii < wmod.quot + wmod.rem; ii++)
+    {
+        complex double* smallcCol = smallc + kernh2 * ii;
+        complex double* bigcCol = bigc + M2 * ii;
+
+        memcpy(smallcCol, bigcCol, kernh2 * sizeof * smallcCol);
+    }
+
+    for (int ii = 1; ii < wmod.quot + 1; ii++)
+    {
+        complex double* smallcCol = smallc + kernh2 * ( ksize.width - ii);
+        complex double* bigcCol = bigc + M2 * ( bigsize.width - ii);
+
+        memcpy(smallcCol, bigcCol, kernh2 * sizeof * smallcCol);
+    }
+    return LTFATERR_SUCCESS;
+}
+
+int
+legla_findkernelsize(complex double* bigc, phaseret_size bigsize,
+                     double relthr, phaseret_size* ksize)
+
+{
+    double thr = relthr * cabs(bigc[0]);
+    int realHeight = bigsize.height / 2 + 1;
+    div_t wmod = div(ksize->width, 2);
+    div_t hmod = div(ksize->height, 2);
+
+    int lastrow = 0;
+    for (int n = 0; n < wmod.quot + wmod.rem - 1; n++)
+        for (int m = 1; m < hmod.quot + hmod.rem - 1; m++)
+            if ( cabs(bigc[n * realHeight + m]) > thr && m > lastrow )
+                lastrow = m;
+
+    ksize->height = 2 * lastrow + 1;
+    hmod = div(ksize->height, 2);
+
+    // Kernel is always symmetric in the horizontal direction
+    int lastcol = 0;
+    for (int m = 0; m <  hmod.quot + hmod.rem - 1; m++)
+        for (int n = 1; n < wmod.quot + wmod.rem - 1; n++)
+            if ( cabs(bigc[n * realHeight + m]) > thr && n > lastcol )
+                lastcol = n;
+
+    ksize->width = 2 * lastcol + 1;
+
+    return LTFATERR_SUCCESS;
+}
+
+int
 legla_execute_newarray(legla_plan* p, const complex double cinit[],
                        const int iter, complex double c[])
 {
@@ -340,7 +341,7 @@ legla_execute_newarray(legla_plan* p, const complex double cinit[],
     // Shallow copy the plan and replace c
     legla_plan p2 = *p;
     dgtreal_anasyn_plan pp2 = *p2.dgtplan;
-    pp2.c = cout;
+    pp2.c = c;
     p2.dgtplan = &pp2;
     p2.cinit = cinit;
     return legla_execute(&p2, iter);

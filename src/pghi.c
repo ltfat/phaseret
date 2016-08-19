@@ -74,6 +74,7 @@ pghi_init(double gamma, const int L, const int W,
     CHECK(LTFATERR_NOTPOSARG, L > 0, "L must be positive");
     CHECK(LTFATERR_NOTPOSARG, W > 0, "W must be positive");
     CHECK(LTFATERR_NOTPOSARG, a > 0, "a must be positive");
+    CHECK(LTFATERR_NOTPOSARG, M > 0, "M must be positive");
     CHECK(LTFATERR_NOTINRANGE, tol1 > 0 && tol1 < 1, "tol1 must be in range ]0,1[");
 
     if (~isnan(tol2))
