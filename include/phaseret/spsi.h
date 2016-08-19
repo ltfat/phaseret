@@ -7,40 +7,60 @@
  */
 
 /** SPSI algorithm implementation
- *  \param[in] s  M x N arrays, target magnitude
- *  \param[in] a  Hop factor
- *  \param[in] M  Number of frequency channels
- *  \param[in] N  Number of time frames
- *  \param[in,out] initphase Length M vector, [in] phase of -1 frame,
- *                           [out] phase of [N-1] frame.
- *                           Can be NULL, but then a memory allocation will occur.
- *  \param[out] c M x N array of coefficients
+ *
+ *  M2 = M/2 + 1, N = L/a
+ *
+ *  \param[in]             s   Target magnitude, size M2 x N x W
+ *  \param[in]             L   Transform length
+ *  \param[in]             W   Number of signal channels
+ *  \param[in]             a   Hop factor
+ *  \param[in]             M   Number of frequency channels
+ *  \param[in,out] initphase   [in]  phase of -1 frame,
+ *                             [out] phase of [N-1] frame, size M2 x W or NULL,
+ *                             but then a memory allocation will occur.
+ *  \param[out]            c   Coefficients with reconstructed phase, size M2 x N x W
+ *  \returns
+ *  Status code          |  Description
+ *  ---------------------|---------------------
+ *  LTFATERR_SUCCESS     | No error occurred
+ *  LTFATERR_NULLPOINTER | \a s or \a c was NULL
+ *  LTFATERR_NOTPOSARG   | At least one of the following was not positive: \a L, \a W, \a a, \a M
+ *  LTFATERR_NOMEM       | Heap allocation failed
  */
-void
-spsi(const double* s, int a, int M, int N, double* initphase, complex double* c);
+int
+spsi(const double s[], int L, int W, int a, int M, double initphase[], complex double c[]);
 
 /** Masked SPSI algorithm implementation
  *
- *  Works as spsi() except arg(c[ii])=phase[ii] if mask[ii] evaluates to true.
+ *  Works as spsi() except c[ii]=cinit[ii] if mask[ii] evaluates to true.
  *
- *  \param[in] s  M x N arrays, target magnitude
- *  \param[in] a  Hop factor
- *  \param[in] M  Number of frequency channels
- *  \param[in] N  Number of time frames
- *  \param[in] mask M x N array, mask of coefficients with known phase
- *  \param[in] phase M x N array, known phase
- *  \param[in,out] initphase Length M vector, [in] phase of -1 frame,
- *                           [out] phase of [N-1] frame.
- *                           Can be NULL, but then a memory allocation will occur.
- *  \param[out] c M x N array of coefficients
+ *  M2 = M/2 + 1, N = L/a
+ *
+ *  \param[in]         cinit   Initial coefficients, size M2 x N x W
+ *  \param[in]          mask   Mask of known coefficients
+ *  \param[in]             L   Transform length
+ *  \param[in]             W   Number of signal channels
+ *  \param[in]             a   Hop factor
+ *  \param[in]             M   Number of frequency channels
+ *  \param[in,out] initphase   [in]  phase of -1 frame,
+ *                             [out] phase of [N-1] frame, size M2 x W or NULL,
+ *                             but then a memory allocation will occur.
+ *  \param[out]            c   Coefficients with reconstructed phase, size M2 x N x W
+ *  \returns
+ *  Status code          |  Description
+ *  ---------------------|---------------------
+ *  LTFATERR_SUCCESS     | No error occurred
+ *  LTFATERR_NULLPOINTER | \a cinit, \a c or \a mask was NULL
+ *  LTFATERR_NOTPOSARG   | At least one of the following was not positive: \a L, \a W, \a a, \a M
+ *  LTFATERR_NOMEM       | Heap allocation failed
  */
-void
-maskedspsi(const double* s, int a, int M, int N,
-               const double* mask, const double* phase, double* initphase, complex double* c);
+int
+spsi_withmask(const complex double cinit[], const int mask[], int L, int W, int a, int M,
+              double initphase[], complex double c[]);
 
 
 /** \} */
 void
-spsiupdate(const double* scol, int a, int M, double* tmpphase);
+spsiupdate(const double* scol, int stride, int a, int M, double* tmpphase);
 
 #endif /* _spsi_h */

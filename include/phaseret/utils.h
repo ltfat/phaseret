@@ -19,13 +19,19 @@
  *  \param[in]     height   Height
  *  \param[in]     N        No. of cols
  *  \param[in]     newcol   (optional) Length height vector to be used as the last col.
- *                          If it is NULL, it is set to zeros. 
+ *                          If it is NULL, it is set to zeros.
  */
 int
 shiftcolsleft(double* cols, int height, int N, const double* newcol);
 
 int
 force_magnitude(complex double* cin, const double* s, int L, complex double* cout);
+
+void
+realimag2absangle(const complex double* cin, const int L, complex double* c);
+
+void
+absangle2realimag(const complex double* cin, const int L, complex double* c);
 
 
 #endif /* _utils_h */

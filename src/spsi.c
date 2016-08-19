@@ -1,83 +1,119 @@
 #include "phaseret/spsi.h"
+#include "phaseret/utils.h"
+#include "ltfat.h"
+#include "ltfat/macros.h"
 #include "float.h"
 
-void
-spsi(const double* s, int a, int M, int N,  double* initphase,
-         complex double* c)
+int
+spsi(const double* s, int L, int W, int a, int M, double* initphase,
+     complex double* c)
 {
     int M2 = M / 2 + 1;
-
+    int N = L / a;
     double* tmpphase = initphase;
 
+    int status = LTFATERR_SUCCESS;
+    CHECKNULL(s); CHECKNULL(c);
+    CHECK(LTFATERR_NOTPOSARG, L > 0, "L must be positive");
+    CHECK(LTFATERR_NOTPOSARG, W > 0, "W must be positive");
+    CHECK(LTFATERR_NOTPOSARG, a > 0, "a must be positive");
+    CHECK(LTFATERR_NOTPOSARG, M > 0, "M must be positive");
+
     if (!initphase)
+        CHECKMEM( tmpphase = calloc( M2 * W , sizeof * tmpphase) );
+
+    if (s == (double*) c)
     {
-        tmpphase = malloc( M2 * sizeof * tmpphase);
-        memset(tmpphase, 0, M2 * sizeof * tmpphase);
+        // Inplace, move the abs. values to the second half of the array
+        double* chalf = ((double*) c) + W * M2 * N;
+        memcpy(chalf, s, W * M2 * N * sizeof * chalf);
+        s = chalf;
     }
 
-    for (int n = 0; n < N; n++)
+    for (int w = 0; w < W; w++)
     {
-        const double* scol = s + n * M2;
-        complex double* ccol = c + n * M2;
+        double* tmpphasecol = tmpphase + w * M2;
+        for (int n = 0; n < N; n++)
+        {
+            const double* scol = s + n * M2 + w * M2 * N;
+            complex double* ccol = c + n * M2 + w * M2 * N;
 
-        spsiupdate(scol, a, M, tmpphase);
+            spsiupdate(scol, 1, a, M, tmpphasecol);
 
-        for (int m = 0; m < M2; m++)
-            ccol[m] = scol[m] * cexp(I * tmpphase[m]);
+            for (int m = 0; m < M2; m++)
+                ccol[m] = scol[m] * cexp(I * tmpphasecol[m]);
+
+        }
+    }
+
+error:
+    if (!initphase) free(tmpphase);
+    return status;
+}
+
+int
+spsi_withmask(const complex double* cinit, const int* mask, int L, int W, int a,
+              int M, double* initphase, complex double* c)
+{
+    int M2 = M / 2 + 1;
+    int N = L / a;
+    double* tmpphase = initphase;
+
+    int status = LTFATERR_SUCCESS;
+    CHECKNULL(cinit); CHECKNULL(mask); CHECKNULL(c);
+    CHECK(LTFATERR_NOTPOSARG, L > 0, "L must be positive");
+    CHECK(LTFATERR_NOTPOSARG, W > 0, "W must be positive");
+    CHECK(LTFATERR_NOTPOSARG, a > 0, "a must be positive");
+    CHECK(LTFATERR_NOTPOSARG, M > 0, "M must be positive");
+
+    if (!initphase)
+        tmpphase = calloc( M2 * W, sizeof * tmpphase);
+
+    for (int w = 0; w < W; w++)
+    {
+        double* tmpphasecol = tmpphase + w * M2;
+        for (int n = 0; n < N; n++)
+        {
+            complex double* ccol = c + n * M2 + w * M2 * N;
+            const complex double* cinitcol = cinit + n * M2 + w * M2 * N;
+            const int* maskcol = mask + n * M2 + w * M2 * N;
+
+            realimag2absangle(cinitcol, M2, ccol);
+            double* absptr = (double*) ccol;
+            double* angleptr = ((double*) ccol) + 1;
+
+            spsiupdate(absptr, 2, a, M, tmpphasecol);
+
+            /* Overwrite with known phase */
+            for (int m = 0; m < M2; m++)
+                if (maskcol[m]) tmpphasecol[m] = angleptr[2 * m];
+
+            for (int m = 0; m < M2; m++)
+                ccol[m] = absptr[2 * m] * cexp(I * tmpphasecol[m]);
+        }
     }
 
     if (!initphase)
         free(tmpphase);
+
+error:
+    return status;
 }
 
 void
-maskedspsi(const double* s, int a, int M, int N,
-               const double* mask, const double* phase, double* initphase, complex double* c)
-{
-    int M2 = M / 2 + 1;
-
-    double* tmpphase = initphase;
-
-    if (!initphase)
-    {
-        tmpphase = malloc( M2 * sizeof * tmpphase);
-        memset(tmpphase, 0, M2 * sizeof * tmpphase);
-    }
-
-    for (int n = 0; n < N; n++)
-    {
-        const double* scol = s + n * M2;
-        complex double* ccol = c + n * M2;
-        const double* maskcol = mask + n * M2;
-        const double* phasecol = phase + n * M2;
-
-        spsiupdate(scol, a, M, tmpphase);
-
-        /* Overwrite with known phase */
-        for (int m = 0; m < M2; m++)
-            if (maskcol[m]) tmpphase[m] = phasecol[m];
-
-        for (int m = 0; m < M2; m++)
-            ccol[m] = scol[m] * cexp(I * tmpphase[m]);
-    }
-
-    if (!initphase)
-        free(tmpphase);
-}
-
-void
-spsiupdate(const double* scol, int a, int M, double* tmpphase)
+spsiupdate(const double* scol, int stride, int a, int M, double* tmpphase)
 {
     int M2 = M / 2 + 1;
 
     for (int m = 1; m < M2 - 1; m++)
     {
-        if (scol[m] > scol[m - 1] && scol[m] > scol[m + 1])
+        if (scol[stride * m] > scol[stride * (m - 1)]
+            && scol[stride * m] > scol[stride * (m + 1)])
         {
             double p; int binup = m, bindown = m;
-            double alpha = log(scol[m - 1] + DBL_MIN);
-            double beta = log(scol[m] + DBL_MIN);
-            double gamma = log(scol[m + 1] + DBL_MIN);
+            double alpha = log(scol[stride * (m - 1)] + DBL_MIN);
+            double beta = log(scol[stride * m] + DBL_MIN);
+            double gamma = log(scol[stride * (m + 1)] + DBL_MIN);
             double denom = alpha - 2.0 * beta + gamma;
 
             if (denom != 0.0)
@@ -107,7 +143,7 @@ spsiupdate(const double* scol, int a, int M, double* tmpphase)
             // Go towards low frequency bins
             int bin = bindown;
 
-            while (bin > 0 && scol[bin] < scol[bin + 1])
+            while (bin > 0 && scol[stride * bin] < scol[stride * (bin + 1)])
             {
                 tmpphase[bin] = peakPhase;
                 bin--;
@@ -116,7 +152,7 @@ spsiupdate(const double* scol, int a, int M, double* tmpphase)
             // Go towards high frequency bins
             bin = binup;
 
-            while (bin < M2 - 1 && scol[bin] < scol[bin - 1])
+            while (bin < M2 - 1 && scol[stride * bin] < scol[stride * (bin - 1)])
             {
                 tmpphase[bin] = peakPhase;
                 bin++;
