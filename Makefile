@@ -39,7 +39,13 @@ ifdef MINGW
 	EXTRALFLAGS = -Wl,--out-implib,$@.a -static-libgcc
 else
 	CFLAGS += -fPIC
+	CXXFLAGS += -fPIC
 	SHARED = libphaseret.so
+endif
+
+ifdef USECPP
+	CC = $(CXX)
+	CFLAGS = $(CXXFLAGS)
 endif
 
 TARGET=$(buildprefix)/$(STATIC)
@@ -107,7 +113,7 @@ mat2docmat:
 	mat2doc . mat
 
 $(buildprefix)/phaseret.h: $(buildprefix)
-	$(CC) -E -P -DNOSYSTEMHEADERS -nostdinc include/phaseret.h -o $(buildprefix)/phaseret.h
+	$(CC) -E -P -DNOSYSTEMHEADERS -nostdinc include/phaseret.h -I../libltfat/include -o $(buildprefix)/phaseret.h
 	sed -i '1 i #ifndef _PHASERET_H' $(buildprefix)/phaseret.h
 	sed -i '1 a #define _PHASERET_H' $(buildprefix)/phaseret.h
 	sed -i '2 a #include <ltfat.h>' $(buildprefix)/phaseret.h

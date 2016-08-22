@@ -1,10 +1,6 @@
-#include "ltfat.h"
 #include "phaseret/pghi.h"
-#include "phaseret/config.h"
-#include <math.h>
-#include <float.h>
-#include "ltfat/errno.h"
 #include "ltfat/macros.h"
+#include <float.h>
 
 struct pghi_plan
 {
@@ -16,14 +12,14 @@ struct pghi_plan
     double tol1;
     double tol2;
     ltfat_heapinttask_d* hit;
-    double* tgrad;
-    double* fgrad;
+    LTFAT_REAL* tgrad;
+    LTFAT_REAL* fgrad;
     /* double* scratch; */
 };
 
 int
-pghi(const double s[], double gamma, const int L, const int W,
-     const int a, const int M, complex double c[])
+pghi(const LTFAT_REAL s[], double gamma, const int L, const int W,
+     const int a, const int M, LTFAT_COMPLEX c[])
 {
     pghi_plan* p = NULL;
     int status = LTFATERR_SUCCESS;
@@ -38,9 +34,9 @@ error:
 }
 
 int
-pghi_withmask(const complex double cinit[], const int mask[],
+pghi_withmask(const LTFAT_COMPLEX cinit[], const int mask[],
               double gamma, const int L, const int W,
-              const int a, const int M, complex double c[])
+              const int a, const int M, LTFAT_COMPLEX c[])
 {
     pghi_plan* p = NULL;
     int status = LTFATERR_SUCCESS;
@@ -67,6 +63,7 @@ pghi_init(double gamma, const int L, const int W,
           const int a, const int M, double tol1, double tol2, pghi_plan** pout)
 {
     pghi_plan* p = NULL;
+    int M2,N;
     int status = LTFATERR_SUCCESS;
     CHECKNULL(pout);
     CHECK(LTFATERR_BADARG, !isnan(gamma) && gamma > 0,
@@ -83,14 +80,15 @@ pghi_init(double gamma, const int L, const int W,
               "tol2 must be in range ]0,1[ and less or equal to tol1.");
     }
 
-    CHECKMEM( p = calloc(1, sizeof * p));
+    CHECKMEM( p = (pghi_plan*) calloc(1, sizeof * p));
+    p->gamma = gamma; p->a = a; p->M = M; p->W = W; p->L = L; p->tol1 = tol1; 
+    p->tol2 = tol2;
 
-    int M2 = M / 2 + 1;
-    int N = L / a;
+    M2 = M / 2 + 1;
+    N = L / a;
 
-    *p = (pghi_plan) { .gamma = gamma, .a = a, .M = M, .W = W, .L = L, .tol1 = tol1, .tol2 = tol2 };
-    CHECKMEM( p->tgrad = malloc(M2 * N * sizeof * p->tgrad));
-    CHECKMEM( p->fgrad = malloc(M2 * N * sizeof * p->fgrad));
+    CHECKMEM( p->tgrad = LTFAT_NAME_REAL(malloc)(M2 * N));
+    CHECKMEM( p->fgrad = LTFAT_NAME_REAL(malloc)(M2 * N));
     /* CHECKMEM( p->scratch = malloc(M2 * N * sizeof * p->scratch)); */
     // Not yet
     p->hit = ltfat_heapinttask_init_d( M2, N, M2 * log((double)M2) , NULL, 1);
@@ -111,22 +109,23 @@ error:
 
 
 int
-pghi_execute(pghi_plan* p, const double s[], complex double c[])
+pghi_execute(pghi_plan* p, const LTFAT_REAL s[], LTFAT_COMPLEX c[])
 {
     int status = LTFATERR_SUCCESS;
+    int M2, W, N;
     CHECKNULL(s); CHECKNULL(c); CHECKNULL(p);
 
-    int M2 = p->M / 2 + 1;
-    int W = p->W;
-    int N = p->L / p->a;
+    M2 = p->M / 2 + 1;
+    W = p->W;
+    N = p->L / p->a;
 
     for (ltfatInt w = W - 1; w >= 0; --w)
     {
-        const double* schan = s + w * M2 * N;
-        complex double* cchan = c + w * M2 * N;
-        const double* tgradwchan = p->tgrad + w * M2 * N;
-        const double* fgradwchan = p->fgrad + w * M2 * N;
-        double* scratch = ((double*)cchan) + M2 * N; // Second half of the output
+        const LTFAT_REAL* schan = s + w * M2 * N;
+        LTFAT_COMPLEX* cchan = c + w * M2 * N;
+        const LTFAT_REAL* tgradwchan = p->tgrad + w * M2 * N;
+        const LTFAT_REAL* fgradwchan = p->fgrad + w * M2 * N;
+        LTFAT_REAL* scratch = ((LTFAT_REAL*)cchan) + M2 * N; // Second half of the output
 
         pghilog(schan, M2 * N, scratch);
         pghitgrad(scratch, p->gamma, p->a, p->M, N, p->tgrad );
@@ -152,7 +151,7 @@ pghi_execute(pghi_plan* p, const double s[], complex double c[])
                 scratch[ii] = 2.0 * M_PI * ((double)rand()) / RAND_MAX;
 
         // Combine phase and magnitude
-        if (schan != (double*) cchan)
+        if (schan != (LTFAT_REAL*) cchan)
         {
             pghimagphase(schan, scratch, M2 * N, cchan);
         }
@@ -168,39 +167,40 @@ error:
 }
 
 int
-pghi_execute_withmask(pghi_plan* p, const complex double cin[],
-                      const int mask[], double buffer[], complex double cout[])
+pghi_execute_withmask(pghi_plan* p, const LTFAT_COMPLEX cin[],
+                      const int mask[], LTFAT_REAL buffer[], LTFAT_COMPLEX cout[])
 {
-    double* bufferLoc = NULL;
-    int freeBufferLoc = 0;
+    LTFAT_REAL* bufferLoc = NULL;
+    int freeBufferLoc = 0, M2, W, N;
+    LTFAT_REAL* schan;
     int status = LTFATERR_SUCCESS;
     CHECKNULL(cin); CHECKNULL(mask); CHECKNULL(cout); CHECKNULL(p);
 
-    int M2 = p->M / 2 + 1;
-    int W = p->W;
-    int N = p->L / p->a;
+    M2 = p->M / 2 + 1;
+    W = p->W;
+    N = p->L / p->a;
 
     if (buffer)
         bufferLoc = buffer;
     else
     {
-        CHECKMEM( bufferLoc = ltfat_malloc(M2 * N * sizeof * bufferLoc) );
+        CHECKMEM( bufferLoc = LTFAT_NAME_REAL(malloc)(M2 * N) );
         freeBufferLoc = 1;
     }
 
-    double* schan = bufferLoc;
+    schan = bufferLoc;
 
     for (ltfatInt w = 0; w < W; ++w)
     {
-        const complex double* cinchan = cin + w * M2 * N;
-        complex double* coutchan = cout + w * M2 * N;
+        const LTFAT_COMPLEX* cinchan = cin + w * M2 * N;
+        LTFAT_COMPLEX* coutchan = cout + w * M2 * N;
         const int* maskchan = mask + w * M2 * N;
-        const double* tgradwchan = p->tgrad + w * M2 * N;
-        const double* fgradwchan = p->fgrad + w * M2 * N;
-        double* scratch = ((double*)coutchan) + M2 * N; // Second half of the output
+        const LTFAT_REAL* tgradwchan = p->tgrad + w * M2 * N;
+        const LTFAT_REAL* fgradwchan = p->fgrad + w * M2 * N;
+        LTFAT_REAL* scratch = ((LTFAT_REAL*)coutchan) + M2 * N; // Second half of the output
 
         for (int ii = 0; ii < M2 * N; ii++)
-            schan[ii] = cabs(cinchan[ii]);
+            schan[ii] = ltfat_abs(cinchan[ii]);
 
         pghilog(schan, M2 * N, scratch);
         pghitgrad(scratch, p->gamma, p->a, p->M, N, p->tgrad );
@@ -238,8 +238,9 @@ int
 pghi_done(pghi_plan** p)
 {
     int status = LTFATERR_SUCCESS;
+    pghi_plan* pp;
     CHECKNULL(p); CHECKNULL(*p);
-    pghi_plan* pp = *p;
+    pp = *p;
     ltfat_heapinttask_done_d(pp->hit);
     /* free(pp->scratch); */
     free(pp->fgrad);
@@ -251,14 +252,14 @@ error:
 }
 
 void
-pghimagphase(const double s[], const double phase[], int L, complex double c[])
+pghimagphase(const LTFAT_REAL s[], const LTFAT_REAL phase[], int L, LTFAT_COMPLEX c[])
 {
     for (int l = 0; l < L; l++)
-        c[l] = s[l] * cexp(I * phase[l]);
+        c[l] = s[l] * exp(I * phase[l]);
 }
 
 void
-pghilog(const double* in, int L, double* out)
+pghilog(const LTFAT_REAL* in, int L, LTFAT_REAL* out)
 {
     for (int l = 0; l < L; l++)
         out[l] = log(in[l] + DBL_MIN);
@@ -266,18 +267,18 @@ pghilog(const double* in, int L, double* out)
 }
 
 void
-pghitgrad(const double* logs, double gamma, int a, int M, int N, double* tgrad)
+pghitgrad(const LTFAT_REAL* logs, double gamma, int a, int M, int N, LTFAT_REAL* tgrad)
 {
     int M2 = M / 2 + 1;
 
-    const double tgradmul = (a * M) / (gamma * 2.0);
-    const double tgradplus = 2.0 * M_PI * a / M;
+    const LTFAT_REAL tgradmul = (a * M) / (gamma * 2.0);
+    const LTFAT_REAL tgradplus = 2.0 * M_PI * a / M;
 
 
     for (int n = 0; n < N; n++)
     {
-        double* tgradCol = tgrad + n * M2;
-        const double* logsCol = logs + n * M2;
+        LTFAT_REAL* tgradCol = tgrad + n * M2;
+        const LTFAT_REAL* logsCol = logs + n * M2;
 
         tgradCol[0]      = 0.0;
         tgradCol[M2 - 1] = 0.0;
@@ -288,7 +289,7 @@ pghitgrad(const double* logs, double gamma, int a, int M, int N, double* tgrad)
 }
 
 void
-pghifgrad(const double* logs, double gamma, int a, int M, int N, double* fgrad)
+pghifgrad(const LTFAT_REAL* logs, double gamma, int a, int M, int N, LTFAT_REAL* fgrad)
 {
     int M2 = M / 2 + 1;
 
@@ -296,9 +297,9 @@ pghifgrad(const double* logs, double gamma, int a, int M, int N, double* fgrad)
 
     for (int n = 1; n < N - 1; n++)
     {
-        const double* scol0 = logs + (n - 1) * M2;
-        const double* scol2 = logs + (n + 1) * M2;
-        double* fgradCol = fgrad + n * M2;
+        const LTFAT_REAL* scol0 = logs + (n - 1) * M2;
+        const LTFAT_REAL* scol2 = logs + (n + 1) * M2;
+        LTFAT_REAL* fgradCol = fgrad + n * M2;
 
         for (int m = 0; m < M2; ++m)
             fgradCol[m] = fgradmul * (scol2[m] - scol0[m]);
@@ -306,9 +307,9 @@ pghifgrad(const double* logs, double gamma, int a, int M, int N, double* fgrad)
 
     // Explicit first col
     {
-        const double* scol0 = logs + (N - 1) * M2;
-        const double* scol2 = logs + M2;
-        double* fgradCol = fgrad;
+        const LTFAT_REAL* scol0 = logs + (N - 1) * M2;
+        const LTFAT_REAL* scol2 = logs + M2;
+        LTFAT_REAL* fgradCol = fgrad;
 
         for (int m = 0; m < M2; ++m)
             fgradCol[m] = fgradmul * (scol2[m] - scol0[m]);
@@ -316,9 +317,9 @@ pghifgrad(const double* logs, double gamma, int a, int M, int N, double* fgrad)
 
     // Explicit last col
     {
-        const double* scol0 = logs;
-        const double* scol2 = logs + (N - 2) * M2;
-        double* fgradCol = fgrad + (N - 1) * M2;
+        const LTFAT_REAL* scol0 = logs;
+        const LTFAT_REAL* scol2 = logs + (N - 2) * M2;
+        LTFAT_REAL* fgradCol = fgrad + (N - 1) * M2;
 
         for (int m = 0; m < M2; ++m)
             fgradCol[m] = fgradmul * (scol2[m] - scol0[m]);

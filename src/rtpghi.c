@@ -1,8 +1,5 @@
-#include "ltfat.h"
-#include "ltfat/errno.h"
 #include "ltfat/macros.h"
 #include "phaseret/rtpghi.h"
-#include "phaseret/config.h"
 #include "phaseret/utils.h"
 #include "float.h"
 
@@ -13,15 +10,15 @@ struct rtpghi_state
     int W;
     int* mask;
     int do_causal;
-    double* slog;
-    double* s;
-    double* tgrad; //!< Time gradient buffer
-    double* fgrad; //!< Frequency gradient buffer
-    double* phase; //!< Buffer for keeping previously computed frame
+    LTFAT_REAL* slog;
+    LTFAT_REAL* s;
+    LTFAT_REAL* tgrad; //!< Time gradient buffer
+    LTFAT_REAL* fgrad; //!< Frequency gradient buffer
+    LTFAT_REAL* phase; //!< Buffer for keeping previously computed frame
     double logtol;
     double tol;
     double gamma;
-    double* randphase; //!< Precomputed array of random phase
+    LTFAT_REAL* randphase; //!< Precomputed array of random phase
     int randphaseLen;
     int randphaseId;
     struct ltfat_heapinttask_d* hit;
@@ -45,22 +42,22 @@ rtpghi_init(double gamma, int W, int a, int M, double tol, int do_causal,
 
     int M2 = M / 2 + 1;
     rtpghi_state* p = NULL;
-    CHECKMEM( p = calloc(1, sizeof * p));
+    CHECKMEM( p = (rtpghi_state*) calloc(1, sizeof * p));
 
     p->hit = ltfat_heapinttask_init_d( M2, 2, 2 * M2 , NULL, 1);
-    CHECKMEM( p->slog = calloc(3 * M2 * W , sizeof * p->slog));
-    CHECKMEM( p->s = calloc(2 * M2 * W , sizeof * p->slog));
-    CHECKMEM( p->phase = calloc(2 * M2 * W,  sizeof * p->phase));
-    CHECKMEM( p->tgrad = calloc(3 * M2 * W,  sizeof * p->tgrad));
-    CHECKMEM( p->fgrad = calloc(2 * M2 * W,  sizeof * p->fgrad));
+    CHECKMEM( p->slog = LTFAT_NAME_REAL(calloc)(3 * M2 * W));
+    CHECKMEM( p->s = LTFAT_NAME_REAL(calloc)(2 * M2 * W));
+    CHECKMEM( p->phase = LTFAT_NAME_REAL(calloc)(2 * M2 * W));
+    CHECKMEM( p->tgrad = LTFAT_NAME_REAL(calloc)(3 * M2 * W));
+    CHECKMEM( p->fgrad = LTFAT_NAME_REAL(calloc)(2 * M2 * W));
 
     p->randphaseLen = 10 * M2 * W;
-    CHECKMEM( p->randphase = malloc(p->randphaseLen * sizeof * p->randphase));
+    CHECKMEM( p->randphase = LTFAT_NAME_REAL(malloc)(p->randphaseLen));
 
     for (int ii = 0; ii < p->randphaseLen; ii++)
         p->randphase[ii] = 2.0 * M_PI * ((double)rand()) / RAND_MAX;
 
-    CHECKMEM( p->mask = malloc(2 * M2 * W * sizeof * p->mask));
+    CHECKMEM( p->mask = (int*) malloc(2 * M2 * W * sizeof * p->mask));
 
     for (int w = 0; w < W; ++w)
     {
@@ -98,7 +95,7 @@ error:
 
 
 int
-rtpghi_execute(rtpghi_state* p, const double s[], complex double c[])
+rtpghi_execute(rtpghi_state* p, const LTFAT_REAL s[], LTFAT_COMPLEX c[])
 {
     // n, n-1, n-2 frames
     // s is n-th
@@ -109,11 +106,11 @@ rtpghi_execute(rtpghi_state* p, const double s[], complex double c[])
 
     for (int w = 0; w < W; ++w)
     {
-        double* slogCol = p->slog + w * 3 * M2;
-        double* sCol = p->s + w * 2 * M2;
-        double* phaseCol = p->phase + w * 2 * M2;
-        double* tgradCol = p->tgrad + w * 3 * M2;
-        double* fgradCol = p->fgrad + w * 2 * M2;
+        LTFAT_REAL* slogCol = p->slog + w * 3 * M2;
+        LTFAT_REAL* sCol = p->s + w * 2 * M2;
+        LTFAT_REAL* phaseCol = p->phase + w * 2 * M2;
+        LTFAT_REAL* tgradCol = p->tgrad + w * 3 * M2;
+        LTFAT_REAL* fgradCol = p->fgrad + w * 2 * M2;
 
         // store log(s)
         shiftcolsleft(slogCol, M2, 3, NULL);
@@ -161,8 +158,9 @@ int
 rtpghi_done(rtpghi_state** p)
 {
     int status = LTFATERR_SUCCESS;
+    rtpghi_state* pp; 
     CHECKNULL(p); CHECKNULL(*p);
-    rtpghi_state* pp = *p;
+    pp = *p;
     ltfat_heapinttask_done_d(pp->hit);
     free(pp->slog);
     free(pp->s);
@@ -178,8 +176,8 @@ error:
 }
 
 int
-rtpghioffline(const double* s, double gamma, int L, int W, int a, int M,
-              double tol, int do_causal, complex double* c)
+rtpghioffline(const LTFAT_REAL* s, double gamma, int L, int W, int a, int M,
+              double tol, int do_causal, LTFAT_COMPLEX* c)
 {
     int N = L / a;
     int M2 = M / 2 + 1;
@@ -194,8 +192,8 @@ rtpghioffline(const double* s, double gamma, int L, int W, int a, int M,
     {
         for (int n = 0; n < N; ++n)
         {
-            const double* sncol = s + n * M2;
-            complex double* cncol = c + n * M2;
+            const LTFAT_REAL* sncol = s + n * M2;
+            LTFAT_COMPLEX* cncol = c + n * M2;
             rtpghi_execute(p, sncol, cncol);
         }
     }
@@ -205,8 +203,8 @@ rtpghioffline(const double* s, double gamma, int L, int W, int a, int M,
 
         for (int n = 0, nahead = 1; nahead < N; ++n, ++nahead)
         {
-            const double* sncol = s + nahead * M2;
-            complex double* cncol = c + n * M2;
+            const LTFAT_REAL* sncol = s + nahead * M2;
+            LTFAT_COMPLEX* cncol = c + n * M2;
             rtpghi_execute(p, sncol, cncol);
         }
 
@@ -220,18 +218,18 @@ error:
 
 
 void
-rtpghifgrad(const double* logs, int a, int M, double gamma,
-            int do_causal, double* fgrad)
+rtpghifgrad(const LTFAT_REAL* logs, int a, int M, double gamma,
+            int do_causal, LTFAT_REAL* fgrad)
 {
     int M2 = M / 2 + 1;
 
-    const double fgradmul = -gamma / (2.0 * a * M);
-    const double* scol0 = logs;
-    const double* scol2 = logs + 2 * M2;
+    const LTFAT_REAL fgradmul = -gamma / (2.0 * a * M);
+    const LTFAT_REAL* scol0 = logs;
+    const LTFAT_REAL* scol2 = logs + 2 * M2;
 
     if (do_causal)
     {
-        const double* scol1 = logs + M2;
+        const LTFAT_REAL* scol1 = logs + M2;
 
         for (int m = 0; m < M2; ++m)
             fgrad[m] = fgradmul * (3.0 * scol2[m] - 4.0 * scol1[m] + scol0[m]);
@@ -244,13 +242,13 @@ rtpghifgrad(const double* logs, int a, int M, double gamma,
 }
 
 void
-rtpghitgrad(const double* logs, int a, int M, double gamma,
-            double* tgrad)
+rtpghitgrad(const LTFAT_REAL* logs, int a, int M, double gamma,
+            LTFAT_REAL* tgrad)
 {
     int M2 = M / 2 + 1;
 
-    const double tgradmul = (a * M) / (gamma * 2.0);
-    const double tgradplus = 2.0 * M_PI * a / M;
+    const LTFAT_REAL tgradmul = (a * M) / (gamma * 2.0);
+    const LTFAT_REAL tgradplus = 2.0 * M_PI * a / M;
 
     tgrad[0]      = 0.0;
     tgrad[M2 - 1] = 0.0;
@@ -260,7 +258,7 @@ rtpghitgrad(const double* logs, int a, int M, double gamma,
 }
 
 void
-rtpghilog(const double* in, int L, double* out)
+rtpghilog(const LTFAT_REAL* in, int L, LTFAT_REAL* out)
 {
     for (int l = 0; l < L; l++)
         out[l] = log(in[l] + DBL_MIN);
@@ -268,10 +266,10 @@ rtpghilog(const double* in, int L, double* out)
 }
 
 void
-rtpghimagphase(const double* s, const double* phase, int L, complex double* c)
+rtpghimagphase(const LTFAT_REAL* s, const LTFAT_REAL* phase, int L, LTFAT_COMPLEX* c)
 {
     for (int l = 0; l < L; l++)
-        c[l] = s[l] * cexp(I * phase[l]);
+        c[l] = s[l] * exp(I * phase[l]);
 }
 
 

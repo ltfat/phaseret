@@ -1,9 +1,11 @@
 #ifndef _pghi_h
 #define _pghi_h
 
-// #ifndef NOSYSTEMHEADERS
-// #include <ltfat.h>
-// #endif
+#define LTFAT_DOUBLE
+#ifndef NOSYSTEMHEADERS
+#include "ltfat.h"
+#endif
+#include "ltfat/types.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -38,8 +40,8 @@ typedef struct pghi_plan pghi_plan;
  * \see firwin2gamma
  */
 int
-pghi(const double s[], double gamma, const int L, const int W,
-     const int a, const int M, complex double c[]);
+pghi(const LTFAT_REAL s[], double gamma, const int L, const int W,
+     const int a, const int M, LTFAT_COMPLEX c[]);
 
 /** Reconstruct complex coefficients from the magnitude using PGHI algorithm 
  * ... using some known coefficients.
@@ -66,9 +68,9 @@ pghi(const double s[], double gamma, const int L, const int W,
  * \see firwin2gamma
  */
 int
-pghi_withmask(const complex double cin[], const int mask[],
+pghi_withmask(const LTFAT_COMPLEX cin[], const int mask[],
               double gamma, const int L, const int W,
-              const int a, const int M, complex double c[]);
+              const int a, const int M, LTFAT_COMPLEX c[]);
 
 /** Initialize PGHI plan
  *
@@ -114,7 +116,7 @@ pghi_init(double gamma, const int L, const int W,
  * LTFATERR_NULLPOINTER     | Indicates that at least one of the following was NULL: \a p, \a c, \a s
  */
 int
-pghi_execute(pghi_plan* p, const double s[], complex double c[]);
+pghi_execute(pghi_plan* p, const LTFAT_REAL s[], LTFAT_COMPLEX c[]);
 
 /** Execute PGHI plan with respect to mask
  *
@@ -135,8 +137,8 @@ pghi_execute(pghi_plan* p, const double s[], complex double c[]);
  * LTFATERR_NOMEM           | Indicates that heap allocation failed
  */
 int
-pghi_execute_withmask(pghi_plan* p, const complex double cin[], const int mask[],
-                      double buffer[], complex double cout[]);
+pghi_execute_withmask(pghi_plan* p, const LTFAT_COMPLEX cin[], const int mask[],
+                      LTFAT_REAL buffer[], LTFAT_COMPLEX cout[]);
 
 /** Destroy PGHI plan
  *
@@ -152,16 +154,16 @@ pghi_done(pghi_plan** p);
 /** @} */
 
 void
-pghimagphase(const double s[], const double phase[], int L, complex double c[]);
+pghimagphase(const LTFAT_REAL s[], const LTFAT_REAL phase[], int L, LTFAT_COMPLEX c[]);
 
 void
-pghilog(const double in[], int L, double out[]);
+pghilog(const LTFAT_REAL in[], int L, LTFAT_REAL out[]);
 
 void
-pghitgrad(const double logs[], double gamma, int a, int M, int N, double tgrad[]);
+pghitgrad(const LTFAT_REAL logs[], double gamma, int a, int M, int N, LTFAT_REAL tgrad[]);
 
 void
-pghifgrad(const double logs[], double gamma, int a, int M, int N, double fgrad[]);
+pghifgrad(const LTFAT_REAL logs[], double gamma, int a, int M, int N, LTFAT_REAL fgrad[]);
 
 
 #ifdef __cplusplus

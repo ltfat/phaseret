@@ -1,3 +1,9 @@
+#define LTFAT_DOUBLE
+
+#ifndef NOSYSTEMHEADERS
+#include "ltfat.h"
+#endif
+#include "ltfat/types.h"
 #include "dgtrealwrapper.h"
 
 
@@ -32,7 +38,7 @@ typedef struct gla_plan gla_plan;
  *
  *  \see dgtreal_anasyn_execute_proj dgtreal_anasyn_execute_ana dgtreal_anasyn_execute_syn
  */
-typedef int gla_callback_status(dgtreal_anasyn_plan* p, void* userdata, complex double c[],
+typedef int gla_callback_status(dgtreal_anasyn_plan* p, void* userdata, LTFAT_COMPLEX c[],
                                 int L, int W, int a, int M, double* alpha, int iter);
 
 /** Function prototype for coefficient modification callback
@@ -51,7 +57,7 @@ typedef int gla_callback_status(dgtreal_anasyn_plan* p, void* userdata, complex 
  *   0          | Signalizes that callback exited without error
  *  <0          | Callback exited with error
  */
-typedef int gla_callback_cmod(void* userdata, complex double c[], int L, int W, int a, int M);
+typedef int gla_callback_cmod(void* userdata, LTFAT_COMPLEX c[], int L, int W, int a, int M);
 
 /** Function prototype for signal modification callback
  *
@@ -67,7 +73,7 @@ typedef int gla_callback_cmod(void* userdata, complex double c[], int L, int W, 
  *   0          | Signalizes that callback exited without error
  *  <0          | Callback exited with error
  */
-typedef int gla_callback_fmod(void* userdata, double f[], int L, int W, int a, int M);
+typedef int gla_callback_fmod(void* userdata, LTFAT_REAL f[], int L, int W, int a, int M);
 
 
 /** Griffin-Lim algorithm
@@ -97,8 +103,8 @@ typedef int gla_callback_fmod(void* userdata, double f[], int L, int W, int a, i
  *  LTFATERR_NOMEM        | Memory allocation error occurred
  */
 int
-gla(const complex double cinit[], const double g[], const int L, const int gl, const int W,
-    const int a, const int M, const int iter, complex double cout[]);
+gla(const LTFAT_COMPLEX cinit[], const LTFAT_REAL g[], const int L, const int gl, const int W,
+    const int a, const int M, const int iter, LTFAT_COMPLEX cout[]);
 
 /** Initialize Griffin-Lim algorithm plan
  *
@@ -139,9 +145,9 @@ gla(const complex double cinit[], const double g[], const int L, const int gl, c
  *  LTFATERR_NOMEM        | Memory allocation error occurred
  */
 int
-gla_init(const complex double cinit[], const double g[], const int L, const int gl, const int W,
+gla_init(const LTFAT_COMPLEX cinit[], const LTFAT_REAL g[], const int L, const int gl, const int W,
          const int a, const int M, const double alpha,
-         complex double c[], dgtreal_anasyn_hint hint, unsigned flags,
+         LTFAT_COMPLEX c[], dgtreal_anasyn_hint hint, unsigned flags,
          gla_plan** p);
 
 /** Execute Griffin-Lim algorithm plan
@@ -182,8 +188,8 @@ gla_execute(gla_plan* p, const int iter);
  *  any                   | Error code from some of the callbacks
  */
 int
-gla_execute_newarray(gla_plan* p, const complex double cinit[], const int iter,
-                     complex double cout[]);
+gla_execute_newarray(gla_plan* p, const LTFAT_COMPLEX cinit[], const int iter,
+                     LTFAT_COMPLEX cout[]);
 
 /** Destroy Griffin-Lim algorithm plan
  *
@@ -242,4 +248,4 @@ gla_set_fmod_callback(gla_plan* p, gla_callback_fmod* callback, void* userdata);
 /** @} */
 
 int
-fastupdate(complex double* c, complex double* t, double alpha, int L);
+fastupdate(LTFAT_COMPLEX* c, LTFAT_COMPLEX* t, double alpha, int L);

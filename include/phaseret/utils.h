@@ -11,7 +11,11 @@
 #ifndef _utils_h
 #define _utils_h
 
-#include "config.h"
+#define LTFAT_DOUBLE
+#ifndef NOSYSTEMHEADERS
+#include "ltfat.h"
+#endif
+#include "ltfat/types.h"
 
 /** Shifts cols of height x N matrix by one to the left
  *
@@ -22,16 +26,16 @@
  *                          If it is NULL, it is set to zeros.
  */
 int
-shiftcolsleft(double* cols, int height, int N, const double* newcol);
+shiftcolsleft(LTFAT_REAL* cols, int height, int N, const LTFAT_REAL* newcol);
 
 int
-force_magnitude(complex double* cin, const double* s, int L, complex double* cout);
+force_magnitude(LTFAT_COMPLEX* cin, const LTFAT_REAL* s, int L, LTFAT_COMPLEX* cout);
 
 void
-realimag2absangle(const complex double* cin, const int L, complex double* c);
+realimag2absangle(const LTFAT_COMPLEX* cin, const int L, LTFAT_COMPLEX* c);
 
 void
-absangle2realimag(const complex double* cin, const int L, complex double* c);
+absangle2realimag(const LTFAT_COMPLEX* cin, const int L, LTFAT_COMPLEX* c);
 
 
 #endif /* _utils_h */

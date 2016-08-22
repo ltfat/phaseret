@@ -10,11 +10,10 @@
 #ifndef _rtisila_h
 #define _rtisila_h
 #ifndef NOSYSTEMHEADERS
-#include <complex.h>
-#include <math.h>
-#include <fftw3.h>
-#include <ltfat.h>
+#define LTFAT_DOUBLE
+#include "ltfat.h"
 #endif
+#include "ltfat/types.h"
 
 
 #ifdef __cplusplus
@@ -26,7 +25,7 @@ typedef struct rtisilaupdate_plan rtisilaupdate_plan;
 typedef struct rtisila_state rtisila_state;
 
 void
-overlaynthframe(const double* frames, int gl, int N, int a, int n, double* frame);
+overlaynthframe(const LTFAT_REAL* frames, int gl, int N, int a, int n, LTFAT_REAL* frame);
 
 /** Overlay frames to get n-th frame.
  *  \param[in,out] p        RTISILA Update Plan, p.frame contains the overlaid frame
@@ -36,7 +35,7 @@ overlaynthframe(const double* frames, int gl, int N, int a, int n, double* frame
  *  \param[in]     N        Number of frames
  */
 void
-rtisilaoverlaynthframe(rtisilaupdate_plan* p, const double* frames, const double* g, int n, int N);
+rtisilaoverlaynthframe(rtisilaupdate_plan* p, const LTFAT_REAL* frames, const LTFAT_REAL* g, int n, int N);
 
 /** Phase update of a frame.
  * \param[in,out] p         RTISILA Update Plan, p.fftframe contains
@@ -44,7 +43,7 @@ rtisilaoverlaynthframe(rtisilaupdate_plan* p, const double* frames, const double
  * \param[out]    frameupd  Updated frame
  */
 void
-rtisilaphaseupdate(rtisilaupdate_plan* p, const double* sframe, double* frameupd, fftw_complex* c);
+rtisilaphaseupdate(rtisilaupdate_plan* p, const LTFAT_REAL* sframe, LTFAT_REAL* frameupd, LTFAT_COMPLEX* c);
 
 /** Create a RTISILA Update Plan.
  * \param[in]     g          Analysis window
@@ -59,8 +58,8 @@ rtisilaphaseupdate(rtisilaupdate_plan* p, const double* sframe, double* frameupd
  * \returns RTISILA Update Plan
  */
 int
-rtisilaupdate_init(const double *g, const double* specg1,
-                   const double* specg2, const double* gd,
+rtisilaupdate_init(const LTFAT_REAL *g, const LTFAT_REAL* specg1,
+                   const LTFAT_REAL* specg2, const LTFAT_REAL* gd,
                    const int gl, int a, int M,
                    rtisilaupdate_plan** p);
 
@@ -88,9 +87,9 @@ rtisilaupdate_done(rtisilaupdate_plan** p);
  * \param[out]    frames2    N output frames M samples long
  */
 void
-rtisilaupdate_execute(rtisilaupdate_plan* p, const double* frames, int N,
-                      const double* s, int lookahead, int maxit, double* frames2,
-                      fftw_complex* c);
+rtisilaupdate_execute(rtisilaupdate_plan* p, const LTFAT_REAL* frames, int N,
+                      const LTFAT_REAL* s, int lookahead, int maxit, LTFAT_REAL* frames2,
+                      LTFAT_COMPLEX* c);
 
 /** Do maxit iterations of RTISI-LA for a single frame
  *
@@ -116,10 +115,10 @@ rtisilaupdate_execute(rtisilaupdate_plan* p, const double* frames, int N,
  * \param[out]    frames2    N output frames M samples long
  */
 void
-rtisilaupdate(const double* frames,
-              const double* g, const double* specg1, const double* specg2, const double* gd,
-              const int gl, int a, int M, int N, const double* s, int lookahead, int maxit,
-              double* frames2);
+rtisilaupdate(const LTFAT_REAL* frames,
+              const LTFAT_REAL* g, const LTFAT_REAL* specg1, const LTFAT_REAL* specg2, const LTFAT_REAL* gd,
+              const int gl, int a, int M, int N, const LTFAT_REAL* s, int lookahead, int maxit,
+              LTFAT_REAL* frames2);
 
 /** \addtogroup rtisila
  *  @{
@@ -153,7 +152,7 @@ rtisilaupdate(const double* frames,
  * LTFATERR_NOMEM           | Indentifies that heap allocation failed 
  */
 int
-rtisila_init(const double g[], const int gl, const int W,
+rtisila_init(const LTFAT_REAL g[], const int gl, const int W,
              int a, int M, int lookahead, int maxit,
              rtisila_state** p);
 
@@ -223,7 +222,7 @@ rtisila_set_lookahead(rtisila_state* p, int lookahead);
  * LTFATERR_NULLPOINTER     | At least one of the following was NULL: \a p, \a s and \a c
  */
 int
-rtisila_execute(rtisila_state* p, const double s[], double complex c[]);
+rtisila_execute(rtisila_state* p, const LTFAT_REAL s[], LTFAT_COMPLEX c[]);
 
 /** Reset buffers of rtisila_state
  *
@@ -267,9 +266,9 @@ rtisila_done(rtisila_state** p);
  * \param[out]    c          Reconstructed coefficients M2 x N array
  */
 int
-rtisilaoffline(const double s[], const double g[],
+rtisilaoffline(const LTFAT_REAL s[], const LTFAT_REAL g[],
                int L, int gl, int W, int a, int M,
-               int lookahead, int maxit, complex double c[]);
+               int lookahead, int maxit, LTFAT_COMPLEX c[]);
 /** @} */
 
 #ifdef __cplusplus

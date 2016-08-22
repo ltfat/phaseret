@@ -1,9 +1,13 @@
 #ifndef _rtpghi_h
 #define _rtpghi_h
 
-// #ifndef NOSYSTEMHEADERS
-// #include <ltfat.h>
-// #endif
+#define LTFAT_DOUBLE
+
+#ifndef NOSYSTEMHEADERS
+#include "ltfat.h"
+#endif
+
+#include "ltfat/types.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -64,7 +68,7 @@ rtpghi_set_causal(rtpghi_state* p, int do_causal);
  * \param[out]      c   Reconstructed coefficients
  */
 int
-rtpghi_execute(rtpghi_state* p, const double s[], complex double c[]);
+rtpghi_execute(rtpghi_state* p, const LTFAT_REAL s[], LTFAT_COMPLEX c[]);
 
 /** Destroy a RTPGHI Plan.
  * \param[in] p  RTPGHI Plan
@@ -86,8 +90,8 @@ rtpghi_done(rtpghi_state** p);
  * \param[out]    c          Reconstructed coefficients M2 x N array
  */
 int
-rtpghioffline(const double s[], double gamma, int L, int W, int a, int M,
-              double tol, int do_causal, complex double c[]);
+rtpghioffline(const LTFAT_REAL s[], double gamma, int L, int W, int a, int M,
+              double tol, int do_causal, LTFAT_COMPLEX c[]);
 
 /** Computes \a gamma parameter given window type and its length
  *
@@ -139,7 +143,7 @@ rtpghilog(const double in[], int L, double out[]);
  * \param[out]       c      Output array of length L
  */
 void
-rtpghimagphase(const double s[], const double phase[], int L, complex double c[]);
+rtpghimagphase(const double s[], const double phase[], int L, LTFAT_COMPLEX c[]);
 
 #ifdef __cplusplus
 }

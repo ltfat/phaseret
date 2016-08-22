@@ -1,6 +1,12 @@
 #ifndef _spsi_h
 #define _spsi_h
-#include "config.h"
+#define LTFAT_DOUBLE
+
+#ifndef NOSYSTEMHEADERS
+#include "ltfat.h"
+#endif
+
+#include "ltfat/types.h"
 
 /** \addtogroup spsi
  *  \{
@@ -28,7 +34,7 @@
  *  LTFATERR_NOMEM       | Heap allocation failed
  */
 int
-spsi(const double s[], int L, int W, int a, int M, double initphase[], complex double c[]);
+spsi(const LTFAT_REAL s[], int L, int W, int a, int M, LTFAT_REAL initphase[], LTFAT_COMPLEX c[]);
 
 /** Masked SPSI algorithm implementation
  *
@@ -55,12 +61,12 @@ spsi(const double s[], int L, int W, int a, int M, double initphase[], complex d
  *  LTFATERR_NOMEM       | Heap allocation failed
  */
 int
-spsi_withmask(const complex double cinit[], const int mask[], int L, int W, int a, int M,
-              double initphase[], complex double c[]);
+spsi_withmask(const LTFAT_COMPLEX cinit[], const int mask[], int L, int W, int a, int M,
+              LTFAT_REAL initphase[], LTFAT_COMPLEX c[]);
 
 
 /** \} */
 void
-spsiupdate(const double* scol, int stride, int a, int M, double* tmpphase);
+spsiupdate(const LTFAT_REAL* scol, int stride, int a, int M, LTFAT_REAL* tmpphase);
 
 #endif /* _spsi_h */

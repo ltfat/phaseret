@@ -1,5 +1,5 @@
-typedef int complextorealtransform(void* userdata, const complex double* c, int L, int W, double* f);
-typedef int realtocomplextransform(void* userdata, const double* f, int L, int W, complex double* c);
+typedef int complextorealtransform(void* userdata, const LTFAT_COMPLEX* c, int L, int W, LTFAT_REAL* f);
+typedef int realtocomplextransform(void* userdata, const LTFAT_REAL* f, int L, int W, LTFAT_COMPLEX* c);
 typedef int donefunc(void** pla);
 
 struct dgtreal_anasyn_plan
@@ -8,8 +8,8 @@ struct dgtreal_anasyn_plan
     int W;
     int a;
     int M;
-    double* f;
-    complex double* c;
+    LTFAT_REAL* f;
+    LTFAT_COMPLEX* c;
     complextorealtransform* backtra;
     void* backtra_userdata;
     donefunc* backdonefunc;
@@ -20,20 +20,20 @@ struct dgtreal_anasyn_plan
 
 
 int
-ltfat_idgtreal_long_execute_d_wrapper(void* plan, const complex double* c, int L,
-                                      int W, double* f);
+ltfat_idgtreal_long_execute_d_wrapper(void* plan, const LTFAT_COMPLEX* c, int L,
+                                      int W, LTFAT_REAL* f);
 
 int
-ltfat_dgtreal_long_execute_d_wrapper(void* plan, const double* f, int L, int W,
-                                     complex double* c);
+ltfat_dgtreal_long_execute_d_wrapper(void* plan, const LTFAT_REAL* f, int L, int W,
+                                     LTFAT_COMPLEX* c);
 
 int
-ltfat_idgtreal_fb_execute_d_wrapper(void* plan, const complex double* c, int L,
-                                    int W, double* f);
+ltfat_idgtreal_fb_execute_d_wrapper(void* plan, const LTFAT_COMPLEX* c, int L,
+                                    int W, LTFAT_REAL* f);
 
 int
-ltfat_dgtreal_fb_execute_d_wrapper(void* plan, const double* f, int L, int W,
-                                   complex double* c);
+ltfat_dgtreal_fb_execute_d_wrapper(void* plan, const LTFAT_REAL* f, int L, int W,
+                                   LTFAT_COMPLEX* c);
 
 int
 ltfat_idgtreal_long_done_d_wrapper(void** plan);

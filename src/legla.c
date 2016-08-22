@@ -2,7 +2,6 @@
 #include "phaseret/gla.h"
 #include "phaseret/dgtrealwrapper.h"
 #include "dgtrealwrapper_private.h"
-#include "ltfat.h"
 #include "ltfat/macros.h"
 
 struct legla_plan
@@ -14,19 +13,19 @@ struct legla_plan
     legla_callback_cmod* cmod_callback;
     void* cmod_callback_userdata;
 // Storing magnitude
-    double* s;
-    const complex double* cinit;
+    LTFAT_REAL* s;
+    const LTFAT_COMPLEX* cinit;
 // Used just for flegla
     int do_fast;
     double alpha;
-    complex double* t;
+    LTFAT_COMPLEX* t;
 };
 
 struct leglaupdate_plan
 {
     int kNo;
-    complex double** k;
-    complex double* buf;
+    LTFAT_COMPLEX** k;
+    LTFAT_COMPLEX* buf;
     int a;
     int N;
     int W;
@@ -61,9 +60,9 @@ error:
 }
 
 int
-legla(const complex double cinit[], const double g[],  const int L,
+legla(const LTFAT_COMPLEX cinit[], const LTFAT_REAL g[],  const int L,
       const int gl, const int W, const int a, const int M, const int iter,
-      complex double cout[])
+      LTFAT_COMPLEX cout[])
 {
     legla_plan* p = NULL;
     int status = LTFATERR_SUCCESS;
@@ -81,15 +80,15 @@ error:
 
 
 int
-legla_init(const complex double cinit[], const double g[], const int L,
+legla_init(const LTFAT_COMPLEX cinit[], const LTFAT_REAL g[], const int L,
            const int gl, const int W, const int a, const int M,
-           const double alpha, complex double c[],
+           const double alpha, LTFAT_COMPLEX c[],
            legla_init_params* params, legla_plan** pout)
 {
     legla_plan* p = NULL;
     legla_init_params pLoc;
     phaseret_size ksize;
-    complex double* kernsmall = NULL;
+    LTFAT_COMPLEX* kernsmall = NULL;
     int M2 = M / 2 + 1;
     int N = L / a;
 
@@ -137,8 +136,8 @@ legla_init(const complex double cinit[], const double g[], const int L,
         }
     }
 
-    CHECKMEM( p = calloc(1, sizeof * p));
-    CHECKMEM( p->s = malloc(M2 * N * W * sizeof * p->s));
+    CHECKMEM( p = (legla_plan*) calloc(1, sizeof * p));
+    CHECKMEM( p->s = LTFAT_NAME_REAL(malloc)(M2 * N * W));
 
     CHECKSTATUS(
         dgtreal_anasyn_init(g, gl, L, W, a, M, c, pLoc.hint, LTFAT_FREQINV,
@@ -148,7 +147,8 @@ legla_init(const complex double cinit[], const double g[], const int L,
     memset(c, 0, M2 * N * W * sizeof * c);
     c[0] = 1.0;
     dgtreal_anasyn_execute_proj(p->dgtplan, c, c);
-    phaseret_size bigsize = {.width = N, .height = M};
+    phaseret_size bigsize;
+    bigsize.width = N; bigsize.height = M;
 
     if ( pLoc.relthr != 0.0)
         legla_findkernelsize(c, bigsize, pLoc.relthr, &ksize);
@@ -156,7 +156,7 @@ legla_init(const complex double cinit[], const double g[], const int L,
     DEBUG("Kernel size: {.width=%d,.height=%d}", ksize.width, ksize.height);
 
     CHECKMEM( kernsmall =
-                  malloc(ksize.width * (ksize.height / 2 + 1) * sizeof * kernsmall));
+                  LTFAT_NAME_COMPLEX(malloc)(ksize.width * (ksize.height / 2 + 1)));
 
     legla_big2small_kernel(c, bigsize, ksize, kernsmall);
 
@@ -169,7 +169,7 @@ legla_init(const complex double cinit[], const double g[], const int L,
     {
         p->do_fast = 1;
         p->alpha = alpha;
-        CHECKMEM( p->t = malloc(M2 * N * W * sizeof * p->t));
+        CHECKMEM( p->t = LTFAT_NAME_COMPLEX(malloc)(M2 * N * W));
     }
 
     free(kernsmall);
@@ -192,8 +192,9 @@ int
 legla_done(legla_plan** p)
 {
     int status = LTFATERR_SUCCESS;
+    legla_plan* pp; 
     CHECKMEM(p); CHECKMEM(*p);
-    legla_plan* pp = *p;
+    pp = *p;
 
     dgtreal_anasyn_done(&pp->dgtplan);
     leglaupdate_done(&pp->updateplan);
@@ -209,20 +210,22 @@ int
 legla_execute(legla_plan* p, const int iter)
 {
     int status = LTFATERR_SUCCESS;
+    int M,L,W,a,M2,N;
+    dgtreal_anasyn_plan* pp; 
     CHECKNULL(p);
     CHECK(LTFATERR_NOTPOSARG, iter > 0, "At least one iteration is required");
-    dgtreal_anasyn_plan* pp = p->dgtplan;
     CHECKNULL(p->cinit);
-    int M = pp->M;
-    int L = pp->L;
-    int W = pp->W;
-    int a = pp->a;
-    int M2 = M / 2 + 1;
-    int N = L / a;
+    pp = p->dgtplan;
+    M = pp->M;
+    L = pp->L;
+    W = pp->W;
+    a = pp->a;
+    M2 = M / 2 + 1;
+    N = L / a;
 
     // Store the magnitude
     for (int ii = 0; ii < N * M2 * W; ii++)
-        p->s[ii] = cabs(p->cinit[ii]);
+        p->s[ii] = ltfat_abs(p->cinit[ii]);
 
     // Copy to the output array if we are not working inplace
     if (p->cinit != pp->c)
@@ -261,7 +264,7 @@ legla_execute(legla_plan* p, const int iter)
                 // The plan was not inicialized with acceleration but
                 // nonzero alpha was set in the status callback.
                 p->do_fast = 1;
-                CHECKMEM( p->t = malloc(M2 * N * W * sizeof * p->t));
+                CHECKMEM( p->t = LTFAT_NAME_COMPLEX(malloc)(M2 * N * W));
                 memcpy(p->t, pp->c, (N * M2 * W) * sizeof * p->t );
             }
 
@@ -273,8 +276,8 @@ error:
 }
 
 int
-legla_big2small_kernel(complex double* bigc, phaseret_size bigsize,
-                       phaseret_size ksize, complex double* smallc)
+legla_big2small_kernel(LTFAT_COMPLEX* bigc, phaseret_size bigsize,
+                       phaseret_size ksize, LTFAT_COMPLEX* smallc)
 {
     div_t wmod = div(ksize.width, 2);
     div_t hmod = div(ksize.height, 2);
@@ -284,16 +287,16 @@ legla_big2small_kernel(complex double* bigc, phaseret_size bigsize,
 
     for (int ii = 0; ii < wmod.quot + wmod.rem; ii++)
     {
-        complex double* smallcCol = smallc + kernh2 * ii;
-        complex double* bigcCol = bigc + M2 * ii;
+        LTFAT_COMPLEX* smallcCol = smallc + kernh2 * ii;
+        LTFAT_COMPLEX* bigcCol = bigc + M2 * ii;
 
         memcpy(smallcCol, bigcCol, kernh2 * sizeof * smallcCol);
     }
 
     for (int ii = 1; ii < wmod.quot + 1; ii++)
     {
-        complex double* smallcCol = smallc + kernh2 * ( ksize.width - ii);
-        complex double* bigcCol = bigc + M2 * ( bigsize.width - ii);
+        LTFAT_COMPLEX* smallcCol = smallc + kernh2 * ( ksize.width - ii);
+        LTFAT_COMPLEX* bigcCol = bigc + M2 * ( bigsize.width - ii);
 
         memcpy(smallcCol, bigcCol, kernh2 * sizeof * smallcCol);
     }
@@ -301,11 +304,11 @@ legla_big2small_kernel(complex double* bigc, phaseret_size bigsize,
 }
 
 int
-legla_findkernelsize(complex double* bigc, phaseret_size bigsize,
+legla_findkernelsize(LTFAT_COMPLEX* bigc, phaseret_size bigsize,
                      double relthr, phaseret_size* ksize)
 
 {
-    double thr = relthr * cabs(bigc[0]);
+    double thr = relthr * ltfat_abs(bigc[0]);
     int realHeight = bigsize.height / 2 + 1;
     div_t wmod = div(ksize->width, 2);
     div_t hmod = div(ksize->height, 2);
@@ -313,7 +316,7 @@ legla_findkernelsize(complex double* bigc, phaseret_size bigsize,
     int lastrow = 0;
     for (int n = 0; n < wmod.quot + wmod.rem - 1; n++)
         for (int m = 1; m < hmod.quot + hmod.rem - 1; m++)
-            if ( cabs(bigc[n * realHeight + m]) > thr && m > lastrow )
+            if ( ltfat_abs(bigc[n * realHeight + m]) > thr && m > lastrow )
                 lastrow = m;
 
     ksize->height = 2 * lastrow + 1;
@@ -323,7 +326,7 @@ legla_findkernelsize(complex double* bigc, phaseret_size bigsize,
     int lastcol = 0;
     for (int m = 0; m <  hmod.quot + hmod.rem - 1; m++)
         for (int n = 1; n < wmod.quot + wmod.rem - 1; n++)
-            if ( cabs(bigc[n * realHeight + m]) > thr && n > lastcol )
+            if ( ltfat_abs(bigc[n * realHeight + m]) > thr && n > lastcol )
                 lastcol = n;
 
     ksize->width = 2 * lastcol + 1;
@@ -332,15 +335,17 @@ legla_findkernelsize(complex double* bigc, phaseret_size bigsize,
 }
 
 int
-legla_execute_newarray(legla_plan* p, const complex double cinit[],
-                       const int iter, complex double c[])
+legla_execute_newarray(legla_plan* p, const LTFAT_COMPLEX cinit[],
+                       const int iter, LTFAT_COMPLEX c[])
 {
     int status = LTFATERR_SUCCESS;
+    legla_plan p2; 
+    dgtreal_anasyn_plan pp2; 
     CHECKNULL(p); CHECKNULL(cinit); CHECKNULL(c);
 
     // Shallow copy the plan and replace c
-    legla_plan p2 = *p;
-    dgtreal_anasyn_plan pp2 = *p2.dgtplan;
+    p2 = *p;
+    pp2 = *p2.dgtplan;
     pp2.c = c;
     p2.dgtplan = &pp2;
     p2.cinit = cinit;
@@ -357,13 +362,11 @@ leglaupdate_init_col( int M, phaseret_size ksize, int flags,
     leglaupdate_plan_col* p = NULL;
     int status = LTFATERR_SUCCESS;
 
-    CHECKMEM( p = calloc(1, sizeof * p));
-
-    *p = (leglaupdate_plan_col)
-    {
-        .M = M, .flags = flags, .ksize = ksize,
-         .ksize2 = {.width = ksize.width / 2 + 1, .height = ksize.height / 2 + 1}
-    };
+    CHECKMEM( p = (leglaupdate_plan_col*) calloc(1, sizeof * p));
+    phaseret_size ksize2;
+    ksize2.width = ksize.width / 2 + 1;
+    ksize2.height = ksize.height / 2 + 1;
+    p->M = M; p->flags = flags; p->ksize = ksize; p->ksize2 = ksize2;
 
     // Sanitize flags (set defaults)
     if (p->flags & (MOD_FRAMEWISE | MOD_COEFFICIENTWISE))
@@ -396,17 +399,18 @@ error:
 }
 
 int
-leglaupdate_init(const complex double kern[], phaseret_size ksize,
+leglaupdate_init(const LTFAT_COMPLEX kern[], phaseret_size ksize,
                  int L, int W, int a, int M, int flags, leglaupdate_plan** pout)
 {
     int N = L / a;
     int M2 = M / 2 + 1;
+    int kernh2;
     int status = LTFATERR_SUCCESS;
 
     leglaupdate_plan* p = NULL;
-    complex double* ktmp = NULL;
+    LTFAT_COMPLEX* ktmp = NULL;
 
-    CHECKMEM( p = calloc (1, sizeof * p));
+    CHECKMEM( p = (leglaupdate_plan*) calloc (1, sizeof * p));
 
     CHECKSTATUS( leglaupdate_init_col( M, ksize, flags, &p->plan_col),
                  "leglaupdate init failed");
@@ -418,19 +422,19 @@ leglaupdate_init(const complex double kern[], phaseret_size ksize,
 
     p->kNo = phaseret_lcm(M, a) / a;
 
-    CHECKMEM( p->k = malloc( p->kNo * sizeof * p->k));
+    CHECKMEM( p->k = (LTFAT_COMPLEX**) malloc( p->kNo * sizeof * p->k));
 
-    CHECKMEM( p->buf = malloc( ((M2 + ksize.height - 1) * (p->N + ksize.width - 1))
-                               * sizeof * p->buf));
+    CHECKMEM( p->buf = 
+            LTFAT_NAME_COMPLEX(malloc)( ((M2 + ksize.height - 1) * (p->N + ksize.width - 1))));
 
-    int kernh2 = ksize.height / 2 + 1;
+    kernh2 = ksize.height / 2 + 1;
 
-    CHECKMEM( ktmp = calloc( ksize.width * kernh2, sizeof * ktmp));
+    CHECKMEM( ktmp = LTFAT_NAME_COMPLEX(calloc)( ksize.width * kernh2));
     // Involute
     for (int ii = 0; ii < kernh2; ii++)
     {
-        const complex double* kRow = kern + ii;
-        complex double* kmodRow = ktmp + ii;
+        const LTFAT_COMPLEX* kRow = kern + ii;
+        LTFAT_COMPLEX* kmodRow = ktmp + ii;
 
         kmodRow[0] = kRow[0];
         for (int jj = 1; jj < ksize.width; jj++)
@@ -441,7 +445,7 @@ leglaupdate_init(const complex double kern[], phaseret_size ksize,
 
     for (int n = 0; n < p->kNo; n++)
     {
-        CHECKMEM( p->k[n] = calloc( ksize.width * kernh2,  sizeof * p->k[n]));
+        CHECKMEM( p->k[n] = LTFAT_NAME_COMPLEX(calloc)( ksize.width * kernh2));
         kernphasefi(ktmp, ksize, n, a, M, p->k[n]);
     }
 
@@ -480,8 +484,8 @@ leglaupdate_done(leglaupdate_plan** plan)
 }
 
 void
-kernphasefi(const complex double kern[], phaseret_size ksize,
-            int n, int a, int M, complex double kernmod[])
+kernphasefi(const LTFAT_COMPLEX kern[], phaseret_size ksize,
+            int n, int a, int M, LTFAT_COMPLEX kernmod[])
 {
     /* int kernh2 = ksize.height / 2 + 1; */
     /* int kernw2 = ksize.width / 2; */
@@ -493,16 +497,16 @@ kernphasefi(const complex double kern[], phaseret_size ksize,
 
     for (int ii = 0; ii < hmod.quot + hmod.rem; ii++)
     {
-        const complex double* kRow = kern + ii;
-        complex double* kmodRow = kernmod + ii;
+        const LTFAT_COMPLEX* kRow = kern + ii;
+        LTFAT_COMPLEX* kmodRow = kernmod + ii;
         double arg = -2.0 * M_PI * n * a / M * (ii);
 
         // fftshift
         for (int jj = 0; jj < wmod.quot + wmod.rem - 1; jj++)
-            kmodRow[(jj + wmod.quot)*kernh2] = cexp(I * arg) * kRow[jj * kernh2];
+            kmodRow[(jj + wmod.quot)*kernh2] = exp(I * arg) * kRow[jj * kernh2];
 
         for (int jj = 0; jj < wmod.quot; jj++)
-            kmodRow[jj * kernh2] = cexp(I * arg) * kRow[(jj + wmod.quot + wmod.rem) *
+            kmodRow[jj * kernh2] = exp(I * arg) * kRow[(jj + wmod.quot + wmod.rem) *
                                    kernh2];
     }
 }
@@ -527,8 +531,8 @@ int phaseret_gcd(int m, int n)
 }
 
 extern void
-leglaupdate_execute(leglaupdate_plan* plan, const double s[],
-                    complex double c[], complex double cout[])
+leglaupdate_execute(leglaupdate_plan* plan, const LTFAT_REAL s[],
+                    LTFAT_COMPLEX c[], LTFAT_COMPLEX cout[])
 {
     leglaupdate_plan_col* p = plan->plan_col;
     int M2 = p->M / 2 + 1;
@@ -541,16 +545,16 @@ leglaupdate_execute(leglaupdate_plan* plan, const double s[],
     int do_framewise = p->flags & MOD_FRAMEWISE;
     //int do_revorder = p->flags & ORDER_REV;
 
-    complex double** k = plan->k;
-    complex double* buf = plan->buf;
+    LTFAT_COMPLEX** k = plan->k;
+    LTFAT_COMPLEX* buf = plan->buf;
 
     int nfirst;
 
     for (int w = 0; w < W; w++)
     {
-        const double* sChan =  s + w * M2 * N;
-        complex double* cChan = c + w * M2 * N;
-        complex double* coutChan = cout + w * M2 * N;
+        const LTFAT_REAL* sChan =  s + w * M2 * N;
+        LTFAT_COMPLEX* cChan = c + w * M2 * N;
+        LTFAT_COMPLEX* coutChan = cout + w * M2 * N;
 
         extendborders(plan->plan_col, cChan, N, buf);
 
@@ -558,12 +562,12 @@ leglaupdate_execute(leglaupdate_plan* plan, const double s[],
         for (nfirst = 0; nfirst < N; nfirst++)
         {
             /* Pick the right kernel */
-            complex double* actK = k[nfirst % plan->kNo];
+            LTFAT_COMPLEX* actK = k[nfirst % plan->kNo];
             /* Go to the n-th col in output*/
-            complex double* cColFirst = buf + nfirst * M2buf;
-            complex double* coutCol = coutChan + nfirst * M2;
+            LTFAT_COMPLEX* cColFirst = buf + nfirst * M2buf;
+            LTFAT_COMPLEX* coutCol = coutChan + nfirst * M2;
 
-            const double* sCol = sChan + nfirst * M2;
+            const LTFAT_REAL* sCol = sChan + nfirst * M2;
 
             leglaupdatereal_execute_col(plan->plan_col, sCol,
                                         actK, cColFirst, coutCol);
@@ -573,17 +577,17 @@ leglaupdate_execute(leglaupdate_plan* plan, const double s[],
         {
             /* Update the phase only after the projection has been done. */
             for (int n = 0; n < N * M2; n++)
-                coutChan[n] = sChan[n] * cexp(I * carg(coutChan[n]));
+                coutChan[n] = sChan[n] * exp(I * ltfat_arg(coutChan[n]));
         }
     }
 }
 
 void
 leglaupdatereal_execute_col(leglaupdate_plan_col* plan,
-                            const double sCol[],
-                            const complex double actK[],
-                            complex double cColFirst[],
-                            complex double coutCol[])
+                            const LTFAT_REAL sCol[],
+                            const LTFAT_COMPLEX actK[],
+                            LTFAT_COMPLEX cColFirst[],
+                            LTFAT_COMPLEX coutCol[])
 {
     int m, mfirst, mlast;
     int M2 = plan->M / 2 + 1;
@@ -603,25 +607,25 @@ leglaupdatereal_execute_col(leglaupdate_plan_col* plan,
     for (m = kernh2 - 1, mfirst = 0, mlast = kernh - 1; mfirst < M2;
          m++, mfirst++, mlast++)
     {
-        complex double accum = 0.0 + I * 0.0;
+        LTFAT_COMPLEX accum = 0.0 + I * 0.0;
 
         /* inner loop over all cols of the kernel*/
         for (int kn = 0; kn < kernw; kn++)
         {
             /* mexPrintf("kn-loop: %d\n",kn); */
-            const complex double* actKCol = actK + kn * kernh2 +  kernh2 - 1;
-            complex double* cCol = cColFirst + kn * M2buf;
+            const LTFAT_COMPLEX* actKCol = actK + kn * kernh2 +  kernh2 - 1;
+            LTFAT_COMPLEX* cCol = cColFirst + kn * M2buf;
 
             /* Inner loop over half of the rows of the kernel excluding the middle row */
             for (int km = 0; km < kernh2 - 1; km++)
             {
                 /* Doing the complex conjugated kernel elements simulteneously */
-                double ar  = creal(actKCol[-km]);
-                double ai  = cimag(actKCol[-km]);
-                double br  = creal(cCol[mfirst + km]);
-                double bi  = cimag(cCol[mfirst + km]);
-                double bbr = creal(cCol[mlast - km]);
-                double bbi = cimag(cCol[mlast - km]);
+                LTFAT_REAL ar  = ltfat_real(actKCol[-km]);
+                LTFAT_REAL ai  = ltfat_imag(actKCol[-km]);
+                LTFAT_REAL br  = ltfat_real(cCol[mfirst + km]);
+                LTFAT_REAL bi  = ltfat_imag(cCol[mfirst + km]);
+                LTFAT_REAL bbr = ltfat_real(cCol[mlast - km]);
+                LTFAT_REAL bbi = ltfat_imag(cCol[mlast - km]);
                 accum += ar * (br + bbr) - ai * (bi - bbi)
                          + I * ( ar * (bi + bbi) + ai * (br - bbr));
             }
@@ -635,7 +639,7 @@ leglaupdatereal_execute_col(leglaupdate_plan_col* plan,
         if (do_onthefly)
         {
             /* Update the phase of a coefficient immediatelly */
-            coutCol[mfirst] = sCol[mfirst] * cexp(I * carg(coutCol[mfirst]));
+            coutCol[mfirst] = sCol[mfirst] * exp(I * ltfat_arg(coutCol[mfirst]));
             cColFirst[kernwMidId * M2buf + m] = coutCol[mfirst];
         }
 
@@ -646,15 +650,15 @@ leglaupdatereal_execute_col(leglaupdate_plan_col* plan,
     {
         for (m = kernh2 - 1, mfirst = 0; mfirst < M2; m++, mfirst++)
         {
-            coutCol[mfirst] = sCol[mfirst] * cexp(I * carg(coutCol[mfirst]));
+            coutCol[mfirst] = sCol[mfirst] * exp(I * ltfat_arg(coutCol[mfirst]));
             cColFirst[kernwMidId * M2buf + m] = coutCol[mfirst];
         }
     }
 }
 
 void
-extendborders(leglaupdate_plan_col* plan, const complex double c[], int N,
-              complex double buf[])
+extendborders(leglaupdate_plan_col* plan, const LTFAT_COMPLEX c[], int N,
+              LTFAT_COMPLEX buf[])
 {
     int m, n;
     int M2 = plan->M / 2 + 1;
@@ -672,16 +676,16 @@ extendborders(leglaupdate_plan_col* plan, const complex double c[], int N,
         /* Copy input to the center of the buffer */
         for (n = 0; n < N; n++)
         {
-            complex double* bufstart = buf + (n + kernw2 - 1) * M2buf + kernh2 - 1;
-            const complex double* cstart = c + n * M2;
+            LTFAT_COMPLEX* bufstart = buf + (n + kernw2 - 1) * M2buf + kernh2 - 1;
+            const LTFAT_COMPLEX* cstart = c + n * M2;
             memcpy(bufstart, cstart, M2 * sizeof * bufstart);
         }
 
         /* Periodically extend the left side */
         for (m = 0; m < M2; m++)
         {
-            complex double* buftarget = buf + kernh2 - 1 + m;
-            complex double* bufsource = buf + (N) * M2buf + kernh2 - 1 + m;
+            LTFAT_COMPLEX* buftarget = buf + kernh2 - 1 + m;
+            LTFAT_COMPLEX* bufsource = buf + (N) * M2buf + kernh2 - 1 + m;
 
             for (n = 0; n < kernw2 - 1; n++)
                 buftarget[n * M2buf] = bufsource[n * M2buf];
@@ -690,8 +694,8 @@ extendborders(leglaupdate_plan_col* plan, const complex double c[], int N,
         /* Periodically extend the right side*/
         for (m = 0; m < M2; m++)
         {
-            complex double* bufsource = buf + (kernw2 - 1) * M2buf + kernh2 - 1 + m;
-            complex double* buftarget = buf + (N + kernw2 - 1) * M2buf + kernh2 - 1 + m;
+            LTFAT_COMPLEX* bufsource = buf + (kernw2 - 1) * M2buf + kernh2 - 1 + m;
+            LTFAT_COMPLEX* buftarget = buf + (N + kernw2 - 1) * M2buf + kernh2 - 1 + m;
 
             for (n = 0; n < kernw2 - 1; n++)
                 buftarget[n * M2buf] = bufsource[n * M2buf];
@@ -702,8 +706,8 @@ extendborders(leglaupdate_plan_col* plan, const complex double c[], int N,
         /* Copy input to the center of the buffer */
         for (n = 0; n < N; n++)
         {
-            complex double* bufstart = buf + n * M2buf + kernh2 - 1;
-            const complex double* cstart = c + n * M2;
+            LTFAT_COMPLEX* bufstart = buf + n * M2buf + kernh2 - 1;
+            const LTFAT_COMPLEX* cstart = c + n * M2;
             memcpy(bufstart, cstart, M2 * sizeof * bufstart);
         }
     }
@@ -711,8 +715,8 @@ extendborders(leglaupdate_plan_col* plan, const complex double c[], int N,
     /* Conjugated odd-symmetric extention of the top border*/
     for (n = 0; n < Nbuf; n++)
     {
-        complex double* bufsource = buf + n * M2buf + kernh2;
-        complex double* buftarget = bufsource - 2;
+        LTFAT_COMPLEX* bufsource = buf + n * M2buf + kernh2;
+        LTFAT_COMPLEX* buftarget = bufsource - 2;
 
         for (m = 0; m < kernh2 - 1; m++)
             buftarget[-m] = conj(bufsource[m]);
@@ -723,8 +727,8 @@ extendborders(leglaupdate_plan_col* plan, const complex double c[], int N,
      * */
     for (n = 0; n < Nbuf; n++)
     {
-        complex double* buftarget = buf + n * M2buf + kernh2 - 1 + M2;
-        complex double* bufsource = buftarget - 2 + plan->M % 2;
+        LTFAT_COMPLEX* buftarget = buf + n * M2buf + kernh2 - 1 + M2;
+        LTFAT_COMPLEX* bufsource = buftarget - 2 + plan->M % 2;
 
         for (m = 0; m < kernh2 - 1; m++)
             buftarget[m] = conj(bufsource[-m]);

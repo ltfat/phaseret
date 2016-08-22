@@ -1,36 +1,35 @@
-#include "ltfat.h"
-#include "ltfat/macros.h"
 #include "phaseret/dgtrealwrapper.h"
+#include "ltfat/macros.h"
 #include "dgtrealwrapper_private.h"
 
 int
-ltfat_idgtreal_long_execute_d_wrapper(void* plan, const complex double* c,
-                                      int UNUSED(L), int UNUSED(W), double* f)
+ltfat_idgtreal_long_execute_d_wrapper(void* plan, const LTFAT_COMPLEX* c,
+                                      int UNUSED(L), int UNUSED(W), LTFAT_REAL* f)
 {
     return ltfat_idgtreal_long_execute_newarray_d(
                (ltfat_idgtreal_long_plan_d*) plan, c, f);
 }
 
 int
-ltfat_dgtreal_long_execute_d_wrapper(void* plan, const double* f,
+ltfat_dgtreal_long_execute_d_wrapper(void* plan, const LTFAT_REAL* f,
                                      int UNUSED(L), int UNUSED(W),
-                                     complex double* c)
+                                     LTFAT_COMPLEX* c)
 {
     return ltfat_dgtreal_long_execute_newarray_d(
                (ltfat_dgtreal_long_plan_d*) plan, f, c);
 }
 
 int
-ltfat_idgtreal_fb_execute_d_wrapper(void* plan, const complex double* c, int L,
-                                    int W, double* f)
+ltfat_idgtreal_fb_execute_d_wrapper(void* plan, const LTFAT_COMPLEX* c, int L,
+                                    int W, LTFAT_REAL* f)
 {
     return ltfat_idgtreal_fb_execute_d(
                (ltfat_idgtreal_fb_plan_d*) plan, c, L, W, f);
 }
 
 int
-ltfat_dgtreal_fb_execute_d_wrapper(void* plan, const double* f, int L, int W,
-                                   complex double* c)
+ltfat_dgtreal_fb_execute_d_wrapper(void* plan, const LTFAT_REAL* f, int L, int W,
+                                   LTFAT_COMPLEX* c)
 {
     return ltfat_dgtreal_fb_execute_d(
                (ltfat_dgtreal_fb_plan_d*) plan, f, L, W, c);
@@ -61,8 +60,8 @@ ltfat_dgtreal_fb_done_d_wrapper(void** plan)
 }
 
 int
-dgtreal_anasyn_execute_proj(dgtreal_anasyn_plan* p, const complex double cin[],
-                            complex double cout[])
+dgtreal_anasyn_execute_proj(dgtreal_anasyn_plan* p, const LTFAT_COMPLEX cin[],
+                            LTFAT_COMPLEX cout[])
 {
     int status = LTFATERR_SUCCESS;
     CHECKSTATUS( p->backtra(p->backtra_userdata, cin, p->L, p->W, p->f),
@@ -74,15 +73,15 @@ error:
 }
 
 int
-dgtreal_anasyn_execute_syn(dgtreal_anasyn_plan* p, const complex double c[],
-                           double f[])
+dgtreal_anasyn_execute_syn(dgtreal_anasyn_plan* p, const LTFAT_COMPLEX c[],
+                           LTFAT_REAL f[])
 {
     return p->backtra(p->backtra_userdata, c, p->L, p->W, f);
 }
 
 int
-dgtreal_anasyn_execute_ana(dgtreal_anasyn_plan* p, const double f[],
-                           complex double c[])
+dgtreal_anasyn_execute_ana(dgtreal_anasyn_plan* p, const LTFAT_REAL f[],
+                           LTFAT_COMPLEX c[])
 {
     return p->fwdtra(p->fwdtra_userdata, f, p->L, p->W,  c);
 }
@@ -91,8 +90,9 @@ int
 dgtreal_anasyn_done(dgtreal_anasyn_plan** p)
 {
     int status = LTFATERR_SUCCESS;
+    dgtreal_anasyn_plan* pp;
     CHECKNULL(p); CHECKNULL(*p);
-    dgtreal_anasyn_plan* pp = *p;
+    pp = *p;
     CHECKSTATUS( pp->fwddonefunc(&pp->fwdtra_userdata),
                  "Forward transform done function failed");
     CHECKSTATUS( pp->backdonefunc(&pp->backtra_userdata),
@@ -106,18 +106,15 @@ error:
 }
 
 int
-dgtreal_anasyn_init(const double g[], int gl, int L, int W, int a, int M,
-                    complex double c[], dgtreal_anasyn_hint hint,
+dgtreal_anasyn_init(const LTFAT_REAL g[], int gl, int L, int W, int a, int M,
+                    LTFAT_COMPLEX c[], dgtreal_anasyn_hint hint,
                     ltfat_phaseconvention ptype, unsigned flags,
                     dgtreal_anasyn_plan** pout)
 {
-    dgtreal_anasyn_plan* p = NULL;
-
     int status = LTFATERR_SUCCESS;
-
+    dgtreal_anasyn_plan* p = NULL;
     int ispainless = gl <= M;
-
-    double* g2 = NULL;
+    LTFAT_REAL* g2 = NULL;
     int g2l = 0;
 
     int minL = ltfat_lcm(a, M);
@@ -128,7 +125,7 @@ dgtreal_anasyn_init(const double g[], int gl, int L, int W, int a, int M,
     {
         // The length of the dual window is guaranteed to be gl
         g2l = gl;
-        CHECKMEM( g2 = malloc(gl * sizeof * g2));
+        CHECKMEM( g2 = LTFAT_NAME_REAL(malloc)(gl));
         CHECKSTATUS( ltfat_gabdual_painless_d(g, gl, a, M, g2),
                      "Gabdual painless call failed");
     }
@@ -136,7 +133,7 @@ dgtreal_anasyn_init(const double g[], int gl, int L, int W, int a, int M,
     {
 #ifndef NOBLASLAPACK
         g2l = L;
-        CHECKMEM( g2 = malloc(L * sizeof * g2));
+        CHECKMEM( g2 = LTFAT_NAME_REAL(malloc)(L));
         ltfat_fir2long_d(g, gl, L, g2);
         CHECKSTATUS( ltfat_gabdual_long_d(g, L, a, M, g2),
                      "Gabdual long failed");
@@ -145,11 +142,11 @@ dgtreal_anasyn_init(const double g[], int gl, int L, int W, int a, int M,
 #endif
     }
 
-    CHECKMEM( p = calloc(1, sizeof * p));
-    *p = (dgtreal_anasyn_plan) {.M = M, .a = a, .L = L, .W = W, .c = c};
+    CHECKMEM( p = (dgtreal_anasyn_plan*) calloc(1, sizeof * p));
+    p->M = M, p->a = a, p->L = L, p->W = W, p->c = c;
 
     // Needed for some of the plans
-    CHECKMEM( p->f = malloc(L * W * sizeof * p->f));
+    CHECKMEM( p->f = LTFAT_NAME_REAL(malloc)(L * W));
 
     if (dgtreal_anasyn_long == hint)
     {
@@ -157,7 +154,7 @@ dgtreal_anasyn_init(const double g[], int gl, int L, int W, int a, int M,
         if (ispainless)
         {
             // Make the dual window longer if it is not already
-            CHECKMEM( g2 = realloc(g2, L * sizeof * g2));
+            CHECKMEM( g2 = LTFAT_NAME_REAL(realloc)(g2, g2l, L));
             ltfat_fir2long_d(g2, g2l, L, g2);
         }
 

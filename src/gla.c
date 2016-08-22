@@ -1,7 +1,6 @@
-#include "ltfat.h"
-#include "ltfat/macros.h"
 #include "phaseret/gla.h"
 #include "phaseret/utils.h"
+#include "ltfat/macros.h"
 #include "dgtrealwrapper_private.h"
 
 struct gla_plan
@@ -14,19 +13,19 @@ struct gla_plan
     gla_callback_fmod* fmod_callback;
     void* fmod_callback_userdata;
 // For storing magnitude
-    double* s;
+    LTFAT_REAL* s;
 // Storing cinit
-    const complex double* cinit;
+    const LTFAT_COMPLEX* cinit;
 // Used just for fgla
     int do_fast;
     double alpha;
-    complex double* t;
+    LTFAT_COMPLEX* t;
 };
 
 int
-gla(const complex double cinit[], const double g[],  const int L, const int gl,
+gla(const LTFAT_COMPLEX cinit[], const LTFAT_REAL g[],  const int L, const int gl,
     const int W,
-    const int a, const int M, const int iter, complex double cout[])
+    const int a, const int M, const int iter, LTFAT_COMPLEX cout[])
 {
     gla_plan* p = NULL;
     int status = LTFATERR_SUCCESS;
@@ -42,9 +41,9 @@ error:
 }
 
 int
-gla_init(const complex double cinit[], const double g[], const int L,
+gla_init(const LTFAT_COMPLEX cinit[], const LTFAT_REAL g[], const int L,
          const int gl, const int W, const int a, const int M, const double alpha,
-         complex double c[], dgtreal_anasyn_hint hint, unsigned flags,
+         LTFAT_COMPLEX c[], dgtreal_anasyn_hint hint, unsigned flags,
          gla_plan** pout)
 {
     int status = LTFATERR_SUCCESS;
@@ -53,14 +52,14 @@ gla_init(const complex double cinit[], const double g[], const int L,
     int M2 = M / 2 + 1;
 
     CHECK(LTFATERR_BADARG, alpha >= 0.0, "alpha cannot be negative");
-    CHECKMEM( p = calloc(1, sizeof * p));
-    CHECKMEM( p->s = malloc(M2 * N * W * sizeof * p->t));
+    CHECKMEM( p = (gla_plan*) ltfat_calloc(1, sizeof * p));
+    CHECKMEM( p->s = LTFAT_NAME_REAL(malloc)(M2 * N * W));
 
     if (alpha > 0.0)
     {
         p->do_fast = 1;
         p->alpha = alpha;
-        CHECKMEM( p->t = malloc(M2 * N * W * sizeof * p->t));
+        CHECKMEM( p->t = LTFAT_NAME_COMPLEX(malloc)(M2 * N * W));
     }
 
     CHECKSTATUS(
@@ -85,9 +84,10 @@ error:
 int
 gla_done(gla_plan** p)
 {
+    gla_plan* pp = NULL;
     int status = LTFATERR_SUCCESS;
     CHECKNULL(p); CHECKNULL(*p);
-    gla_plan* pp = *p;
+    pp = *p;
 
     CHECKSTATUS(
         dgtreal_anasyn_done(&pp->p),
@@ -102,14 +102,16 @@ error:
 }
 
 int
-gla_execute_newarray(gla_plan* p, const complex double cinit[], const int iter,
-                     complex double cout[])
+gla_execute_newarray(gla_plan* p, const LTFAT_COMPLEX cinit[], const int iter,
+                     LTFAT_COMPLEX cout[])
 {
     int status = LTFATERR_SUCCESS;
+    dgtreal_anasyn_plan pp2;
+    gla_plan p2;
     CHECKNULL(p); CHECKNULL(cinit); CHECKNULL(cout);
     // Shallow copy the plan and replace c
-    gla_plan p2 = *p;
-    dgtreal_anasyn_plan pp2 = *p2.p;
+    p2 = *p;
+    pp2 = *p2.p;
     pp2.c = cout;
     p2.p = &pp2;
     p2.cinit = cinit;
@@ -122,22 +124,24 @@ int
 gla_execute(gla_plan* p, const int iter)
 {
     int status = LTFATERR_SUCCESS;
+    int M,L,W,a,M2,N;
+    dgtreal_anasyn_plan* pp;
     CHECKNULL(p);
     CHECK(LTFATERR_NOTPOSARG, iter > 0,
           "At least one iteration is requred. Passed %d.", iter);
 
-    dgtreal_anasyn_plan* pp = p->p;
+    pp = p->p;
     CHECKNULL(pp->c); CHECKNULL(p->cinit);
-    int M = pp->M;
-    int L = pp->L;
-    int W = pp->W;
-    int a = pp->a;
-    int M2 = M / 2 + 1;
-    int N = L / a;
+    M = pp->M;
+    L = pp->L;
+    W = pp->W;
+    a = pp->a;
+    M2 = M / 2 + 1;
+    N = L / a;
 
     // Store the magnitude
     for (int ii = 0; ii < N * M2 * W; ii++)
-        p->s[ii] = cabs(p->cinit[ii]);
+        p->s[ii] = ltfat_abs(p->cinit[ii]);
 
     // Copy to the output array if we are not working inplace
     if (p->cinit != pp->c)
@@ -192,7 +196,7 @@ gla_execute(gla_plan* p, const int iter)
                 // The plan was not inicialized with acceleration but
                 // nonzero alpha was set in the status callback.
                 p->do_fast = 1;
-                CHECKMEM( p->t = malloc(M2 * N * W * sizeof * p->t));
+                CHECKMEM( p->t = LTFAT_NAME_COMPLEX(malloc)(M2 * N * W));
                 memcpy(p->t, pp->c, (N * M2 * W) * sizeof * p->t );
             }
         }
@@ -243,11 +247,11 @@ error:
 }
 
 int
-fastupdate(complex double* c, complex double* t, double alpha, int L)
+fastupdate(LTFAT_COMPLEX* c, LTFAT_COMPLEX* t, double alpha, int L)
 {
     for (int ii = 0; ii < L; ii++)
     {
-        complex double cold = c[ii];
+        LTFAT_COMPLEX cold = c[ii];
         c[ii] = c[ii] + alpha * (c[ii] - t[ii]);
         t[ii] = cold;
     }

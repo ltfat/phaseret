@@ -1,95 +1,91 @@
 #include "phaseret/spsi.h"
 #include "phaseret/utils.h"
-#include "ltfat.h"
 #include "ltfat/macros.h"
 #include "float.h"
 
-int
-spsi(const double* s, int L, int W, int a, int M, double* initphase,
-     complex double* c)
+int spsi(const LTFAT_REAL* s, int L, int W, int a, int M, LTFAT_REAL* initphase,
+    LTFAT_COMPLEX* c)
 {
     int M2 = M / 2 + 1;
     int N = L / a;
-    double* tmpphase = initphase;
+    LTFAT_REAL* tmpphase = initphase;
 
     int status = LTFATERR_SUCCESS;
-    CHECKNULL(s); CHECKNULL(c);
+    CHECKNULL(s);
+    CHECKNULL(c);
     CHECK(LTFATERR_NOTPOSARG, L > 0, "L must be positive");
     CHECK(LTFATERR_NOTPOSARG, W > 0, "W must be positive");
     CHECK(LTFATERR_NOTPOSARG, a > 0, "a must be positive");
     CHECK(LTFATERR_NOTPOSARG, M > 0, "M must be positive");
 
     if (!initphase)
-        CHECKMEM( tmpphase = calloc( M2 * W , sizeof * tmpphase) );
+        CHECKMEM(tmpphase = LTFAT_NAME_REAL(calloc)(M2 * W));
 
-    if (s == (double*) c)
-    {
+    if (s == (LTFAT_REAL*)c) {
         // Inplace, move the abs. values to the second half of the array
-        double* chalf = ((double*) c) + W * M2 * N;
-        memcpy(chalf, s, W * M2 * N * sizeof * chalf);
+        LTFAT_REAL* chalf = ((LTFAT_REAL*)c) + W * M2 * N;
+        memcpy(chalf, s, W * M2 * N * sizeof *chalf);
         s = chalf;
     }
 
-    for (int w = 0; w < W; w++)
-    {
-        double* tmpphasecol = tmpphase + w * M2;
-        for (int n = 0; n < N; n++)
-        {
-            const double* scol = s + n * M2 + w * M2 * N;
-            complex double* ccol = c + n * M2 + w * M2 * N;
+    for (int w = 0; w < W; w++) {
+        LTFAT_REAL* tmpphasecol = tmpphase + w * M2;
+        for (int n = 0; n < N; n++) {
+            const LTFAT_REAL* scol = s + n * M2 + w * M2 * N;
+            LTFAT_COMPLEX* ccol = c + n * M2 + w * M2 * N;
 
             spsiupdate(scol, 1, a, M, tmpphasecol);
 
             for (int m = 0; m < M2; m++)
-                ccol[m] = scol[m] * cexp(I * tmpphasecol[m]);
-
+                ccol[m] = scol[m] * exp(I * tmpphasecol[m]);
         }
     }
 
 error:
-    if (!initphase) free(tmpphase);
+    if (!initphase)
+        free(tmpphase);
     return status;
 }
 
-int
-spsi_withmask(const complex double* cinit, const int* mask, int L, int W, int a,
-              int M, double* initphase, complex double* c)
+int spsi_withmask(const LTFAT_COMPLEX* cinit, const int* mask, int L, int W, int a, int M,
+    LTFAT_REAL* initphase, LTFAT_COMPLEX* c)
 {
     int M2 = M / 2 + 1;
     int N = L / a;
-    double* tmpphase = initphase;
+    LTFAT_REAL* tmpphase = initphase;
 
     int status = LTFATERR_SUCCESS;
-    CHECKNULL(cinit); CHECKNULL(mask); CHECKNULL(c);
+    CHECKNULL(cinit);
+    CHECKNULL(mask);
+    CHECKNULL(c);
     CHECK(LTFATERR_NOTPOSARG, L > 0, "L must be positive");
     CHECK(LTFATERR_NOTPOSARG, W > 0, "W must be positive");
     CHECK(LTFATERR_NOTPOSARG, a > 0, "a must be positive");
     CHECK(LTFATERR_NOTPOSARG, M > 0, "M must be positive");
 
     if (!initphase)
-        tmpphase = calloc( M2 * W, sizeof * tmpphase);
+        CHECKMEM(tmpphase = LTFAT_NAME_REAL(calloc)(M2 * W));
 
-    for (int w = 0; w < W; w++)
-    {
-        double* tmpphasecol = tmpphase + w * M2;
-        for (int n = 0; n < N; n++)
-        {
-            complex double* ccol = c + n * M2 + w * M2 * N;
-            const complex double* cinitcol = cinit + n * M2 + w * M2 * N;
+    for (int w = 0; w < W; w++) {
+        LTFAT_REAL* tmpphasecol = tmpphase + w * M2;
+        for (int n = 0; n < N; n++) {
+            LTFAT_COMPLEX* ccol = c + n * M2 + w * M2 * N;
+            const LTFAT_COMPLEX* cinitcol = cinit + n * M2 + w * M2 * N;
             const int* maskcol = mask + n * M2 + w * M2 * N;
 
             realimag2absangle(cinitcol, M2, ccol);
-            double* absptr = (double*) ccol;
-            double* angleptr = ((double*) ccol) + 1;
+            LTFAT_REAL* absptr = (LTFAT_REAL*)ccol;
+            LTFAT_REAL* angleptr = ((LTFAT_REAL*)ccol) + 1;
 
             spsiupdate(absptr, 2, a, M, tmpphasecol);
 
             /* Overwrite with known phase */
             for (int m = 0; m < M2; m++)
-                if (maskcol[m]) tmpphasecol[m] = angleptr[2 * m];
+                if (maskcol[m])
+                    tmpphasecol[m] = angleptr[2 * m];
 
             for (int m = 0; m < M2; m++)
-                ccol[m] = absptr[2 * m] * cexp(I * tmpphasecol[m]);
+                ccol[m] = absptr[2 * m] * exp(I * tmpphasecol[m]);
         }
     }
 
@@ -100,41 +96,36 @@ error:
     return status;
 }
 
-void
-spsiupdate(const double* scol, int stride, int a, int M, double* tmpphase)
+void spsiupdate(const LTFAT_REAL* scol, int stride, int a, int M, LTFAT_REAL* tmpphase)
 {
     int M2 = M / 2 + 1;
 
-    for (int m = 1; m < M2 - 1; m++)
-    {
+    for (int m = 1; m < M2 - 1; m++) {
         if (scol[stride * m] > scol[stride * (m - 1)]
-            && scol[stride * m] > scol[stride * (m + 1)])
-        {
-            double p; int binup = m, bindown = m;
-            double alpha = log(scol[stride * (m - 1)] + DBL_MIN);
-            double beta = log(scol[stride * m] + DBL_MIN);
-            double gamma = log(scol[stride * (m + 1)] + DBL_MIN);
-            double denom = alpha - 2.0 * beta + gamma;
+            && scol[stride * m] > scol[stride * (m + 1)]) {
+            LTFAT_REAL p;
+            int binup = m, bindown = m;
+            LTFAT_REAL alpha = log(scol[stride * (m - 1)] + DBL_MIN);
+            LTFAT_REAL beta = log(scol[stride * m] + DBL_MIN);
+            LTFAT_REAL gamma = log(scol[stride * (m + 1)] + DBL_MIN);
+            LTFAT_REAL denom = alpha - 2.0 * beta + gamma;
 
             if (denom != 0.0)
                 p = 0.5 * (alpha - gamma) / denom;
             else
                 p = 0;
 
-
-            double instf = m + p;
-            double peakPhase = tmpphase[m] + 2.0 * M_PI * a * instf / M;
+            LTFAT_REAL instf = m + p;
+            LTFAT_REAL peakPhase = tmpphase[m] + 2.0 * M_PI * a * instf / M;
             tmpphase[m] = peakPhase;
 
-            if (p > 0)
-            {
+            if (p > 0) {
                 tmpphase[m + 1] = peakPhase;
                 binup = m + 2;
                 bindown = m - 1;
             }
 
-            if (p < 0)
-            {
+            if (p < 0) {
                 tmpphase[m - 1] = peakPhase;
                 binup = m + 1;
                 bindown = m - 2;
@@ -143,8 +134,7 @@ spsiupdate(const double* scol, int stride, int a, int M, double* tmpphase)
             // Go towards low frequency bins
             int bin = bindown;
 
-            while (bin > 0 && scol[stride * bin] < scol[stride * (bin + 1)])
-            {
+            while (bin > 0 && scol[stride * bin] < scol[stride * (bin + 1)]) {
                 tmpphase[bin] = peakPhase;
                 bin--;
             }
@@ -152,13 +142,10 @@ spsiupdate(const double* scol, int stride, int a, int M, double* tmpphase)
             // Go towards high frequency bins
             bin = binup;
 
-            while (bin < M2 - 1 && scol[stride * bin] < scol[stride * (bin - 1)])
-            {
+            while (bin < M2 - 1 && scol[stride * bin] < scol[stride * (bin - 1)]) {
                 tmpphase[bin] = peakPhase;
                 bin++;
             }
         }
     }
-
-
 }

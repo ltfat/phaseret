@@ -1,9 +1,10 @@
-#include "config.h"
-#include "dgtrealwrapper.h"
-#ifndef NOSYSTEMHEADERS
-#include <stdlib.h>
-#endif
+#define LTFAT_DOUBLE
 
+#ifndef NOSYSTEMHEADERS
+#include "ltfat.h"
+#endif
+#include "ltfat/types.h"
+#include "dgtrealwrapper.h"
 
 typedef struct legla_plan legla_plan;
 typedef struct leglaupdate_plan leglaupdate_plan;
@@ -41,7 +42,7 @@ typedef enum
  *   0          | Signalizes that callback exited without error
  *  <0          | Callback exited with error
  */
-typedef int legla_callback_cmod(void* userdata, complex double c[], int L, int W, int a, int M);
+typedef int legla_callback_cmod(void* userdata, LTFAT_COMPLEX c[], int L, int W, int a, int M);
 
 /** Function prototype for status callback
  *
@@ -67,7 +68,7 @@ typedef int legla_callback_cmod(void* userdata, complex double c[], int L, int W
  *
  *  \see dgtreal_anasyn_execute_proj dgtreal_anasyn_execute_ana dgtreal_anasyn_execute_syn
  */
-typedef int legla_callback_status(dgtreal_anasyn_plan* p, void* userdata, complex double c[],
+typedef int legla_callback_status(dgtreal_anasyn_plan* p, void* userdata, LTFAT_COMPLEX c[],
                                   int L, int W, int a, int M, double* alpha, int iter);
 
 typedef struct
@@ -126,8 +127,8 @@ typedef enum
  *  LTFATERR_NOMEM        | Memory allocation error occurred
  */
 int
-legla(const complex double cinit[], const double g[], const int L, const int gl,
-      const int W, const int a, const int M, const int iter, complex double c[]);
+legla(const LTFAT_COMPLEX cinit[], const LTFAT_REAL g[], const int L, const int gl,
+      const int W, const int a, const int M, const int iter, LTFAT_COMPLEX c[]);
 
 /** Le Roux's Griffin-Lim algorithm struct initialization
  *
@@ -157,9 +158,9 @@ legla(const complex double cinit[], const double g[], const int L, const int gl,
  *  LTFATERR_NOMEM        | Memory allocation error occurred
  */
 int
-legla_init(const complex double cinit[], const double g[], const int L,
+legla_init(const LTFAT_COMPLEX cinit[], const LTFAT_REAL g[], const int L,
            const int gl, const int W, const int a, const int M,
-           const double alpha, complex double c[],
+           const double alpha, LTFAT_COMPLEX c[],
            legla_init_params* params, legla_plan** pout);
 
 /** Initialize parameter struct for legla_init
@@ -211,7 +212,7 @@ legla_execute(legla_plan* p, const int iter);
  * any                  | Status code from any of the callbacks
  */
 int
-legla_execute_newarray(legla_plan* p, const complex double cinit[], const int iter, complex double c[]);
+legla_execute_newarray(legla_plan* p, const LTFAT_COMPLEX cinit[], const int iter, LTFAT_COMPLEX c[]);
 
 /** Delete LEGLA plan
  *
@@ -257,12 +258,12 @@ legla_set_cmod_callback(legla_plan* p, legla_callback_cmod* callback, void* user
 
 /* Single iteration  */
 int
-leglaupdate_init(const complex double kern[], phaseret_size ksize,
+leglaupdate_init(const LTFAT_COMPLEX kern[], phaseret_size ksize,
                  int L, int W, int a, int M, int flags, leglaupdate_plan** pout);
 
 extern void
-leglaupdate_execute(leglaupdate_plan* plan, const double s[], complex double c[],
-                    complex double cout[]);
+leglaupdate_execute(leglaupdate_plan* plan, const LTFAT_REAL s[], LTFAT_COMPLEX c[],
+                    LTFAT_COMPLEX cout[]);
 
 void
 leglaupdate_done(leglaupdate_plan** plan);
@@ -274,34 +275,34 @@ leglaupdate_init_col(int M, phaseret_size ksize,
 
 void
 leglaupdatereal_execute_col(leglaupdate_plan_col* plan,
-                            const double sCol[],
-                            const complex double actK[],
-                            complex double cColFirst[],
-                            complex double coutrCol[]);
+                            const LTFAT_REAL sCol[],
+                            const LTFAT_COMPLEX actK[],
+                            LTFAT_COMPLEX cColFirst[],
+                            LTFAT_COMPLEX coutrCol[]);
 
 /* Utils */
 void
-extendborders(leglaupdate_plan_col* plan, const complex double c[], int N,
-              complex double buf[]);
+extendborders(leglaupdate_plan_col* plan, const LTFAT_COMPLEX c[], int N,
+              LTFAT_COMPLEX buf[]);
 
 int
-legla_big2small_kernel(complex double* bigc, phaseret_size bigsize,
-                       phaseret_size smallsize, complex double* smallc);
+legla_big2small_kernel(LTFAT_COMPLEX* bigc, phaseret_size bigsize,
+                       phaseret_size smallsize, LTFAT_COMPLEX* smallc);
 
 int
-legla_findkernelsize(complex double* bigc, phaseret_size bigsize,
+legla_findkernelsize(LTFAT_COMPLEX* bigc, phaseret_size bigsize,
                      double relthr, phaseret_size* ksize);
 
 /* Modulate kernel */
 void
-kernphasefi(const complex double kern[], phaseret_size ksize,
-            int n, int a, int M, complex double kernmod[]);
+kernphasefi(const LTFAT_COMPLEX kern[], phaseret_size ksize,
+            int n, int a, int M, LTFAT_COMPLEX kernmod[]);
 
 /* Format kernel */
 void
-formatkernel(double* kernr, double* kerni,
+formatkernel(LTFAT_REAL* kernr, LTFAT_REAL* kerni,
              int kernh, int kernw,
-             int kernwskip, double* kernmodr, double* kernmodi);
+             int kernwskip, LTFAT_REAL* kernmodr, LTFAT_REAL* kernmodi);
 
 /* Util */
 int phaseret_gcd(int m, int n);
