@@ -1,3 +1,22 @@
+# This is the main makefile for libphaseret
+#
+# Builds three static and three shared libraries (default prefix is build/):
+#
+# 	libphaseret.a(.so)     Contains double, single and common code
+# 	libphaseretd.a(.so)    Contains double and common code
+# 	libphaseretf.a(.so)    Contains single and common code
+#
+# make CROSS=x86_64-w64-mingw32.static-
+# or
+# make CROSS=x86_64-w64-mingw32.static- NOBLASLAPACK=1
+#
+# Single, flattened header file build/phaseret.h can be obtained by
+# make build/phaseret.h
+# 
+#
+
+include ostools.mk
+
 ifdef CROSS
 	CC = $(CROSS)gcc
 	AR = $(CROSS)ar
@@ -13,8 +32,6 @@ else
 	objprefix ?= obj
 endif
 
-include ostools.mk
-
 # VERSION := $(shell cat phaseret_version)
 PACKAGE = phaseret-$(VERSION)
 
@@ -22,25 +39,39 @@ PREFIX ?= /usr/local
 LIBDIR = $(PREFIX)/lib
 INCDIR = $(PREFIX)/include
 
-# LIB
-LIBSOURCES = $(wildcard src/*.c)
-LIBOBJECTS = $(addprefix $(objprefix)/,$(notdir $(LIBSOURCES:.c=.o)))
-
 # Base CFLAGS
-CFLAGS+=-Wall -std=c99 -Iinclude -Ithirdparty $(OPTCFLAGS)
-CXXFLAGS+=-Wall -std=c++11 -Iinclude -Ithirdparty $(OPTCFLAGS)
+CFLAGS+=-Wall -Wextra -pedantic -std=c99 -Iinclude -Ithirdparty $(OPTCFLAGS)
+CXXFLAGS+=-Wall -Wextra -pedantic -fno-exceptions -fno-rtti -std=c++11 -Iinclude -Ithirdparty $(OPTCFLAGS)
 
 # The following adds parameters to CFLAGS
 include comptarget.mk
 
-STATIC = libphaseret.a
+# LIB
+SOURCES = $(addprefix src/, dgtrealwrapper.c gla.c legla.c pghi.c rtisila.c \
+		                    rtpghi.c spsi.c utils.c )
+SOURCES_TYPECONSTANT = $(wildcard src/*_typeconstant.c )
+DOBJECTS = $(addprefix $(objprefix)/double/,$(notdir $(SOURCES:.c=.o)))
+SOBJECTS = $(addprefix $(objprefix)/single/,$(notdir $(SOURCES:.c=.o)))
+COMMONDOBJECTS = $(addprefix $(objprefix)/common/d,$(notdir $(SOURCES_TYPECONSTANT:.c=.o)))
+COMMONSOBJECTS = $(addprefix $(objprefix)/common/s,$(notdir $(SOURCES_TYPECONSTANT:.c=.o)))
+
+DSTATIC = libphaseretd.a
+SSTATIC = libphaseretf.a
+DSSTATIC = libphaseret.a
+
 ifdef MINGW
-	SHARED = libphaseret.dll
+	DSHARED = $(patsubst %.a,%.dll,$(DSTATIC))
+	SSHARED = $(patsubst %.a,%.dll,$(SSTATIC))
+	DSSHARED = $(patsubst %.a,%.dll,$(DSSTATIC))
 	EXTRALFLAGS = -Wl,--out-implib,$@.a -static-libgcc
+	CFLAGS += -DPHASERET_BUILD_SHARED
+	CXXFLAGS += -DPHASERET_BUILD_SHARED
 else
 	CFLAGS += -fPIC
 	CXXFLAGS += -fPIC
-	SHARED = libphaseret.so
+	DSHARED = $(patsubst %.a,%.so,$(DSTATIC))
+	SSHARED = $(patsubst %.a,%.so,$(SSTATIC))
+	DSSHARED = $(patsubst %.a,%.so,$(DSSTATIC))	
 endif
 
 ifdef USECPP
@@ -48,32 +79,74 @@ ifdef USECPP
 	CFLAGS = $(CXXFLAGS)
 endif
 
-TARGET=$(buildprefix)/$(STATIC)
-SO_TARGET=$(buildprefix)/$(SHARED)
+ifdef NOBLASLAPACK
+	CFLAGS += -DNOBLASLAPACK
+endif
 
-FFTWLIB ?= -lfftw3
+# Define targets
+DTARGET=$(buildprefix)/$(DSTATIC)
+STARGET=$(buildprefix)/$(SSTATIC)
+DSTARGET=$(buildprefix)/$(DSSTATIC)
+SO_DTARGET=$(buildprefix)/$(DSHARED)
+SO_STARGET=$(buildprefix)/$(SSHARED)
+SO_DSTARGET=$(buildprefix)/$(DSSHARED)
 
-LIBS=-lltfat  $(FFTWLIB) -lm
+FFTWLIB ?= -lfftw3 -lfftw3f
+LTFATFLIB ?= -lltfatf
+LTFATDLIB ?= -lltfatd
+LTFATLIB ?= -lltfat
 
-lib: $(TARGET) $(SO_TARGET)
+LIBS=$(FFTWLIB) -lm
 
-all: lib matlab octave
+DDEP = $(buildprefix) $(objprefix)/double $(objprefix)/common
+SDEP = $(buildprefix) $(objprefix)/single $(objprefix)/common
 
-$(TARGET): $(objprefix) $(buildprefix) $(LIBOBJECTS)
-	$(AR) rvu $@ $(LIBOBJECTS)
+lib: static shared
+
+$(DSTARGET): $(DDEP) $(SDEP) $(COMMONDOBJECTS) $(DOBJECTS) $(SOBJECTS)
+	$(AR) rv $@ $(COMMONDOBJECTS) $(DOBJECTS) $(SOBJECTS)
+	$(RANLIB) $@ 
+
+$(DTARGET): $(DDEP) $(COMMONDOBJECTS) $(DOBJECTS)
+	$(AR) rv $@ $(COMMONDOBJECTS) $(DOBJECTS)
 	$(RANLIB) $@
 
-$(SO_TARGET): $(objprefix) $(buildprefix) $(LIBOBJECTS)
-	$(CC) -shared -Wl,--no-undefined -o $@ $(LIBOBJECTS) $(EXTRALFLAGS) $(LIBS)
+$(STARGET): $(SDEP) $(COMMONSOBJECTS) $(SOBJECTS)
+	$(AR) rv $@ $(COMMONSOBJECTS) $(SOBJECTS)
+	$(RANLIB) $@
 
-$(objprefix)/%.o: src/%.c $(objprefix)
-	$(CC) -c $(CFLAGS) $< -o $@
+$(SO_DSTARGET): $(DDEP) $(SDEP) $(COMMONDOBJECTS) $(DOBJECTS) $(SOBJECTS)
+	$(CC) -shared -Wl,--no-undefined -o $@ $(COMMONDOBJECTS) $(DOBJECTS) $(SOBJECTS) $(EXTRALFLAGS) $(LTFATLIB) $(LIBS)
+
+$(SO_DTARGET): $(DDEP) $(COMMONDOBJECTS) $(DOBJECTS) 
+	$(CC) -shared -Wl,--no-undefined -o $@ $(COMMONDOBJECTS) $(DOBJECTS) $(EXTRALFLAGS) $(LTFATDLIB) $(LIBS)
+
+$(SO_STARGET): $(SDEP) $(COMMONSOBJECTS) $(SOBJECTS) 
+	$(CC) -shared -Wl,--no-undefined -o $@ $(COMMONSOBJECTS) $(SOBJECTS) $(EXTRALFLAGS) $(LTFATFLIB) $(LIBS)
+
+$(objprefix)/common/d%.o: src/%.c
+	$(CC) $(CFLAGS) $(OPTCFLAGS) -DLTFAT_DOUBLE -c $< -o $@ 
+
+$(objprefix)/double/%.o: src/%.c
+	$(CC) $(CFLAGS) $(OPTCFLAGS) -DLTFAT_DOUBLE  -c $< -o $@
+
+$(objprefix)/common/s%.o: src/%.c
+	$(CC) $(CFLAGS) $(OPTCFLAGS) -DLTFAT_SINGLE -c $< -o $@
+
+$(objprefix)/single/%.o: src/%.c
+	$(CC) $(CFLAGS) $(OPTCFLAGS) -DLTFAT_SINGLE  -c $< -o $@
 
 $(buildprefix):
-	$(MKDIR) $(buildprefix)
+	@$(MKDIR) $(buildprefix)
 
-$(objprefix):
-	$(MKDIR) $(objprefix)
+$(objprefix)/common:
+	@$(MKDIR) $(objprefix)$(PS)common
+
+$(objprefix)/double:
+	@$(MKDIR) $(objprefix)$(PS)double
+
+$(objprefix)/single:
+	@$(MKDIR) $(objprefix)$(PS)single
 
 matlab: $(TARGET)
 	$(MAKE) -C mex matlab
@@ -88,11 +161,13 @@ cleanlib:
 clean: cleanlib
 	$(MAKE) -C mex clean
 
-static: $(TARGET)
+static: $(DSTARGET) $(DTARGET) $(STARGET) 
 
-shared: $(SO_TARGET)
+shared: $(SO_DSTARGET) $(SO_DTARGET) $(SO_STARGET) 
 
-.PHONY: doc doxy mat2doc mat2docmat clean cleanlib octave matlab cleandoc cleandoxy cleanmat2doc static shared
+all: lib matlab octave
+
+.PHONY: all doc doxy mat2doc mat2docmat clean cleanlib octave matlab cleandoc cleandoxy cleanmat2doc static shared
 doc: doxy mat2doc
 
 cleanmat2doc:
@@ -113,7 +188,7 @@ mat2docmat:
 	mat2doc . mat
 
 $(buildprefix)/phaseret.h: $(buildprefix)
-	$(CC) -E -P -DNOSYSTEMHEADERS -nostdinc include/phaseret.h -I../libltfat/include -o $(buildprefix)/phaseret.h
+	$(CC) -E -P -DNOSYSTEMHEADERS -nostdinc include/phaseret.h -Iinclude -I../libltfat/include -o $(buildprefix)/phaseret.h
 	sed -i '1 i #ifndef _PHASERET_H' $(buildprefix)/phaseret.h
 	sed -i '1 a #define _PHASERET_H' $(buildprefix)/phaseret.h
 	sed -i '2 a #include <ltfat.h>' $(buildprefix)/phaseret.h
