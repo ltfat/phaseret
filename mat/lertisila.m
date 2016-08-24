@@ -193,7 +193,8 @@ if flags.do_modtrunc
 end
 
 % Just shrink the kernel to the size of look ahead
-kernsmall = middlepad2(kern,[kernh, kernw]);
+kernsmall = postpad(kern,floor(kernh/2) + 1);
+kernsmall = middlepad(kernsmall,kernw,2);
 
 % Kernel for the first asymetric window
 ctmpSpec1 = zeros(M,N);
@@ -205,7 +206,8 @@ if flags.do_modtrunc
 end
 
 % Just shrink the kernel to the size of look ahead
-kernsmallSpec1 = middlepad2(kernSpec1,[kernh, kernw]);
+kernsmallSpec1 = postpad(kernSpec1,floor(kernh/2) + 1);
+kernsmallSpec1 = middlepad(kernsmallSpec1,kernw,2);
 
 % Kernel for the second asymetric window
 ctmpSpec2 = zeros(M,N);
@@ -217,7 +219,8 @@ if flags.do_modtrunc
 end
 
 % Just shrink the kernel to the size of look ahead
-kernsmallSpec2 = middlepad2(kernSpec2,[kernh,kernw]);
+kernsmallSpec2 = postpad(kernSpec2,floor(kernh/2) + 1);
+kernsmallSpec2 = middlepad(kernsmallSpec2,kernw,2);
 
 cfull = c;
 c = zeros(size(cfull));
@@ -226,7 +229,7 @@ cbuf = zeros(M2,3*(lookback) + 1);
 
 % Precompute modulated kernels
 kNo = lcm(M,a)/a;
-kernelsSmall = zeros([kernh,kernw,kNo]);
+kernelsSmall = zeros([floor(kernh/2)+1,kernw,kNo]);
 kernelsSpec1Small = kernelsSmall;
 kernelsSpec2Small = kernelsSmall;
 for k = 0:kNo-1
@@ -234,9 +237,9 @@ for k = 0:kNo-1
     kernelsSpec1Small(:,:,k+1) = phasekernfi(kernsmallSpec1,k,a,M);
     kernelsSpec2Small(:,:,k+1) = phasekernfi(kernsmallSpec2,k,a,M);
     
-    kernelsSmall(:,:,k+1)=fftshift(involute2(conj(kernelsSmall(:,:,k+1))));
-    kernelsSpec1Small(:,:,k+1)=fftshift(involute2(conj(kernelsSpec1Small(:,:,k+1))));
-    kernelsSpec2Small(:,:,k+1)=fftshift(involute2(conj(kernelsSpec2Small(:,:,k+1))));
+    kernelsSmall(:,:,k+1)=(fftshift(kernelsSmall(:,:,k+1),2));
+    kernelsSpec1Small(:,:,k+1)=(fftshift(kernelsSpec1Small(:,:,k+1),2));
+    kernelsSpec2Small(:,:,k+1)=(fftshift(kernelsSpec2Small(:,:,k+1),2));
 end
 
 % Buffer initialization
@@ -349,10 +352,10 @@ end
 
 % M/a periodic in n
 function kernm = phasekernfi(kern,n,a,M)
-kern = involute2(kern);
+%kern = involute(kern,2);
 
 kernh = size(kern,1);
-l = -2*pi*n*fftindex(kernh)*a/M;
+l = -2*pi*n*(0:kernh-1)'*a/M;
 
 kernm = bsxfun(@times,kern,exp(1i*l));
 

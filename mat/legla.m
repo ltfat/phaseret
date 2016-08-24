@@ -287,19 +287,21 @@ for n=1:N
 end
 
 lastcol1 = 1;
-lastcol2 = 1;
+% Searching from the other end is not neccesary since the kenel
+% is always symmetric in the horizontal direction too
+% lastcol2 = 1;
 for m=1:M2
     newlastcol = find(abs(kern(m,1:ceil(end/2)))>=thr,1,'last');
     if newlastcol > lastcol1
         lastcol1 = newlastcol;
     end
     
-    newlastcol = find(abs(kern(m,end:-1:floor(end/2)))>=thr,1,'last');
-    if newlastcol > lastcol2
-        lastcol2 = newlastcol;
-    end
+%     newlastcol = find(abs(kern(m,end:-1:floor(end/2)))>=thr,1,'last');
+%     if newlastcol > lastcol2
+%         lastcol2 = newlastcol;
+%     end
 end
 
-ksize = [2*lastrow-1, lastcol1 + lastcol2];
+ksize = [2*lastrow-1, 2*lastcol1 - 1];
 
 
