@@ -5,7 +5,7 @@ OCTAVEMEXTARGETS = $(patsubst %.c,%.mex,$(MEXSOURCES))
 
 export TARGETUP = ../build/libphaseret.a
 
-MYCFLAGS = -std=c99 -pedantic -Wall -Wextra -I../include -I../include/phaseret -I../thirdparty -fPIC -Wl,--no-undefined
+MYCFLAGS = -std=c99 -pedantic -Wall -Wextra -I../include -I../thirdparty -fPIC -Wl,--no-undefined
 
 ifeq ($(CONFIG), debug)
 	CFLAGS += -O0 -g

@@ -32,7 +32,8 @@
  */
 
 #include "mex_helper.h"
-#include "rtisila.h"
+#define LTFAT_DOUBLE
+#include "phaseret/rtisila.h"
 
 void
 mexFunction(int nlhs, mxArray* plhs[],
@@ -75,15 +76,15 @@ mexFunction(int nlhs, mxArray* plhs[],
         cout = mxMalloc(M2 * sizeof * cout);
     }
 
-    rtisilaupdate_plan* p = NULL;
-    rtisilaupdate_init(gnum, specg1, specg2, dgnum, gl, a, M, &p);
+    phaseret_rtisilaupdate_plan_d* p = NULL;
+    phaseret_rtisilaupdate_init_d(gnum, specg1, specg2, dgnum, gl, a, M, &p);
 
     for (int w = 0; w < W; w++)
     {
-        rtisilaupdate_execute(p, cframes + w * M * N, N,
-                              sframes + w * M2 * N,
-                              lookahead, maxit, cframes2 + w * M * N,
-                              cout);
+        phaseret_rtisilaupdate_execute_d(p, cframes + w * M * N, N,
+                                         sframes + w * M2 * N,
+                                         lookahead, maxit, cframes2 + w * M * N,
+                                         cout);
 
         if (nlhs > 1)
         {
@@ -104,5 +105,5 @@ mexFunction(int nlhs, mxArray* plhs[],
         mxFree(cout);
 
 
-    rtisilaupdate_done(&p);
+    phaseret_rtisilaupdate_done_d(&p);
 }

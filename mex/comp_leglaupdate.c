@@ -2,7 +2,8 @@
  *  @{
  */
 #include "mex_helper.h"
-#include "legla.h"
+#define LTFAT_DOUBLE
+#include "phaseret/legla.h"
 
 /** MEX interface for LeRoux's version of GLA
 *
@@ -60,13 +61,13 @@ mexFunction(int nlhs, mxArray* plhs[],
     split2complex(cr, ci, M2 * N, c);
     split2complex(kernr, kerni, kernh2 * kernw, kern);
 
-    leglaupdate_plan* plan = NULL;
-    leglaupdate_init(kern, (phaseret_size) {.width = kernw, .height = 2 * kernh2 - 1},
+    phaseret_leglaupdate_plan_d* plan = NULL;
+    phaseret_leglaupdate_init_d(kern, (phaseret_size) {.width = kernw, .height = 2 * kernh2 - 1},
     L, 1, a, M, do_onthefly ? MOD_COEFFICIENTWISE : 0, &plan);
 
-    leglaupdate_execute(plan, s, c, cout);
+    phaseret_leglaupdate_execute_d(plan, s, c, cout);
 
-    leglaupdate_done(&plan);
+    phaseret_leglaupdate_done_d(&plan);
 
     complex2split(cout, M2 * N, coutr, couti);
 

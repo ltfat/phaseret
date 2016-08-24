@@ -31,22 +31,28 @@
 
 
 #include "mex_helper.h"
-#include "spsi.h"
+#define LTFAT_DOUBLE
+#include "phaseret/spsi.h"
 
 void
 mexFunction(int nlhs, mxArray* plhs[],
             int nrhs, const mxArray* prhs[])
 {
     UNUSED(nrhs);
-    double* s, *cr, *ci, *initphase = (void*) 0, *mask, *phase;
+    double* s, *cr, *ci, *initphase = (void*) 0, *maskDouble, *phase;
     mwSignedIndex N, M, a, M2;
     a = (mwSignedIndex) mxGetScalar(prhs[1]);
     M = (mwSignedIndex) mxGetScalar(prhs[2]);
     M2 = M / 2 + 1;
     N  = mxGetN(prhs[0]);
     s = mxGetData(prhs[0]);
-    mask = mxGetData(prhs[3]);
+    maskDouble = mxGetData(prhs[3]);
     phase = mxGetData(prhs[4]);
+
+    int* mask = mxMalloc(M2*N*sizeof*mask);
+
+    for(int ii=0;ii<M2*N;ii++)
+        mask[ii] = (int) maskDouble[ii];
 
     if (nrhs > 5)
         initphase = mxGetData(prhs[5]);
@@ -57,7 +63,9 @@ mexFunction(int nlhs, mxArray* plhs[],
 
     double complex* cc = mxMalloc( M2 * N * sizeof * cc);
 
-    maskedspsi(s, a, M, N, mask, phase, initphase, cc);
+    phaseret_absangle2realimag_split2inter_d(s, phase, M2*N, cc); 
+
+    phaseret_spsi_withmask_d(cc, mask, N*a, 1, a, M, initphase, cc);
 
     complex2split(cc, M2 * N, cr, ci);
 
@@ -69,4 +77,5 @@ mexFunction(int nlhs, mxArray* plhs[],
     }
 
     mxFree(cc);
+    mxFree(mask);
 }

@@ -1,5 +1,6 @@
 #include "mex_helper.h"
-#include "legla.h"
+#define LTFAT_DOUBLE
+#include "phaseret/legla.h"
 
 /*
  Calling convention                   0         1 2 3           4
@@ -19,9 +20,10 @@ mexFunction(int nlhs, mxArray* plhs[],
 {
     UNUSED(nlhs); UNUSED(nrhs);
     double* cr, *ci, *coutr, *couti, *s, *kernr, *kerni;
-    mwSignedIndex M, M2, N, kernh, kernw;
+    mwSignedIndex M, M2, N, kernh2, kernh, kernw;
     M = (mwSignedIndex) mxGetScalar(prhs[3]);
-    M2 = M / 2 + 1;  N  = mxGetN(prhs[0]);
+    M2 = M / 2 + 1;
+    N  = mxGetN(prhs[0]);
     cr = mxGetPr(prhs[0]);
     ci = mxGetPi(prhs[0]);
 
@@ -36,12 +38,13 @@ mexFunction(int nlhs, mxArray* plhs[],
 
     kernr = mxGetPr(prhs[1]);
     kerni = mxGetPi(prhs[1]);
-    kernh = mxGetM(prhs[1]);
+    kernh2 = mxGetM(prhs[1]);
+    kernh = 2 * kernh2 - 1;
     kernw = mxGetN(prhs[1]);
     int iskernreal = !mxIsComplex(prhs[1]);
 
     if (iskernreal)
-        kerni = mxCalloc(kernw * kernh, sizeof * kerni);
+        kerni = mxCalloc(kernw * kernh2, sizeof * kerni);
 
     s = mxGetPr(prhs[2]);
 
@@ -50,28 +53,29 @@ mexFunction(int nlhs, mxArray* plhs[],
     couti = mxGetPi(plhs[0]);
 
     leglaupdate_mod modflag = do_onthefly ? MOD_COEFFICIENTWISE : MOD_FRAMEWISE;
-    leglaupdate_plan_col* plan = NULL;
+    phaseret_leglaupdate_plan_col_d* plan = NULL;
 
-    leglaupdate_init_col( M, (phaseret_size) {.width = kernw, .height = kernh},
+    phaseret_leglaupdate_col_init_d( M, (phaseret_size) {.width = kernw, .height = kernh},
     EXT_UPDOWN | modflag , &plan);
 
-    complex double* kern = mxMalloc(kernw * kernh * sizeof * kern);
+    complex double* kern = mxMalloc(kernw * kernh2 * sizeof * kern);
     complex double* c = mxMalloc(M2 * N * sizeof * c);
     split2complex(cr, ci, M2 * N, c);
-    split2complex(kernr, kerni, M2 * N, kern);
+    split2complex(kernr, kerni, kernh2 * kernw, kern);
 
-    complex double* cout = mxMalloc(M2 * N * sizeof * cout);
+    complex double* cout = mxMalloc(M2 * sizeof * cout);
     complex double* buf = mxMalloc(((M2 + kernh - 1) * N) * sizeof * buf);
-    extendborders(plan, c, N, buf);
+    phaseret_extendborders_d(plan, c, N, buf);
 
-    leglaupdatereal_execute_col(plan, s, kern, buf, cout);
+    phaseret_leglaupdate_col_execute_d(plan, s, kern, buf, cout);
 
-    complex2split(cout, M2 * N, coutr, couti);
+    complex2split(cout, M2, coutr, couti);
 
     mxFree(kern);
     mxFree(buf);
     mxFree(c);
     mxFree(cout);
+    phaseret_leglaupdate_col_done_d(&plan);
 
     if (isreal) mxFree(ci);
     if (iskernreal) mxFree(kerni);

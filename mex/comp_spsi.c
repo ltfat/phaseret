@@ -29,7 +29,8 @@
 
 
 #include "mex_helper.h"
-#include "spsi.h"
+#define LTFAT_DOUBLE
+#include "phaseret/spsi.h"
 
 void
 mexFunction(int nlhs, mxArray* plhs[],
@@ -53,7 +54,7 @@ mexFunction(int nlhs, mxArray* plhs[],
 
     double complex* cc = mxMalloc( M2 * N * sizeof * cc);
 
-    spsi(s, a, M, N, initphase, cc);
+    phaseret_spsi_d(s, N*a, 1, a, M, initphase, cc);
 
     complex2split(cc, M2 * N, cr, ci);
 
