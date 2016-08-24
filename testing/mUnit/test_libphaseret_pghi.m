@@ -15,7 +15,7 @@ s = abs(corig);
 cout = zeros(2*M2,N);
 coutPtr = libpointer('doublePtr',cout);
 gamma = gl^2*0.25645;
-calllib('libphaseret','pghi',s,gamma,L,1,a,M,coutPtr);
+calllib('libphaseret','phaseret_pghi_d',s,gamma,L,1,a,M,coutPtr);
 
 cout2 = interleaved2complex(coutPtr.Value);
 %cout2 = pghi(s,gamma,a,M,'timeinv');

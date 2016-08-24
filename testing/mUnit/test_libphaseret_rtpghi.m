@@ -1,6 +1,6 @@
 clear all;
 f = greasy;
-a = 64;
+a = 128;
 M = 1024;
 M2 = floor(M/2) + 1; 
 gl = 1024;
@@ -15,7 +15,7 @@ s = abs(corig);
 cout = zeros(2*M2,N);
 coutPtr = libpointer('doublePtr',cout);
 gamma = gl^2*0.25645;
-calllib('libphaseret','rtpghioffline',s,gamma,L,1,a,M,1e-4,0,coutPtr);
+calllib('libphaseret','phaseret_rtpghioffline_d',s,gamma,L,1,a,M,1e-4,0,coutPtr);
 
 cout2 = interleaved2complex(coutPtr.Value);
 %cout2 = rtpghi(s,gamma,a,M,'timeinv','tol',1e-4);

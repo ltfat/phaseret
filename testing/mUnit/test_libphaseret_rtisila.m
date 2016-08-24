@@ -17,7 +17,7 @@ s = abs(corig);
 cout = zeros(2*M2,N);
 coutPtr = libpointer('doublePtr',cout);
 
-calllib('libphaseret','rtisilaoffline',s,g,L,gl,1,a,M,lookahead,maxit,coutPtr);
+calllib('libphaseret','phaseret_rtisilaoffline_d',s,g,L,gl,1,a,M,lookahead,maxit,coutPtr);
 
 cout2 = interleaved2complex(coutPtr.Value);
 
