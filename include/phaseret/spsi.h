@@ -1,12 +1,19 @@
-#ifndef _spsi_h
-#define _spsi_h
-#define LTFAT_DOUBLE
-
 #ifndef NOSYSTEMHEADERS
 #include "ltfat.h"
 #endif
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+#ifndef _phaseret_spsi_h
+#define _phaseret_spsi_h
+
+#endif /* _spsi_h */
+
 #include "ltfat/types.h"
+#include "phaseret/types.h"
+
 
 /** \addtogroup spsi
  *  \{
@@ -25,6 +32,15 @@
  *                             [out] phase of [N-1] frame, size M2 x W or NULL,
  *                             but then a memory allocation will occur.
  *  \param[out]            c   Coefficients with reconstructed phase, size M2 x N x W
+ *
+ * #### Versions #
+ * <tt>
+ * phaseret_spsi_d(const double s[], ltfatInt L, ltfatInt W, ltfatInt a, ltfatInt M,
+ *                 double initphase[], ltfat_complex_d c[]);
+ *
+ * phaseret_spsi_s(const float s[], ltfatInt L, ltfatInt W, ltfatInt a, ltfatInt M,
+ *                 float initphase[], ltfat_complex_s c[]);
+ * </tt>
  *  \returns
  *  Status code          |  Description
  *  ---------------------|---------------------
@@ -33,8 +49,8 @@
  *  LTFATERR_NOTPOSARG   | At least one of the following was not positive: \a L, \a W, \a a, \a M
  *  LTFATERR_NOMEM       | Heap allocation failed
  */
-int
-spsi(const LTFAT_REAL s[], int L, int W, int a, int M, LTFAT_REAL initphase[], LTFAT_COMPLEX c[]);
+PHASERET_API int
+PHASERET_NAME(spsi)(const LTFAT_REAL s[], int L, int W, int a, int M, LTFAT_REAL initphase[], LTFAT_COMPLEX c[]);
 
 /** Masked SPSI algorithm implementation
  *
@@ -52,6 +68,17 @@ spsi(const LTFAT_REAL s[], int L, int W, int a, int M, LTFAT_REAL initphase[], L
  *                             [out] phase of [N-1] frame, size M2 x W or NULL,
  *                             but then a memory allocation will occur.
  *  \param[out]            c   Coefficients with reconstructed phase, size M2 x N x W
+ *
+ * #### Versions #
+ * <tt>
+ * phaseret_spsi_withmask_d(const ltfat_complex_d cin[], const int mask[],
+ *                          ltfatInt L, ltfatInt W, ltfatInt a, ltfatInt M,
+ *                          double initphase[], ltfat_complex_d c[]);
+ *
+ * phaseret_spsi_withmask_s(const ltfat_complex_s cin[], const int mask[],
+ *                          ltfatInt L, ltfatInt W, ltfatInt a, ltfatInt M,
+ *                          float initphase[], ltfat_complex_s c[]);
+ * </tt>
  *  \returns
  *  Status code          |  Description
  *  ---------------------|---------------------
@@ -60,13 +87,16 @@ spsi(const LTFAT_REAL s[], int L, int W, int a, int M, LTFAT_REAL initphase[], L
  *  LTFATERR_NOTPOSARG   | At least one of the following was not positive: \a L, \a W, \a a, \a M
  *  LTFATERR_NOMEM       | Heap allocation failed
  */
-int
-spsi_withmask(const LTFAT_COMPLEX cinit[], const int mask[], int L, int W, int a, int M,
-              LTFAT_REAL initphase[], LTFAT_COMPLEX c[]);
+PHASERET_API int
+PHASERET_NAME(spsi_withmask)(const LTFAT_COMPLEX cin[], const int mask[], int L, int W, int a, int M,
+                             LTFAT_REAL initphase[], LTFAT_COMPLEX c[]);
 
 
 /** \} */
 void
-spsiupdate(const LTFAT_REAL* scol, int stride, int a, int M, LTFAT_REAL* tmpphase);
+PHASERET_NAME(spsiupdate)(const LTFAT_REAL* scol, int stride, int a, int M, LTFAT_REAL* tmpphase);
 
-#endif /* _spsi_h */
+#ifdef __cplusplus
+}
+#endif
+

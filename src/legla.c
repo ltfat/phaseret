@@ -1,16 +1,15 @@
 #include "phaseret/legla.h"
 #include "phaseret/gla.h"
-#include "phaseret/dgtrealwrapper.h"
 #include "dgtrealwrapper_private.h"
 #include "ltfat/macros.h"
 
-struct legla_plan
+struct PHASERET_NAME(legla_plan)
 {
-    leglaupdate_plan* updateplan;
-    dgtreal_anasyn_plan* dgtplan;
-    legla_callback_status* status_callback;
+    PHASERET_NAME(leglaupdate_plan)* updateplan;
+    PHASERET_NAME(dgtreal_plan)* dgtplan;
+    PHASERET_NAME(legla_callback_status)* status_callback;
     void* status_callback_userdata;
-    legla_callback_cmod* cmod_callback;
+    PHASERET_NAME(legla_callback_cmod)* cmod_callback;
     void* cmod_callback_userdata;
 // Storing magnitude
     LTFAT_REAL* s;
@@ -19,9 +18,10 @@ struct legla_plan
     int do_fast;
     double alpha;
     LTFAT_COMPLEX* t;
+    ltfat_phaseconvention ptype;
 };
 
-struct leglaupdate_plan
+struct PHASERET_NAME(leglaupdate_plan)
 {
     int kNo;
     LTFAT_COMPLEX** k;
@@ -29,10 +29,10 @@ struct leglaupdate_plan
     int a;
     int N;
     int W;
-    leglaupdate_plan_col* plan_col;
+    PHASERET_NAME(leglaupdate_plan_col)* plan_col;
 };
 
-struct leglaupdate_plan_col
+struct PHASERET_NAME(leglaupdate_plan_col)
 {
     phaseret_size ksize;
     phaseret_size ksize2;
@@ -40,53 +40,35 @@ struct leglaupdate_plan_col
     int flags;
 };
 
-#define legla_init_params_hash 968456
-
-int
-legla_init_params_defaults(legla_init_params* params)
+PHASERET_API int
+PHASERET_NAME(legla)(const LTFAT_COMPLEX cinit[], const LTFAT_REAL g[],
+                     const int L, const int gl, const int W, const int a, const int M,
+                     const int iter, LTFAT_COMPLEX cout[])
 {
-    int status = LTFATERR_SUCCESS;
-    CHECKNULL(params);
-
-    params->relthr = 1e-3;
-    params->ksize.width = 0;
-    params->ksize.height = 0;
-    params->hint = dgtreal_anasyn_auto;
-    params->dgtrealflags = FFTW_ESTIMATE;
-    params->leglaflags = MOD_COEFFICIENTWISE | MOD_MODIFIEDUPDATE;
-    params->private_hash_do_not_use = legla_init_params_hash;
-error:
-    return status;
-}
-
-int
-legla(const LTFAT_COMPLEX cinit[], const LTFAT_REAL g[],  const int L,
-      const int gl, const int W, const int a, const int M, const int iter,
-      LTFAT_COMPLEX cout[])
-{
-    legla_plan* p = NULL;
+    PHASERET_NAME(legla_plan)* p = NULL;
     int status = LTFATERR_SUCCESS;
 
     CHECKSTATUS(
-        legla_init(cinit, g, gl, L, W, a, M, 0.99, cout, NULL, &p),
+        PHASERET_NAME(legla_init)(cinit, g, L, gl, W, a, M, 0.99, cout, NULL, &p),
         "legla init failed");
 
-    CHECKSTATUS( legla_execute(p, iter), "legla execute failed");
+    CHECKSTATUS( PHASERET_NAME(legla_execute)(p, iter), "legla execute failed");
 
 error:
-    if (p) legla_done(&p);
+    if (p) PHASERET_NAME(legla_done)(&p);
     return status;
 }
 
 
-int
-legla_init(const LTFAT_COMPLEX cinit[], const LTFAT_REAL g[], const int L,
-           const int gl, const int W, const int a, const int M,
-           const double alpha, LTFAT_COMPLEX c[],
-           legla_init_params* params, legla_plan** pout)
+PHASERET_API int
+PHASERET_NAME(legla_init)(const LTFAT_COMPLEX cinit[], const LTFAT_REAL g[],
+                          const int L, const int gl, const int W, const int a, const int M,
+                          const double alpha, LTFAT_COMPLEX c[],
+                          phaseret_legla_init_params* params, PHASERET_NAME(legla_plan)** pout)
 {
-    legla_plan* p = NULL;
-    legla_init_params pLoc;
+    PHASERET_NAME(legla_plan)* p = NULL;
+    phaseret_legla_init_params pLoc;
+    phaseret_dgtreal_init_params dparams2;
     phaseret_size ksize;
     LTFAT_COMPLEX* kernsmall = NULL;
     int M2 = M / 2 + 1;
@@ -99,16 +81,16 @@ legla_init(const LTFAT_COMPLEX cinit[], const LTFAT_REAL g[], const int L,
 
     if (params)
     {
-        CHECK(LTFATERR_CANNOTHAPPEN,
-              params->private_hash_do_not_use == legla_init_params_hash,
-              "params were not initialized with legla_init_params_defaults");
+        /* CHECK(LTFATERR_CANNOTHAPPEN, */
+        /*       params->private_hash_do_not_use == phaseret_legla_init_params_hash, */
+        /*       "params were not initialized with phaseret_legla_init_params_defaults"); */
         CHECK(LTFATERR_NOTINRANGE, params->relthr >= 0 && params->relthr <= 1,
               "relthr must be in range [0-1]");
 
-        memcpy(&pLoc, params, sizeof * params);
+        pLoc = *params;
     }
     else
-        legla_init_params_defaults(&pLoc);
+        phaseret_legla_init_params_defaults(&pLoc);
 
     ksize = pLoc.ksize;
 
@@ -136,33 +118,37 @@ legla_init(const LTFAT_COMPLEX cinit[], const LTFAT_REAL g[], const int L,
         }
     }
 
-    CHECKMEM( p = (legla_plan*) calloc(1, sizeof * p));
+    CHECKMEM( p = (PHASERET_NAME(legla_plan)*) ltfat_calloc(1, sizeof * p));
+    p->ptype = pLoc.dparams.ptype;  // Store the user defined phase convention
+    // Copy and overwrite phase convention
+    dparams2 = pLoc.dparams;
+    dparams2.ptype = LTFAT_FREQINV;
     CHECKMEM( p->s = LTFAT_NAME_REAL(malloc)(M2 * N * W));
 
     CHECKSTATUS(
-        dgtreal_anasyn_init(g, gl, L, W, a, M, c, pLoc.hint, LTFAT_FREQINV,
-                            pLoc.dgtrealflags, &p->dgtplan), "dgtreal anasyn init failed");
+        PHASERET_NAME(dgtreal_init)(g, gl, L, W, a, M, c, &dparams2, &p->dgtplan),
+        "dgtreal anasyn init failed");
 
     // Get the "impulse response" and crop it
     memset(c, 0, M2 * N * W * sizeof * c);
     c[0] = 1.0;
-    dgtreal_anasyn_execute_proj(p->dgtplan, c, c);
+    PHASERET_NAME(dgtreal_execute_proj)(p->dgtplan, c, c);
     phaseret_size bigsize;
     bigsize.width = N; bigsize.height = M;
 
     if ( pLoc.relthr != 0.0)
-        legla_findkernelsize(c, bigsize, pLoc.relthr, &ksize);
+        PHASERET_NAME(legla_findkernelsize)(c, bigsize, pLoc.relthr, &ksize);
 
     DEBUG("Kernel size: {.width=%d,.height=%d}", ksize.width, ksize.height);
 
     CHECKMEM( kernsmall =
                   LTFAT_NAME_COMPLEX(malloc)(ksize.width * (ksize.height / 2 + 1)));
 
-    legla_big2small_kernel(c, bigsize, ksize, kernsmall);
+    PHASERET_NAME(legla_big2small_kernel)(c, bigsize, ksize, kernsmall);
 
     CHECKSTATUS(
-        leglaupdate_init( kernsmall, ksize, L, W, a, M, pLoc.leglaflags,
-                          &p->updateplan),
+        PHASERET_NAME(leglaupdate_init)( kernsmall, ksize, L, W, a, M, pLoc.leglaflags,
+                                         &p->updateplan),
         "leglaupdate init failed");
 
     if (alpha > 0.0)
@@ -172,46 +158,40 @@ legla_init(const LTFAT_COMPLEX cinit[], const LTFAT_REAL g[], const int L,
         CHECKMEM( p->t = LTFAT_NAME_COMPLEX(malloc)(M2 * N * W));
     }
 
-    free(kernsmall);
+    ltfat_free(kernsmall);
     p->cinit = cinit;
     *pout = p;
     return status;
 error:
-    if (kernsmall) free(kernsmall);
-    if (p)
-    {
-        if (p->t) free(p->t);
-        if (p->s) free(p->s);
-        free(p);
-        *pout = NULL;
-    }
+    if (kernsmall) ltfat_free(kernsmall);
+    if (p) PHASERET_NAME(legla_done)(&p);
     return status;
 }
 
-int
-legla_done(legla_plan** p)
+PHASERET_API int
+PHASERET_NAME(legla_done)(PHASERET_NAME(legla_plan)** p)
 {
     int status = LTFATERR_SUCCESS;
-    legla_plan* pp; 
+    PHASERET_NAME(legla_plan)* pp;
     CHECKMEM(p); CHECKMEM(*p);
     pp = *p;
 
-    dgtreal_anasyn_done(&pp->dgtplan);
-    leglaupdate_done(&pp->updateplan);
-    free(pp->s);
-    if (pp->t) free(pp->t);
-    free(pp);
+    if (pp->dgtplan) PHASERET_NAME(dgtreal_done)(&pp->dgtplan);
+    if (pp->updateplan) PHASERET_NAME(leglaupdate_done)(&pp->updateplan);
+    ltfat_safefree(pp->s);
+    ltfat_safefree(pp->t);
+    ltfat_free(pp);
     pp = NULL;
 error:
     return status;
 }
 
-int
-legla_execute(legla_plan* p, const int iter)
+PHASERET_API int
+PHASERET_NAME(legla_execute)(PHASERET_NAME(legla_plan)* p, const int iter)
 {
     int status = LTFATERR_SUCCESS;
-    int M,L,W,a,M2,N;
-    dgtreal_anasyn_plan* pp; 
+    int M, L, W, a, M2, N;
+    PHASERET_NAME(dgtreal_plan)* pp;
     CHECKNULL(p);
     CHECK(LTFATERR_NOTPOSARG, iter > 0, "At least one iteration is required");
     CHECKNULL(p->cinit);
@@ -236,10 +216,10 @@ legla_execute(legla_plan* p, const int iter)
 
     for (int ii = 0; ii < iter; ii++)
     {
-        leglaupdate_execute(p->updateplan, p->s, pp->c, pp->c);
+        PHASERET_NAME(leglaupdate_execute)(p->updateplan, p->s, pp->c, pp->c);
 
         if (p->do_fast)
-            fastupdate(pp->c, p->t, p->alpha, N * M2 * W );
+            PHASERET_NAME(fastupdate)(pp->c, p->t, p->alpha, N * M2 * W );
 
         // Optional coefficient modification
         if (p->cmod_callback)
@@ -271,13 +251,16 @@ legla_execute(legla_plan* p, const int iter)
         }
     }
 
+    if (p->ptype == LTFAT_TIMEINV)
+        LTFAT_NAME_COMPLEX(dgtreal_phaselock)(pp->c, L, W, a, M, pp->c);
 error:
     return status;
 }
 
 int
-legla_big2small_kernel(LTFAT_COMPLEX* bigc, phaseret_size bigsize,
-                       phaseret_size ksize, LTFAT_COMPLEX* smallc)
+PHASERET_NAME(legla_big2small_kernel)(LTFAT_COMPLEX* bigc,
+                                      phaseret_size bigsize,
+                                      phaseret_size ksize, LTFAT_COMPLEX* smallc)
 {
     div_t wmod = div(ksize.width, 2);
     div_t hmod = div(ksize.height, 2);
@@ -304,8 +287,8 @@ legla_big2small_kernel(LTFAT_COMPLEX* bigc, phaseret_size bigsize,
 }
 
 int
-legla_findkernelsize(LTFAT_COMPLEX* bigc, phaseret_size bigsize,
-                     double relthr, phaseret_size* ksize)
+PHASERET_NAME(legla_findkernelsize)(LTFAT_COMPLEX* bigc, phaseret_size bigsize,
+                                    double relthr, phaseret_size* ksize)
 
 {
     double thr = relthr * ltfat_abs(bigc[0]);
@@ -334,13 +317,14 @@ legla_findkernelsize(LTFAT_COMPLEX* bigc, phaseret_size bigsize,
     return LTFATERR_SUCCESS;
 }
 
-int
-legla_execute_newarray(legla_plan* p, const LTFAT_COMPLEX cinit[],
-                       const int iter, LTFAT_COMPLEX c[])
+PHASERET_API int
+PHASERET_NAME(legla_execute_newarray)(PHASERET_NAME(legla_plan)* p,
+                                      const LTFAT_COMPLEX cinit[],
+                                      const int iter, LTFAT_COMPLEX c[])
 {
     int status = LTFATERR_SUCCESS;
-    legla_plan p2; 
-    dgtreal_anasyn_plan pp2; 
+    PHASERET_NAME(legla_plan) p2;
+    PHASERET_NAME(dgtreal_plan) pp2;
     CHECKNULL(p); CHECKNULL(cinit); CHECKNULL(c);
 
     // Shallow copy the plan and replace c
@@ -349,20 +333,21 @@ legla_execute_newarray(legla_plan* p, const LTFAT_COMPLEX cinit[],
     pp2.c = c;
     p2.dgtplan = &pp2;
     p2.cinit = cinit;
-    return legla_execute(&p2, iter);
+    return PHASERET_NAME(legla_execute)(&p2, iter);
 error:
     return status;
 }
 
 
 int
-leglaupdate_init_col( int M, phaseret_size ksize, int flags,
-                      leglaupdate_plan_col** pout)
+PHASERET_NAME(leglaupdate_col_init)( int M, phaseret_size ksize, int flags,
+                                     PHASERET_NAME(leglaupdate_plan_col)** pout)
 {
-    leglaupdate_plan_col* p = NULL;
+    PHASERET_NAME(leglaupdate_plan_col)* p = NULL;
     int status = LTFATERR_SUCCESS;
 
-    CHECKMEM( p = (leglaupdate_plan_col*) calloc(1, sizeof * p));
+    CHECKMEM( p = (PHASERET_NAME(leglaupdate_plan_col)*) ltfat_calloc(1,
+                  sizeof * p));
     phaseret_size ksize2;
     ksize2.width = ksize.width / 2 + 1;
     ksize2.height = ksize.height / 2 + 1;
@@ -394,25 +379,38 @@ leglaupdate_init_col( int M, phaseret_size ksize, int flags,
 
     return status;
 error:
-    if (p) free(p);
+    if (p) ltfat_free(p);
     return status;
 }
 
 int
-leglaupdate_init(const LTFAT_COMPLEX kern[], phaseret_size ksize,
-                 int L, int W, int a, int M, int flags, leglaupdate_plan** pout)
+PHASERET_NAME(leglaupdate_col_done)( PHASERET_NAME(leglaupdate_plan_col)** p)
+{
+    int status = LTFATERR_SUCCESS;
+    CHECKNULL(p); CHECKNULL(*p);
+    ltfat_free(*p);
+    *p = NULL;
+error:
+    return status;
+}
+
+int
+PHASERET_NAME(leglaupdate_init)(const LTFAT_COMPLEX kern[], phaseret_size ksize,
+                                int L, int W, int a, int M, int flags,
+                                PHASERET_NAME(leglaupdate_plan)** pout)
 {
     int N = L / a;
     int M2 = M / 2 + 1;
     int kernh2;
     int status = LTFATERR_SUCCESS;
 
-    leglaupdate_plan* p = NULL;
+    PHASERET_NAME(leglaupdate_plan)* p = NULL;
     LTFAT_COMPLEX* ktmp = NULL;
 
-    CHECKMEM( p = (leglaupdate_plan*) calloc (1, sizeof * p));
+    CHECKMEM( p = (PHASERET_NAME(leglaupdate_plan)*) ltfat_calloc (1, sizeof * p));
 
-    CHECKSTATUS( leglaupdate_init_col( M, ksize, flags, &p->plan_col),
+    CHECKSTATUS( PHASERET_NAME(leglaupdate_col_init)( M, ksize, flags,
+                 &p->plan_col),
                  "leglaupdate init failed");
 
     // N
@@ -420,12 +418,13 @@ leglaupdate_init(const LTFAT_COMPLEX kern[], phaseret_size ksize,
     p->a = a;
     p->W = W;
 
-    p->kNo = phaseret_lcm(M, a) / a;
+    p->kNo = ltfat_lcm(M, a) / a;
 
-    CHECKMEM( p->k = (LTFAT_COMPLEX**) malloc( p->kNo * sizeof * p->k));
+    CHECKMEM( p->k = (LTFAT_COMPLEX**) ltfat_malloc( p->kNo * sizeof * p->k));
 
-    CHECKMEM( p->buf = 
-            LTFAT_NAME_COMPLEX(malloc)( ((M2 + ksize.height - 1) * (p->N + ksize.width - 1))));
+    CHECKMEM( p->buf =
+                  LTFAT_NAME_COMPLEX(malloc)( ((M2 + ksize.height - 1) * (p->N + ksize.width -
+                          1))));
 
     kernh2 = ksize.height / 2 + 1;
 
@@ -441,51 +440,43 @@ leglaupdate_init(const LTFAT_COMPLEX kern[], phaseret_size ksize,
             kmodRow[jj * kernh2] = conj(kRow[(ksize.width - jj) * kernh2]);
     }
 
-    if (flags & MOD_MODIFIEDUPDATE) ktmp[0] = 0.0 + I * 0.0;
+    if (flags & MOD_MODIFIEDUPDATE) ktmp[0] = LTFAT_COMPLEX(0, 0);
 
     for (int n = 0; n < p->kNo; n++)
     {
         CHECKMEM( p->k[n] = LTFAT_NAME_COMPLEX(calloc)( ksize.width * kernh2));
-        kernphasefi(ktmp, ksize, n, a, M, p->k[n]);
+        PHASERET_NAME(kernphasefi)(ktmp, ksize, n, a, M, p->k[n]);
     }
 
-    free(ktmp);
+    ltfat_free(ktmp);
 
     *pout = p;
     return status;
 error:
-    if (ktmp) free(ktmp);
-    if (p)
-    {
-        if (p->buf) free(p->buf);
-        if (p->k)
-        {
-            for (int ii = 0; ii < p->kNo; ii++) free(p->k[ii]);
-            free(p->k);
-        }
-        free(p);
-    }
+    if (ktmp) ltfat_free(ktmp);
+    if (p) PHASERET_NAME(leglaupdate_done)(&p);
     return status;
 }
 
 void
-leglaupdate_done(leglaupdate_plan** plan)
+PHASERET_NAME(leglaupdate_done)(PHASERET_NAME(leglaupdate_plan)** plan)
 {
 
-    leglaupdate_plan* pp = *plan;
+    PHASERET_NAME(leglaupdate_plan)* pp = *plan;
     for (int n = 0; n < pp->kNo; n++)
-        free(pp->k[n]);
+        ltfat_safefree(pp->k[n]);
 
-    if (pp->k) free(pp->k);
+    ltfat_safefree(pp->k);
+    ltfat_safefree(pp->buf);
 
-    free(pp->buf);
-    free(pp);
+    if (pp->plan_col) PHASERET_NAME(leglaupdate_col_done)(&pp->plan_col);
+    ltfat_free(pp);
     pp = NULL;
 }
 
 void
-kernphasefi(const LTFAT_COMPLEX kern[], phaseret_size ksize,
-            int n, int a, int M, LTFAT_COMPLEX kernmod[])
+PHASERET_NAME(kernphasefi)(const LTFAT_COMPLEX kern[], phaseret_size ksize,
+                           int n, int a, int M, LTFAT_COMPLEX kernmod[])
 {
     /* int kernh2 = ksize.height / 2 + 1; */
     /* int kernw2 = ksize.width / 2; */
@@ -499,7 +490,7 @@ kernphasefi(const LTFAT_COMPLEX kern[], phaseret_size ksize,
     {
         const LTFAT_COMPLEX* kRow = kern + ii;
         LTFAT_COMPLEX* kmodRow = kernmod + ii;
-        double arg = -2.0 * M_PI * n * a / M * (ii);
+        LTFAT_REAL arg = (LTFAT_REAL) ( -2.0 * M_PI * n * a / M * (ii) );
 
         // fftshift
         for (int jj = 0; jj < wmod.quot + wmod.rem - 1; jj++)
@@ -511,30 +502,12 @@ kernphasefi(const LTFAT_COMPLEX kern[], phaseret_size ksize,
     }
 }
 
-int phaseret_lcm(int m, int n)
+void
+PHASERET_NAME(leglaupdate_execute)(PHASERET_NAME(leglaupdate_plan)* plan,
+                                   const LTFAT_REAL s[],
+                                   LTFAT_COMPLEX c[], LTFAT_COMPLEX cout[])
 {
-    return m / phaseret_gcd(m, n) * n;
-}
-
-int phaseret_gcd(int m, int n)
-{
-    int tmp;
-
-    while (m)
-    {
-        tmp = m;
-        m = n % m;
-        n = tmp;
-    }
-
-    return n;
-}
-
-extern void
-leglaupdate_execute(leglaupdate_plan* plan, const LTFAT_REAL s[],
-                    LTFAT_COMPLEX c[], LTFAT_COMPLEX cout[])
-{
-    leglaupdate_plan_col* p = plan->plan_col;
+    PHASERET_NAME(leglaupdate_plan_col)* p = plan->plan_col;
     int M2 = p->M / 2 + 1;
     int N = plan->N;
     int W = plan->W;
@@ -556,7 +529,7 @@ leglaupdate_execute(leglaupdate_plan* plan, const LTFAT_REAL s[],
         LTFAT_COMPLEX* cChan = c + w * M2 * N;
         LTFAT_COMPLEX* coutChan = cout + w * M2 * N;
 
-        extendborders(plan->plan_col, cChan, N, buf);
+        PHASERET_NAME(extendborders)(plan->plan_col, cChan, N, buf);
 
         /* Outside loop over columns */
         for (nfirst = 0; nfirst < N; nfirst++)
@@ -569,8 +542,8 @@ leglaupdate_execute(leglaupdate_plan* plan, const LTFAT_REAL s[],
 
             const LTFAT_REAL* sCol = sChan + nfirst * M2;
 
-            leglaupdatereal_execute_col(plan->plan_col, sCol,
-                                        actK, cColFirst, coutCol);
+            PHASERET_NAME(leglaupdate_col_execute)(plan->plan_col, sCol,
+                                                   actK, cColFirst, coutCol);
         }
 
         if (!do_onthefly && !do_framewise)
@@ -583,11 +556,12 @@ leglaupdate_execute(leglaupdate_plan* plan, const LTFAT_REAL s[],
 }
 
 void
-leglaupdatereal_execute_col(leglaupdate_plan_col* plan,
-                            const LTFAT_REAL sCol[],
-                            const LTFAT_COMPLEX actK[],
-                            LTFAT_COMPLEX cColFirst[],
-                            LTFAT_COMPLEX coutCol[])
+PHASERET_NAME(leglaupdate_col_execute)(
+    PHASERET_NAME( leglaupdate_plan_col)* plan,
+    const LTFAT_REAL sCol[],
+    const LTFAT_COMPLEX actK[],
+    LTFAT_COMPLEX cColFirst[],
+    LTFAT_COMPLEX coutCol[])
 {
     int m, mfirst, mlast;
     int M2 = plan->M / 2 + 1;
@@ -607,7 +581,7 @@ leglaupdatereal_execute_col(leglaupdate_plan_col* plan,
     for (m = kernh2 - 1, mfirst = 0, mlast = kernh - 1; mfirst < M2;
          m++, mfirst++, mlast++)
     {
-        LTFAT_COMPLEX accum = 0.0 + I * 0.0;
+        LTFAT_COMPLEX accum = LTFAT_COMPLEX(0, 0);
 
         /* inner loop over all cols of the kernel*/
         for (int kn = 0; kn < kernw; kn++)
@@ -657,8 +631,8 @@ leglaupdatereal_execute_col(leglaupdate_plan_col* plan,
 }
 
 void
-extendborders(leglaupdate_plan_col* plan, const LTFAT_COMPLEX c[], int N,
-              LTFAT_COMPLEX buf[])
+PHASERET_NAME(extendborders)(PHASERET_NAME(leglaupdate_plan_col)* plan,
+                             const LTFAT_COMPLEX c[], int N, LTFAT_COMPLEX buf[])
 {
     int m, n;
     int M2 = plan->M / 2 + 1;
@@ -736,9 +710,9 @@ extendborders(leglaupdate_plan_col* plan, const LTFAT_COMPLEX c[], int N,
 
 }
 
-int
-legla_set_status_callback(legla_plan* p, legla_callback_status* callback,
-                          void* userdata)
+PHASERET_API int
+PHASERET_NAME(legla_set_status_callback)(PHASERET_NAME(legla_plan)* p,
+        PHASERET_NAME(legla_callback_status)* callback, void* userdata)
 {
     int status = LTFATERR_SUCCESS;
     CHECKNULL(p);
@@ -748,9 +722,10 @@ error:
     return status;
 }
 
-int
-legla_set_cmod_callback(legla_plan* p, legla_callback_cmod* callback,
-                        void* userdata)
+PHASERET_API int
+PHASERET_NAME(legla_set_cmod_callback)(PHASERET_NAME(legla_plan)* p,
+                                       PHASERET_NAME(legla_callback_cmod)* callback,
+                                       void* userdata)
 {
     int status = LTFATERR_SUCCESS;
     CHECKNULL(p);

@@ -1,31 +1,25 @@
-/** \addtogroup rtisila
- *
- * @file rtisila.h
- * @author Zdeněk Průša
- * @date 1 Feb 2016
- * @brief RTISI-LA header
- *
- */
-
-#ifndef _rtisila_h
-#define _rtisila_h
 #ifndef NOSYSTEMHEADERS
-#define LTFAT_DOUBLE
 #include "ltfat.h"
 #endif
-#include "ltfat/types.h"
 
+#ifndef _phaseret_rtisila_h
+#define _phaseret_rtisila_h
+// place for non-templated structs, enums, functions etc.
+#endif /* _rtisila_h */
+
+#include "ltfat/types.h"
+#include "phaseret/types.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-typedef struct rtisilaupdate_plan rtisilaupdate_plan;
+typedef struct PHASERET_NAME(rtisilaupdate_plan) PHASERET_NAME(rtisilaupdate_plan);
 
-typedef struct rtisila_state rtisila_state;
+typedef struct PHASERET_NAME(rtisila_state) PHASERET_NAME(rtisila_state);
 
 void
-overlaynthframe(const LTFAT_REAL* frames, int gl, int N, int a, int n, LTFAT_REAL* frame);
+PHASERET_NAME(overlaynthframe)(const LTFAT_REAL* frames, int gl, int N, int a, int n, LTFAT_REAL* frame);
 
 /** Overlay frames to get n-th frame.
  *  \param[in,out] p        RTISILA Update Plan, p.frame contains the overlaid frame
@@ -35,7 +29,8 @@ overlaynthframe(const LTFAT_REAL* frames, int gl, int N, int a, int n, LTFAT_REA
  *  \param[in]     N        Number of frames
  */
 void
-rtisilaoverlaynthframe(rtisilaupdate_plan* p, const LTFAT_REAL* frames, const LTFAT_REAL* g, int n, int N);
+PHASERET_NAME(rtisilaoverlaynthframe)(PHASERET_NAME(rtisilaupdate_plan)* p,
+                                      const LTFAT_REAL* frames, const LTFAT_REAL* g, int n, int N);
 
 /** Phase update of a frame.
  * \param[in,out] p         RTISILA Update Plan, p.fftframe contains
@@ -43,7 +38,8 @@ rtisilaoverlaynthframe(rtisilaupdate_plan* p, const LTFAT_REAL* frames, const LT
  * \param[out]    frameupd  Updated frame
  */
 void
-rtisilaphaseupdate(rtisilaupdate_plan* p, const LTFAT_REAL* sframe, LTFAT_REAL* frameupd, LTFAT_COMPLEX* c);
+PHASERET_NAME(rtisilaphaseupdate)(PHASERET_NAME(rtisilaupdate_plan)* p,
+                                  const LTFAT_REAL* sframe, LTFAT_REAL* frameupd, LTFAT_COMPLEX* c);
 
 /** Create a RTISILA Update Plan.
  * \param[in]     g          Analysis window
@@ -57,17 +53,17 @@ rtisilaphaseupdate(rtisilaupdate_plan* p, const LTFAT_REAL* sframe, LTFAT_REAL* 
  *                           (possibly zero-padded).
  * \returns RTISILA Update Plan
  */
-int
-rtisilaupdate_init(const LTFAT_REAL *g, const LTFAT_REAL* specg1,
-                   const LTFAT_REAL* specg2, const LTFAT_REAL* gd,
-                   const int gl, int a, int M,
-                   rtisilaupdate_plan** p);
+PHASERET_API int
+PHASERET_NAME(rtisilaupdate_init)(const LTFAT_REAL *g, const LTFAT_REAL* specg1,
+                                  const LTFAT_REAL* specg2, const LTFAT_REAL* gd,
+                                  const int gl, int a, int M,
+                                  PHASERET_NAME(rtisilaupdate_plan)** p);
 
 /** Destroy a RTISILA Update Plan.
  * \param[in] p  RTISILA Update Plan
  */
-int
-rtisilaupdate_done(rtisilaupdate_plan** p);
+PHASERET_API int
+PHASERET_NAME(rtisilaupdate_done)(PHASERET_NAME(rtisilaupdate_plan)** p);
 
 /** Do maxit iterations of RTISI-LA for a single frame
  *
@@ -86,10 +82,10 @@ rtisilaupdate_done(rtisilaupdate_plan** p);
  * \param[in]     maxit      Number of iterations
  * \param[out]    frames2    N output frames M samples long
  */
-void
-rtisilaupdate_execute(rtisilaupdate_plan* p, const LTFAT_REAL* frames, int N,
-                      const LTFAT_REAL* s, int lookahead, int maxit, LTFAT_REAL* frames2,
-                      LTFAT_COMPLEX* c);
+PHASERET_API void
+PHASERET_NAME(rtisilaupdate_execute)(PHASERET_NAME(rtisilaupdate_plan)* p, const LTFAT_REAL* frames, int N,
+                                     const LTFAT_REAL* s, int lookahead, int maxit, LTFAT_REAL* frames2,
+                                     LTFAT_COMPLEX* c);
 
 /** Do maxit iterations of RTISI-LA for a single frame
  *
@@ -115,10 +111,17 @@ rtisilaupdate_execute(rtisilaupdate_plan* p, const LTFAT_REAL* frames, int N,
  * \param[out]    frames2    N output frames M samples long
  */
 void
-rtisilaupdate(const LTFAT_REAL* frames,
-              const LTFAT_REAL* g, const LTFAT_REAL* specg1, const LTFAT_REAL* specg2, const LTFAT_REAL* gd,
-              const int gl, int a, int M, int N, const LTFAT_REAL* s, int lookahead, int maxit,
-              LTFAT_REAL* frames2);
+PHASERET_NAME(rtisilaupdate)(const LTFAT_REAL* frames,
+                             const LTFAT_REAL* g, const LTFAT_REAL* specg1, const LTFAT_REAL* specg2, const LTFAT_REAL* gd,
+                             const int gl, int a, int M, int N, const LTFAT_REAL* s, int lookahead, int maxit,
+                             LTFAT_REAL* frames2);
+
+void
+PHASERET_NAME(rtisilaupdatecoef)(const LTFAT_REAL* frames,
+                                 const LTFAT_REAL* g, const LTFAT_REAL* specg1, const LTFAT_REAL* specg2,
+                                 const LTFAT_REAL* gd, const int gl,
+                                 int a, int M, int N, const LTFAT_REAL* s, int lookahead, int maxit,
+                                 LTFAT_REAL* frames2, LTFAT_COMPLEX* c);
 
 /** \addtogroup rtisila
  *  @{
@@ -137,8 +140,19 @@ rtisilaupdate(const LTFAT_REAL* frames,
  * \param[in]     lookahead    (Maximum) number of lookahead frames
  * \param[in]     maxit        Number of iterations. The number of per-frame
  *                             iterations is (lookahead+1) * maxit.
- * \param[out]    p            RTISILA state 
- * \returns 
+ * \param[out]    p            RTISILA state
+ *
+ * #### Versions #
+ * <tt>
+ * phaseret_rtisila_init_d(const double g[], ltfatInt gl, ltfatInt W, 
+ *                         ltfatInt a, ltfatInt M, ltfatInt lookahead,
+ *                         ltfatInt maxit, phaseret_rtisila_state_d** p);
+ *
+ * phaseret_rtisila_init_s(const float g[], ltfatInt gl, ltfatInt W, 
+ *                         ltfatInt a, ltfatInt M, ltfatInt lookahead,
+ *                         ltfatInt maxit, phaseret_rtisila_state_s** p);
+ * </tt>
+ * \returns
  * Status code              | Description
  * -------------------------|--------------------------------------------
  * LTFATERR_SUCCESS         | Indicates no error
@@ -146,15 +160,15 @@ rtisilaupdate(const LTFAT_REAL* frames,
  * LTFATERR_BADARG          | \a lookahead was a negative number
  * LTFATERR_BADSIZE         | \a gl was not positive
  * LTFATERR_NOTPOSARG       | One of the following was not positive: \a W, \a a, \a M, \a maxit
- * LTFATERR_NOTAFRAME       | System is not a frame. 
- * LTFATERR_NOTPAINLESS 	| System is not painless. 
- * LTFATERR_INITFAILED      | FFTW plan creation failed 
- * LTFATERR_NOMEM           | Indentifies that heap allocation failed 
+ * LTFATERR_NOTAFRAME       | System is not a frame.
+ * LTFATERR_NOTPAINLESS     | System is not painless.
+ * LTFATERR_INITFAILED      | FFTW plan creation failed
+ * LTFATERR_NOMEM           | Indentifies that heap allocation failed
  */
-int
-rtisila_init(const LTFAT_REAL g[], const int gl, const int W,
-             int a, int M, int lookahead, int maxit,
-             rtisila_state** p);
+PHASERET_API int
+PHASERET_NAME(rtisila_init)(const LTFAT_REAL g[], const int gl, const int W,
+                            int a, int M, int lookahead, int maxit,
+                            PHASERET_NAME(rtisila_state)** p);
 
 /** Create a RTISILA Plan from a window.
  * \param[in]     win          Analysis window
@@ -165,7 +179,18 @@ rtisila_init(const LTFAT_REAL g[], const int gl, const int W,
  * \param[in]     lookahead    (Maximum) number of lookahead frames
  * \param[in]     maxit        Number of iterations. The number of per-frame
  *                             iterations is (lookahead+1) * maxit.
- * \param[out]    p            RTISILA state 
+ * \param[out]    p            RTISILA state
+ *
+ * #### Versions #
+ * <tt>
+ * phaseret_rtisila_init_win_d(LTFAT_FIRWIN win, ltfatInt gl, ltfatInt W, 
+ *                             ltfatInt a, ltfatInt M, ltfatInt lookahead,
+ *                             ltfatInt maxit, phaseret_rtisila_state_d** p);
+ *
+ * phaseret_rtisila_init_win_s(LTFAT_FIRWIN win, ltfatInt gl, ltfatInt W, 
+ *                             ltfatInt a, ltfatInt M, ltfatInt lookahead,
+ *                             ltfatInt maxit, phaseret_rtisila_state_s** p);
+ * </tt>
  * \returns
  * Status code              | Description
  * -------------------------|--------------------------------------------
@@ -175,24 +200,31 @@ rtisila_init(const LTFAT_REAL g[], const int gl, const int W,
  * LTFATERR_BADARG          | \a lookahead was a negative number
  * LTFATERR_BADSIZE         | \a gl was not positive
  * LTFATERR_NOTPOSARG       | One of the following was not positive: \a W, \a a, \a M, \a maxit
- * LTFATERR_NOTAFRAME       | System is not a frame. 
- * LTFATERR_NOTPAINLESS 	| System is not painless. 
- * LTFATERR_INITFAILED      | FFTW plan creation failed 
- * LTFATERR_NOMEM           | Indentifies that heap allocation failed 
+ * LTFATERR_NOTAFRAME       | System is not a frame.
+ * LTFATERR_NOTPAINLESS     | System is not painless.
+ * LTFATERR_INITFAILED      | FFTW plan creation failed
+ * LTFATERR_NOMEM           | Indentifies that heap allocation failed
  */
-int
-rtisila_init_win(LTFAT_FIRWIN win, int gl, int W, int a, int M,
-                 int lookahead, int maxit, rtisila_state** p);
+PHASERET_API int
+PHASERET_NAME(rtisila_init_win)(LTFAT_FIRWIN win, int gl, int W, int a, int M,
+                                int lookahead, int maxit, PHASERET_NAME(rtisila_state)** p);
 
 /** Change number of lookahead frames
  *
  * The number of frames can only be less or equal to the number of lookahead frames
- * specified in the init function.  
+ * specified in the init function.
  *
  * \note This is not thread safe.
  *
  * \param[in] p          RTISILA Plan
  * \param[in] lookahead  Number of lookahead frame
+ *
+ * #### Versions #
+ * <tt>
+ * phaseret_rtisila_set_lookahead_d(phaseret_rtisila_state_d* p, ltfatInt lookahead);
+ *
+ * phaseret_rtisila_set_lookahead_s(phaseret_rtisila_state_s* p, ltfatInt lookahead);
+ * </tt>
  * \returns
  * Status code              | Description
  * -------------------------|--------------------------------------------
@@ -200,8 +232,8 @@ rtisila_init_win(LTFAT_FIRWIN win, int gl, int W, int a, int M,
  * LTFATERR_NULLPOINTER     | \a p was NULL
  * LTFATERR_BADARG          | \a lookahead was a negative number or greater than max lookahead
  */
-int
-rtisila_set_lookahead(rtisila_state* p, int lookahead);
+PHASERET_API int
+PHASERET_NAME(rtisila_set_lookahead)(PHASERET_NAME(rtisila_state)* p, int lookahead);
 
 /** Execute RTISILA plan for a single time frame
  *
@@ -215,16 +247,51 @@ rtisila_set_lookahead(rtisila_state* p, int lookahead);
  * \param[in]       p   RTISILA plan
  * \param[in]       s   Target magnitude, size M2 x W
  * \param[out]      c   Reconstructed coefficients, size M2 x W
+ *
+ * #### Versions #
+ * <tt>
+ * phaseret_rtisila_execute_d(phaseret_rtisila_state_d* p, const double s[],
+ *                            ltfat_complex_d c[]);
+ *
+ * phaseret_rtisila_execute_s(phaseret_rtisila_state_s* p, const float s[],
+ *                            ltfat_complex_s c[]);
+ * </tt>
  * \returns
  * Status code              | Description
  * -------------------------|--------------------------------------------
  * LTFATERR_SUCCESS         | Indicates no error
  * LTFATERR_NULLPOINTER     | At least one of the following was NULL: \a p, \a s and \a c
  */
-int
-rtisila_execute(rtisila_state* p, const LTFAT_REAL s[], LTFAT_COMPLEX c[]);
+PHASERET_API int
+PHASERET_NAME(rtisila_execute)(PHASERET_NAME(rtisila_state)* p,
+                               const LTFAT_REAL s[], LTFAT_COMPLEX c[]);
 
 /** Reset buffers of rtisila_state
+ *
+ * #### Versions #
+ * <tt>
+ * phaseret_rtisila_reset_d(phaseret_rtisila_state_d* p);
+ *
+ * phaseret_rtisila_reset_s(phaseret_rtisila_state_s* p);
+ * </tt>
+ * \returns
+ * Status code              | Description
+ * -------------------------|--------------------------------------------
+ * LTFATERR_SUCCESS         | Indicates no error
+ * LTFATERR_NULLPOINTER     | \a p or \a *p was NULL.
+ */
+PHASERET_API int
+PHASERET_NAME(rtisila_reset)(PHASERET_NAME(rtisila_state)* p);
+
+/** Destroy a RTISILA Plan.
+ * \param[in] p  RTISILA Plan
+ *
+ * #### Versions #
+ * <tt>
+ * phaseret_rtisila_done_d(phaseret_rtisila_state_d** p);
+ *
+ * phaseret_rtisila_done_s(phaseret_rtisila_state_s** p);
+ * </tt>
  *
  * \returns
  * Status code              | Description
@@ -232,19 +299,8 @@ rtisila_execute(rtisila_state* p, const LTFAT_REAL s[], LTFAT_COMPLEX c[]);
  * LTFATERR_SUCCESS         | Indicates no error
  * LTFATERR_NULLPOINTER     | \a p or \a *p was NULL.
  */
-int
-rtisila_reset(rtisila_state* p);
-
-/** Destroy a RTISILA Plan.
- * \param[in] p  RTISILA Plan
- * \returns
- * Status code              | Description
- * -------------------------|--------------------------------------------
- * LTFATERR_SUCCESS         | Indicates no error
- * LTFATERR_NULLPOINTER     | \a p or \a *p was NULL.
- */
-int
-rtisila_done(rtisila_state** p);
+PHASERET_API int
+PHASERET_NAME(rtisila_done)(PHASERET_NAME(rtisila_state)** p);
 
 /** Do RTISI-LA for a complete magnitude spectrogram and compensate delay
  *
@@ -264,15 +320,27 @@ rtisila_done(rtisila_state** p);
  * \param[in]     lookahead  Number of lookahead frames
  * \param[in]     maxit      Number of per-frame iterations
  * \param[out]    c          Reconstructed coefficients M2 x N array
+ *
+ * #### Versions #
+ * <tt>
+ * phaseret_rtisilaoffline_d(const double s[], const double g[], ltfatInt L,
+ *                           ltfatInt gl, ltfatInt W, ltfatInt a, ltfatInt M,
+ *                           ltfatInt lookahead, ltfatInt maxit, 
+ *                           ltfat_complex_d c[]);
+ *
+ * phaseret_rtisilaoffline_s(const float s[], const float g[], ltfatInt L,
+ *                           ltfatInt gl, ltfatInt W, ltfatInt a, ltfatInt M,
+ *                           ltfatInt lookahead, ltfatInt maxit, 
+ *                           ltfat_complex_s c[]);
+ * </tt>
  */
-int
-rtisilaoffline(const LTFAT_REAL s[], const LTFAT_REAL g[],
-               int L, int gl, int W, int a, int M,
-               int lookahead, int maxit, LTFAT_COMPLEX c[]);
+PHASERET_API int
+PHASERET_NAME(rtisilaoffline)(const LTFAT_REAL s[], const LTFAT_REAL g[],
+                              int L, int gl, int W, int a, int M,
+                              int lookahead, int maxit, LTFAT_COMPLEX c[]);
 /** @} */
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* _rtisila_h */

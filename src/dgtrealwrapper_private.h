@@ -1,8 +1,8 @@
-typedef int complextorealtransform(void* userdata, const LTFAT_COMPLEX* c, int L, int W, LTFAT_REAL* f);
-typedef int realtocomplextransform(void* userdata, const LTFAT_REAL* f, int L, int W, LTFAT_COMPLEX* c);
-typedef int donefunc(void** pla);
+typedef int PHASERET_NAME(complextorealtransform)(void* userdata, const LTFAT_COMPLEX* c, int L, int W, LTFAT_REAL* f);
+typedef int PHASERET_NAME(realtocomplextransform)(void* userdata, const LTFAT_REAL* f, int L, int W, LTFAT_COMPLEX* c);
+typedef int PHASERET_NAME(donefunc)(void** pla);
 
-struct dgtreal_anasyn_plan
+struct PHASERET_NAME(dgtreal_plan)
 {
     int L;
     int W;
@@ -10,39 +10,47 @@ struct dgtreal_anasyn_plan
     int M;
     LTFAT_REAL* f;
     LTFAT_COMPLEX* c;
-    complextorealtransform* backtra;
+    PHASERET_NAME(complextorealtransform)* backtra;
     void* backtra_userdata;
-    donefunc* backdonefunc;
-    realtocomplextransform* fwdtra;
+    PHASERET_NAME(donefunc)* backdonefunc;
+    PHASERET_NAME(realtocomplextransform)* fwdtra;
     void* fwdtra_userdata;
-    donefunc* fwddonefunc;
+    PHASERET_NAME(donefunc)* fwddonefunc;
 };
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 int
-ltfat_idgtreal_long_execute_d_wrapper(void* plan, const LTFAT_COMPLEX* c, int L,
-                                      int W, LTFAT_REAL* f);
+PHASERET_NAME(ltfat_idgtreal_long_execute_wrapper)(void* plan, const LTFAT_COMPLEX* c,
+        int L, int W, LTFAT_REAL* f);
 
 int
-ltfat_dgtreal_long_execute_d_wrapper(void* plan, const LTFAT_REAL* f, int L, int W,
-                                     LTFAT_COMPLEX* c);
+PHASERET_NAME(ltfat_dgtreal_long_execute_wrapper)(void* plan, const LTFAT_REAL* f,
+        int L, int W, LTFAT_COMPLEX* c);
 
 int
-ltfat_idgtreal_fb_execute_d_wrapper(void* plan, const LTFAT_COMPLEX* c, int L,
-                                    int W, LTFAT_REAL* f);
+PHASERET_NAME(ltfat_idgtreal_fb_execute_wrapper)(void* plan, const LTFAT_COMPLEX* c, int L,
+        int W, LTFAT_REAL* f);
 
 int
-ltfat_dgtreal_fb_execute_d_wrapper(void* plan, const LTFAT_REAL* f, int L, int W,
-                                   LTFAT_COMPLEX* c);
+PHASERET_NAME(ltfat_dgtreal_fb_execute_wrapper)(void* plan, const LTFAT_REAL* f, int L, int W,
+        LTFAT_COMPLEX* c);
 
 int
-ltfat_idgtreal_long_done_d_wrapper(void** plan);
+PHASERET_NAME(ltfat_idgtreal_long_done_wrapper)(void** plan);
 
 int
-ltfat_dgtreal_long_done_d_wrapper(void** plan);
+PHASERET_NAME(ltfat_dgtreal_long_done_wrapper)(void** plan);
 
 int
-ltfat_idgtreal_fb_done_d_wrapper(void** plan);
+PHASERET_NAME(ltfat_idgtreal_fb_done_wrapper)(void** plan);
 
 int
-ltfat_dgtreal_fb_done_d_wrapper(void** plan);
+PHASERET_NAME(ltfat_dgtreal_fb_done_wrapper)(void** plan);
+
+#ifdef __cplusplus
+}
+#endif
+

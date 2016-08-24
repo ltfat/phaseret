@@ -3,14 +3,14 @@
 #include "ltfat/macros.h"
 #include "dgtrealwrapper_private.h"
 
-struct gla_plan
+struct PHASERET_NAME(gla_plan)
 {
-    dgtreal_anasyn_plan* p;
-    gla_callback_status* status_callback;
+    PHASERET_NAME(dgtreal_plan)* p;
+    PHASERET_NAME(gla_callback_status)* status_callback;
     void* status_callback_userdata;
-    gla_callback_cmod* cmod_callback;
+    PHASERET_NAME(gla_callback_cmod)* cmod_callback;
     void* cmod_callback_userdata;
-    gla_callback_fmod* fmod_callback;
+    PHASERET_NAME(gla_callback_fmod)* fmod_callback;
     void* fmod_callback_userdata;
 // For storing magnitude
     LTFAT_REAL* s;
@@ -22,37 +22,40 @@ struct gla_plan
     LTFAT_COMPLEX* t;
 };
 
-int
-gla(const LTFAT_COMPLEX cinit[], const LTFAT_REAL g[],  const int L, const int gl,
-    const int W,
-    const int a, const int M, const int iter, LTFAT_COMPLEX cout[])
+PHASERET_API int
+PHASERET_NAME(gla)(const LTFAT_COMPLEX cinit[], const LTFAT_REAL g[],
+                   const int L,
+                   const int gl, const int W, const int a, const int M, const int iter,
+                   LTFAT_COMPLEX cout[])
 {
-    gla_plan* p = NULL;
+    PHASERET_NAME(gla_plan)* p = NULL;
     int status = LTFATERR_SUCCESS;
 
     CHECKSTATUS(
-        gla_init(cinit, g, L, gl, W, a, M, 0.99, cout,
-                 dgtreal_anasyn_auto, FFTW_ESTIMATE, &p), "Init failed");
-    CHECKSTATUS( gla_execute(p, iter), "Execute failed");
+        PHASERET_NAME(gla_init)(cinit, g, L, gl, W, a, M, 0.99, cout, NULL, &p),
+        "Init failed");
+
+    CHECKSTATUS( PHASERET_NAME(gla_execute)(p, iter), "Execute failed");
 
 error:
-    if (p) gla_done(&p);
+    if (p) PHASERET_NAME(gla_done)(&p);
     return status;
 }
 
-int
-gla_init(const LTFAT_COMPLEX cinit[], const LTFAT_REAL g[], const int L,
-         const int gl, const int W, const int a, const int M, const double alpha,
-         LTFAT_COMPLEX c[], dgtreal_anasyn_hint hint, unsigned flags,
-         gla_plan** pout)
+PHASERET_API int
+PHASERET_NAME(gla_init)(const LTFAT_COMPLEX cinit[], const LTFAT_REAL g[],
+                        const int L, const int gl, const int W, const int a,
+                        const int M, const double alpha, LTFAT_COMPLEX c[],
+                        phaseret_dgtreal_init_params* params,
+                        PHASERET_NAME(gla_plan)** pout)
 {
     int status = LTFATERR_SUCCESS;
-    gla_plan* p = NULL;
+    PHASERET_NAME(gla_plan)* p = NULL;
     int N = L / a;
     int M2 = M / 2 + 1;
 
     CHECK(LTFATERR_BADARG, alpha >= 0.0, "alpha cannot be negative");
-    CHECKMEM( p = (gla_plan*) ltfat_calloc(1, sizeof * p));
+    CHECKMEM( p = (PHASERET_NAME(gla_plan)*) ltfat_calloc(1, sizeof * p));
     CHECKMEM( p->s = LTFAT_NAME_REAL(malloc)(M2 * N * W));
 
     if (alpha > 0.0)
@@ -63,7 +66,7 @@ gla_init(const LTFAT_COMPLEX cinit[], const LTFAT_REAL g[], const int L,
     }
 
     CHECKSTATUS(
-        dgtreal_anasyn_init(g, gl, L, W, a, M, c, hint, LTFAT_TIMEINV, flags, &p->p),
+        PHASERET_NAME(dgtreal_init)(g, gl, L, W, a, M, c, params, &p->p),
         "dgtrealwrapper init failed");
 
     p->cinit = cinit;
@@ -71,43 +74,39 @@ gla_init(const LTFAT_COMPLEX cinit[], const LTFAT_REAL g[], const int L,
     *pout = p;
     return status;
 error:
-    if (p)
-    {
-        if (p->t) free(p->t);
-        if (p->s) free(p->s);
-        free(p);
-    }
-    *pout = NULL;
+    if (p) PHASERET_NAME(gla_done)(&p);
     return status;
 }
 
-int
-gla_done(gla_plan** p)
+PHASERET_API int
+PHASERET_NAME(gla_done)(PHASERET_NAME(gla_plan)** p)
 {
-    gla_plan* pp = NULL;
+    PHASERET_NAME(gla_plan)* pp = NULL;
     int status = LTFATERR_SUCCESS;
     CHECKNULL(p); CHECKNULL(*p);
     pp = *p;
 
-    CHECKSTATUS(
-        dgtreal_anasyn_done(&pp->p),
-        "dgtreal wrapper done failed");
+    if (pp->p)
+        CHECKSTATUS(
+            PHASERET_NAME(dgtreal_done)(&pp->p),
+            "dgtreal wrapper done failed");
 
-    if (pp->t) free(pp->t);
-    free(pp->s);
-    free(pp);
+    ltfat_safefree(pp->t);
+    ltfat_safefree(pp->s);
+    ltfat_free(pp);
     pp = NULL;
 error:
     return status;
 }
 
-int
-gla_execute_newarray(gla_plan* p, const LTFAT_COMPLEX cinit[], const int iter,
-                     LTFAT_COMPLEX cout[])
+PHASERET_API int
+PHASERET_NAME(gla_execute_newarray)(PHASERET_NAME(gla_plan)* p,
+                                    const LTFAT_COMPLEX cinit[], const int iter,
+                                    LTFAT_COMPLEX cout[])
 {
     int status = LTFATERR_SUCCESS;
-    dgtreal_anasyn_plan pp2;
-    gla_plan p2;
+    PHASERET_NAME(dgtreal_plan) pp2;
+    PHASERET_NAME(gla_plan) p2;
     CHECKNULL(p); CHECKNULL(cinit); CHECKNULL(cout);
     // Shallow copy the plan and replace c
     p2 = *p;
@@ -115,17 +114,17 @@ gla_execute_newarray(gla_plan* p, const LTFAT_COMPLEX cinit[], const int iter,
     pp2.c = cout;
     p2.p = &pp2;
     p2.cinit = cinit;
-    return gla_execute(&p2, iter);
+    return PHASERET_NAME(gla_execute)(&p2, iter);
 error:
     return status;
 }
 
-int
-gla_execute(gla_plan* p, const int iter)
+PHASERET_API int
+PHASERET_NAME(gla_execute)(PHASERET_NAME(gla_plan)* p, const int iter)
 {
     int status = LTFATERR_SUCCESS;
-    int M,L,W,a,M2,N;
-    dgtreal_anasyn_plan* pp;
+    int M, L, W, a, M2, N;
+    PHASERET_NAME(dgtreal_plan)* pp;
     CHECKNULL(p);
     CHECK(LTFATERR_NOTPOSARG, iter > 0,
           "At least one iteration is requred. Passed %d.", iter);
@@ -154,7 +153,7 @@ gla_execute(gla_plan* p, const int iter)
     for (int ii = 0; ii < iter; ii++)
     {
         // Perform idgtreal
-        CHECKSTATUS( dgtreal_anasyn_execute_syn(pp, pp->c, pp->f),
+        CHECKSTATUS( PHASERET_NAME(dgtreal_execute_syn)(pp, pp->c, pp->f),
                      "idgtreal failed");
 
         // Optional signal modification
@@ -164,14 +163,14 @@ gla_execute(gla_plan* p, const int iter)
                 "fmod callback failed");
 
         // Perform dgtreal
-        CHECKSTATUS( dgtreal_anasyn_execute_ana(pp, pp->f, pp->c),
+        CHECKSTATUS( PHASERET_NAME(dgtreal_execute_ana)(pp, pp->f, pp->c),
                      "dgtreal failed");
 
-        force_magnitude(pp->c, p->s, N * M2 * W, pp->c);
+        PHASERET_NAME(force_magnitude)(pp->c, p->s, N * M2 * W, pp->c);
 
         // The acceleration step
         if (p->do_fast)
-            fastupdate(pp->c, p->t, p->alpha, N * M2 * W );
+            PHASERET_NAME(fastupdate)(pp->c, p->t, p->alpha, N * M2 * W );
 
         // Optional coefficient modification
         if (p->cmod_callback)
@@ -207,9 +206,10 @@ error:
 }
 
 
-int
-gla_set_status_callback(gla_plan* p,
-                        gla_callback_status* callback, void* userdata)
+PHASERET_API int
+PHASERET_NAME(gla_set_status_callback)(PHASERET_NAME(gla_plan)* p,
+                                       PHASERET_NAME(gla_callback_status)* callback,
+                                       void* userdata)
 {
     int status = LTFATERR_SUCCESS;
     CHECKNULL(p); CHECKNULL(callback);
@@ -220,9 +220,10 @@ error:
     return status;
 }
 
-int
-gla_set_cmod_callback(gla_plan* p,
-                      gla_callback_cmod* callback, void* userdata)
+PHASERET_API int
+PHASERET_NAME(gla_set_cmod_callback)(PHASERET_NAME(gla_plan)* p,
+                                     PHASERET_NAME(gla_callback_cmod)* callback,
+                                     void* userdata)
 {
     int status = LTFATERR_SUCCESS;
     CHECKNULL(p); CHECKNULL(callback);
@@ -233,9 +234,10 @@ error:
     return status;
 }
 
-int
-gla_set_fmod_callback(gla_plan* p,
-                      gla_callback_fmod* callback, void* userdata)
+PHASERET_API int
+PHASERET_NAME(gla_set_fmod_callback)(PHASERET_NAME(gla_plan)* p,
+                                     PHASERET_NAME(gla_callback_fmod)* callback,
+                                     void* userdata)
 {
     int status = LTFATERR_SUCCESS;
     CHECKNULL(p); CHECKNULL(callback);
@@ -247,12 +249,13 @@ error:
 }
 
 int
-fastupdate(LTFAT_COMPLEX* c, LTFAT_COMPLEX* t, double alpha, int L)
+PHASERET_NAME(fastupdate)(LTFAT_COMPLEX* c, LTFAT_COMPLEX* t, double alpha,
+                          int L)
 {
     for (int ii = 0; ii < L; ii++)
     {
         LTFAT_COMPLEX cold = c[ii];
-        c[ii] = c[ii] + alpha * (c[ii] - t[ii]);
+        c[ii] = c[ii] + ((LTFAT_REAL)alpha) * (c[ii] - t[ii]);
         t[ii] = cold;
     }
     return 0;

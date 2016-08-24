@@ -1,24 +1,41 @@
-#ifndef _rtpghi_h
-#define _rtpghi_h
-
-#define LTFAT_DOUBLE
-
 #ifndef NOSYSTEMHEADERS
 #include "ltfat.h"
 #endif
 
-#include "ltfat/types.h"
-
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+#include "ltfat/types.h"
+#include "phaseret/types.h"
+
+#ifndef _phaseret_rtpghi_h
+#define _phaseret_rtpghi_h
+/** \addtogroup rtpghi
+ *  @{
+ */
+
+/** Computes \a gamma parameter given window type and its length
+ *
+ * \param[in]   win  LTFAT Gabor window
+ * \param[in]    gt  Window length
+ *
+ * \returns \a gamma or NAN if \a win was not recognized
+ */
+PHASERET_API double
+phaseret_firwin2gamma(LTFAT_FIRWIN win, int gl);
+
+/** @} */
+
+#endif
+
 
 /** Plan for rtpghi
  *
  * Serves for storing state between calls to rtpghi_execute.
  *
  */
-typedef struct rtpghi_state rtpghi_state;
+typedef struct PHASERET_NAME(rtpghi_state) PHASERET_NAME(rtpghi_state);
 
 /** \addtogroup rtpghi
  *  @{
@@ -26,20 +43,48 @@ typedef struct rtpghi_state rtpghi_state;
 
 /** Create a RTPGHI state.
  *
- *
  * \param[in]     gamma        Window-specific constant Cg*gl^2
  * \param[in]     W            Number of channels
  * \param[in]     a            Hop size
  * \param[in]     M            Number of frequency channels (FFT length)
  * \param[in]     tol          Relative coefficient tolerance.
- * \param[in]     do_causal    Zero delay (1) or 1 frame delay version of the alg.
+ * \param[in]     do_causal    Zero delay (1) or 1 frame delay (0) version of the alg.
  * \param[out]    p            RTPGHI state
+ *
+ * #### Versions #
+ * <tt>
+ * phaseret_rtpghi_init_d(double gamma, ltfatInt W, ltfatInt a, ltfatInt M,
+ *                        double tol, int do_causal, phaseret_rtpghi_state_d** p);
+ *
+ * phaseret_rtpghi_init_s(double gamma, ltfatInt W, ltfatInt a, ltfatInt M,
+ *                        double tol, int do_causal, phaseret_rtpghi_state_s** p);
+ * </tt>
  * \returns
  *
- * \see firwin2gamma
+ * \see phaseret_firwin2gamma
  */
-int
-rtpghi_init(double gamma, int W, int a, int M, double tol, int do_causal, rtpghi_state** p);
+PHASERET_API int
+PHASERET_NAME(rtpghi_init)(double gamma, int W, int a, int M, double tol,
+                           int do_causal, PHASERET_NAME(rtpghi_state)** p);
+
+
+/** Reset RTPGHI state.
+ *
+ * Resets RTPGHI state struct to the initial state
+ *
+ * \param[out]    p            RTPGHI state
+ *
+ * #### Versions #
+ * <tt>
+ * phaseret_rtpghi_reset_d(phaseret_rtpghi_state_d* p);
+ *
+ * phaseret_rtpghi_reset_s(phaseret_rtpghi_state_s* p);
+ * </tt>
+ * \returns
+ *
+ */
+PHASERET_API int
+PHASERET_NAME(rtpghi_reset)(PHASERET_NAME(rtpghi_state)* p);
 
 /** Change the version of the algorithm
  *
@@ -50,10 +95,17 @@ rtpghi_init(double gamma, int W, int a, int M, double tol, int do_causal, rtpghi
  *
  * \param[in] p         RTPGHI plan
  * \param[in] do_causal Causal flag
+ *
+ * #### Versions #
+ * <tt>
+ * phaseret_rtpghi_set_causal_d(phaseret_rtpghi_state_d* p, int do_causal);
+ *
+ * phaseret_rtpghi_set_causal_s(phaseret_rtpghi_state_s* p, int do_causal);
+ * </tt>
  * \returns Status code
  */
-int
-rtpghi_set_causal(rtpghi_state* p, int do_causal);
+PHASERET_API int
+PHASERET_NAME(rtpghi_set_causal)(PHASERET_NAME(rtpghi_state)* p, int do_causal);
 
 /** Execute RTPGHI plan for a single frame
  *
@@ -66,15 +118,32 @@ rtpghi_set_causal(rtpghi_state* p, int do_causal);
  * \param[in]       p   RTPGHI plan
  * \param[in]       s   Target magnitude
  * \param[out]      c   Reconstructed coefficients
+ *
+ * #### Versions #
+ * <tt>
+ * phaseret_rtpghi_execute_d(phaseret_rtpghi_state_d* p, const double s[],
+ *                           ltfat_complex_d c[]);
+ *
+ * phaseret_rtpghi_execute_s(phaseret_rtpghi_state_s* p, const float s[],
+ *                           ltfat_complex_s c[]);
+ * </tt>
  */
-int
-rtpghi_execute(rtpghi_state* p, const LTFAT_REAL s[], LTFAT_COMPLEX c[]);
+PHASERET_API int
+PHASERET_NAME(rtpghi_execute)(PHASERET_NAME(rtpghi_state)* p,
+                              const LTFAT_REAL s[], LTFAT_COMPLEX c[]);
 
 /** Destroy a RTPGHI Plan.
  * \param[in] p  RTPGHI Plan
+ *
+ * #### Versions #
+ * <tt>
+ * phaseret_rtpghi_done_d(phaseret_rtpghi_state_d** p);
+ *
+ * phaseret_rtpghi_done_s(phaseret_rtpghi_state_s** p);
+ * </tt>
  */
-int
-rtpghi_done(rtpghi_state** p);
+PHASERET_API int
+PHASERET_NAME(rtpghi_done)(PHASERET_NAME(rtpghi_state)** p);
 
 /** Do RTPGHI for a complete magnitude spectrogram and compensate delay
  *
@@ -88,19 +157,25 @@ rtpghi_done(rtpghi_state** p);
  * \param[in]     a          Hop size
  * \param[in]     M          FFT length, also length of all the windows
  * \param[out]    c          Reconstructed coefficients M2 x N array
- */
-int
-rtpghioffline(const LTFAT_REAL s[], double gamma, int L, int W, int a, int M,
-              double tol, int do_causal, LTFAT_COMPLEX c[]);
-
-/** Computes \a gamma parameter given window type and its length
  *
- * \returns \a gamma or NAN if \a win was not recognized
+ * #### Versions #
+ * <tt>
+ * phaseret_rtpghioffline_d(const double s[], double gamma,
+ *                          ltfatInt L, ltfatInt W, ltfatInt a, ltfatInt M,
+ *                          double tol, int do_causal, ltfat_complex_d c[]);
+ *
+ * phaseret_rtpghioffline_s(const float s[], double gamma,
+ *                          ltfatInt L, ltfatInt W, ltfatInt a, ltfatInt M,
+ *                          double tol, int do_causal, ltfat_complex_s c[]);
+ * </tt>
+ *
+ * \see phaseret_firwin2gamma ltfat_dgtreal_phaseunlock
  */
-double
-firwin2gamma(LTFAT_FIRWIN win, int gl);
-/** @}*/
+PHASERET_API int
+PHASERET_NAME(rtpghioffline)(const LTFAT_REAL s[], double gamma, int L, int W, int a, int M,
+                             double tol, int do_causal, LTFAT_COMPLEX c[]);
 
+/** @}*/
 
 /** Compute phase frequency gradient by differentiation in time
  *
@@ -113,8 +188,8 @@ firwin2gamma(LTFAT_FIRWIN win, int gl);
  * \param[out]    fgrad      Frequency gradient, array of length M2
  */
 void
-rtpghifgrad(const double logs[], int a, int M, double gamma,
-            int do_causal, double fgrad[]);
+PHASERET_NAME(rtpghifgrad)(const LTFAT_REAL logs[], int a, int M, double gamma,
+                           int do_causal, LTFAT_REAL fgrad[]);
 
 /** Compute phase time gradient by differentiation in frequency
  *
@@ -125,8 +200,8 @@ rtpghifgrad(const double logs[], int a, int M, double gamma,
  * \param[out]    tgrad      Time gradient, array of length M2
  */
 void
-rtpghitgrad(const double logs[], int a, int M, double gamma,
-            double tgrad[]);
+PHASERET_NAME(rtpghitgrad)(const LTFAT_REAL logs[], int a, int M, double gamma,
+                           LTFAT_REAL tgrad[]);
 
 /** Compute log of input
  * \param[in]   in  Input array of length L
@@ -134,7 +209,7 @@ rtpghitgrad(const double logs[], int a, int M, double gamma,
  * \param[out] out  Output array of length L
  */
 void
-rtpghilog(const double in[], int L, double out[]);
+PHASERET_NAME(rtpghilog)(const LTFAT_REAL in[], int L, LTFAT_REAL out[]);
 
 /** Combine magnitude and phase to a complex array
  * \param[in]        s      Magnitude, array of length L
@@ -143,11 +218,10 @@ rtpghilog(const double in[], int L, double out[]);
  * \param[out]       c      Output array of length L
  */
 void
-rtpghimagphase(const double s[], const double phase[], int L, LTFAT_COMPLEX c[]);
+PHASERET_NAME(rtpghimagphase)(const LTFAT_REAL s[], const LTFAT_REAL phase[], int L, LTFAT_COMPLEX c[]);
 
 #ifdef __cplusplus
 }
 #endif
 
 
-#endif /* _rtpghi_h */

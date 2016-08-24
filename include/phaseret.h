@@ -1,12 +1,38 @@
 #ifndef _phaseret_h
 #define _phaseret_h
 
-#include "phaseret/gla.h"
-#include "phaseret/rtisila.h"
-#include "phaseret/legla.h"
-#include "phaseret/spsi.h"
-#include "phaseret/utils.h"
-#include "phaseret/rtpghi.h"
-#include "phaseret/pghi.h"
+#ifndef NOSYSTEMHEADERS
+#include "ltfat.h"
+#endif
+
+#ifndef LTFAT_DOUBLE
+#   ifndef LTFAT_SINGLE
+#      define LTFAT_SINGLE_WASNOTDEFINED
+#      define LTFAT_SINGLE
+#   endif
+
+#   include "phaseret/api.h"
+
+#   ifdef LTFAT_SINGLE_WASNOTDEFINED
+#      undef LTFAT_SINGLE
+#      undef LTFAT_SINGLE_WASNOTDEFINED
+#   endif
+#endif
+
+#ifndef LTFAT_SINGLE
+#   ifndef LTFAT_DOUBLE
+#       define LTFAT_DOUBLE_WASNOTDEFINED
+#       define LTFAT_DOUBLE
+#   endif
+
+#       include "phaseret/api.h"
+
+#   ifdef LTFAT_DOUBLE_WASNOTDEFINED
+#      undef LTFAT_DOUBLE
+#      undef LTFAT_DOUBLE_WASNOTDEFINED
+#   endif
+#endif
+
+
 
 #endif

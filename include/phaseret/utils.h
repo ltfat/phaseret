@@ -1,21 +1,13 @@
-/** \defgroup utils Utilities
- * \addtogroup utils
- *  \{
- *
- * \file
- * \author Zdeněk Průša
- * \date 1 Feb 2016
- * \brief UTILS header
- *
- */
-#ifndef _utils_h
-#define _utils_h
 
-#define LTFAT_DOUBLE
 #ifndef NOSYSTEMHEADERS
 #include "ltfat.h"
 #endif
 #include "ltfat/types.h"
+#include "phaseret/types.h"
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 /** Shifts cols of height x N matrix by one to the left
  *
@@ -26,18 +18,23 @@
  *                          If it is NULL, it is set to zeros.
  */
 int
-shiftcolsleft(LTFAT_REAL* cols, int height, int N, const LTFAT_REAL* newcol);
+PHASERET_NAME(shiftcolsleft)(LTFAT_REAL cols[], int height, int N, const LTFAT_REAL newcol[]);
 
 int
-force_magnitude(LTFAT_COMPLEX* cin, const LTFAT_REAL* s, int L, LTFAT_COMPLEX* cout);
+PHASERET_NAME(force_magnitude)(LTFAT_COMPLEX cin[], const LTFAT_REAL s[], int L, LTFAT_COMPLEX cout[]);
 
 void
-realimag2absangle(const LTFAT_COMPLEX* cin, const int L, LTFAT_COMPLEX* c);
+PHASERET_NAME(realimag2absangle)(const LTFAT_COMPLEX cin[], const int L, LTFAT_COMPLEX c[]);
 
 void
-absangle2realimag(const LTFAT_COMPLEX* cin, const int L, LTFAT_COMPLEX* c);
+PHASERET_NAME(absangle2realimag)(const LTFAT_COMPLEX cin[], const int L, LTFAT_COMPLEX c[]);
+
+void
+PHASERET_NAME(absangle2realimag_split2inter)(const LTFAT_REAL s[],
+        const LTFAT_REAL phase[], const int L, LTFAT_COMPLEX c[]);
+
+#ifdef __cplusplus
+}
+#endif
 
 
-#endif /* _utils_h */
-
-/** @}*/

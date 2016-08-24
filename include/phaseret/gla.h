@@ -1,13 +1,19 @@
-#define LTFAT_DOUBLE
-
 #ifndef NOSYSTEMHEADERS
 #include "ltfat.h"
-#endif
-#include "ltfat/types.h"
+#ifndef _phaseret_dgtrealwrapper_h_included
+#define _phaseret_dgtrealwrapper_h_included
 #include "dgtrealwrapper.h"
+#endif
+#endif
 
+#include "ltfat/types.h"
+#include "phaseret/types.h"
 
-typedef struct gla_plan gla_plan;
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+typedef struct PHASERET_NAME(gla_plan) PHASERET_NAME(gla_plan);
 
 /** \addtogroup gla
  * @{
@@ -29,6 +35,20 @@ typedef struct gla_plan gla_plan;
  *  \param[in]         M   Number of frequency channels
  *  \param[in]     alpha   Acceleration parameter
  *  \param[in]      iter   Current iteration
+ *
+ * #### Versions #
+ * <tt>
+ * phaseret_gla_callback_status_d(phaseret_dgtreal_plan_d* p,
+ *                                void* userdata, ltfat_complex_d c[],
+ *                                ltfatInt L, ltfatInt W, ltfatInt a,
+ *                                ltfatint M, double* alpha, ltfatInt iter);
+ *
+ *
+ * phaseret_gla_callback_status_s(phaseret_dgtreal_plan_s* p,
+ *                                void* userdata, ltfat_complex_s c[],
+ *                                ltfatInt L, ltfatInt W, ltfatInt a,
+ *                                ltfatint M, double* alpha, ltfatInt iter);
+ * </tt>
  *  \returns
  *  Status code | Meaning
  *  ------------|---------------------------------------------------------------------------------------
@@ -36,10 +56,12 @@ typedef struct gla_plan gla_plan;
  *  >0          | Signalizes that callback exited without error but terminate the algorithm prematurely
  *  <0          | Callback exited with error
  *
- *  \see dgtreal_anasyn_execute_proj dgtreal_anasyn_execute_ana dgtreal_anasyn_execute_syn
+ *  \see dgtreal_execute_proj dgtreal_execute_ana dgtreal_execute_syn
  */
-typedef int gla_callback_status(dgtreal_anasyn_plan* p, void* userdata, LTFAT_COMPLEX c[],
-                                int L, int W, int a, int M, double* alpha, int iter);
+typedef int
+PHASERET_NAME(gla_callback_status)(PHASERET_NAME(dgtreal_plan)* p,
+                                   void* userdata, LTFAT_COMPLEX c[],
+                                   int L, int W, int a, int M, double* alpha, int iter);
 
 /** Function prototype for coefficient modification callback
  *
@@ -51,13 +73,23 @@ typedef int gla_callback_status(dgtreal_anasyn_plan* p, void* userdata, LTFAT_CO
  *  \param[in]         W   Number of signal channels
  *  \param[in]         a   Time hop factor
  *  \param[in]         M   Number of frequency channels
+ *
+ * #### Versions #
+ * <tt>
+ * phaseret_gla_callback_cmod_d(void* userdata, ltfat_complex_d c[],
+ *                              ltfatInt L, ltfatInt W, ltfatInt a, ltfatInt M);
+ *
+ * phaseret_gla_callback_cmod_s(void* userdata, ltfat_complex_s c[],
+ *                              ltfatInt L, ltfatInt W, ltfatInt a, ltfatInt M);
+ * </tt>
  *  \returns
  *  Status code | Meaning
  *  ------------|-----------------
  *   0          | Signalizes that callback exited without error
  *  <0          | Callback exited with error
  */
-typedef int gla_callback_cmod(void* userdata, LTFAT_COMPLEX c[], int L, int W, int a, int M);
+typedef int
+PHASERET_NAME(gla_callback_cmod)(void* userdata, LTFAT_COMPLEX c[], int L, int W, int a, int M);
 
 /** Function prototype for signal modification callback
  *
@@ -67,13 +99,23 @@ typedef int gla_callback_cmod(void* userdata, LTFAT_COMPLEX c[], int L, int W, i
  *  \param[in]         W   Number of signal channels
  *  \param[in]         a   Time hop factor
  *  \param[in]         M   Number of frequency channels
+ *
+ * #### Versions #
+ * <tt>
+ * phaseret_gla_callback_fmod_d(void* userdata, double f[],
+ *                              ltfatInt L, ltfatInt W, ltfatInt a, ltfatInt M);
+ *
+ * phaseret_gla_callback_fmod_s(void* userdata, float f[],
+ *                              ltfatInt L, ltfatInt W, ltfatInt a, ltfatInt M);
+ * </tt>
  *  \returns
  *  Status code | Meaning
  *  ------------|-----------------
  *   0          | Signalizes that callback exited without error
  *  <0          | Callback exited with error
  */
-typedef int gla_callback_fmod(void* userdata, LTFAT_REAL f[], int L, int W, int a, int M);
+typedef int
+PHASERET_NAME(gla_callback_fmod)(void* userdata, LTFAT_REAL f[], int L, int W, int a, int M);
 
 
 /** Griffin-Lim algorithm
@@ -89,22 +131,34 @@ typedef int gla_callback_fmod(void* userdata, LTFAT_REAL f[], int L, int W, int 
  *  \param[in]      M   Number of frequency channels
  *  \param[in]   iter   Number of iterations
  *  \param[out]  cout   Coefficients with reconstructed phase, size M2 x N x W
+ *
+ * #### Versions #
+ * <tt>
+ * phaseret_gla_d(const ltfat_complex_d cinit[], const double g[],
+ *                ltfatInt L, ltfatInt gl, ltfatInt W, ltfatInt a, ltfatInt M,
+ *                ltfatInt iter, ltfat_complex_d c[]);
+ *
+ * phaseret_gla_s(const ltfat_complex_s cinit[], const float g[],
+ *                ltfatInt L, ltfatInt gl, ltfatInt W, ltfatInt a, ltfatInt M,
+ *                ltfatInt iter, ltfat_complex_s c[]);
+ * </tt>
  *  \returns
  *  Status code           | Description
  *  ----------------------|-----------------------
  *  LTFATERR_SUCCESS      | No error occurred
  *  LTFATERR_NULLPOINTER  | \a cinit or \a g or \a cout was NULL
  *  LTFATERR_BADSIZE      | Signal length L is less or equal to 0.
- *  LTFATERR_NOTPOSARG    | At least one of \f W, \f a, \f M, \f gl was less or equal to zero. 
- *  LTFATERR_BADTRALEN    | \a L is not divisible by both \a a and \a M. 
+ *  LTFATERR_NOTPOSARG    | At least one of \f W, \f a, \f M, \f gl was less or equal to zero.
+ *  LTFATERR_BADTRALEN    | \a L is not divisible by both \a a and \a M.
  *  LTFATERR_NOTAFRAME    | System does not form a frame
- *  LTFATERR_INITFAILED   | The FFTW plan creation failed 
+ *  LTFATERR_INITFAILED   | The FFTW plan creation failed
  *  LTFATERR_NOTSUPPORTED | This is a non-painless system but its support was not compiled
  *  LTFATERR_NOMEM        | Memory allocation error occurred
  */
-int
-gla(const LTFAT_COMPLEX cinit[], const LTFAT_REAL g[], const int L, const int gl, const int W,
-    const int a, const int M, const int iter, LTFAT_COMPLEX cout[]);
+PHASERET_API int
+PHASERET_NAME(gla)(const LTFAT_COMPLEX cinit[], const LTFAT_REAL g[],
+                   const int L, const int gl, const int W,
+                   const int a, const int M, const int iter, LTFAT_COMPLEX c[]);
 
 /** Initialize Griffin-Lim algorithm plan
  *
@@ -129,26 +183,40 @@ gla(const LTFAT_COMPLEX cinit[], const LTFAT_REAL g[], const int L, const int gl
  *  \param[in]   hint   DGT algorithm hint
  *  \param[in]  flags   FFTW planning flag
  *  \param[out]     p   GLA Plan
+ *
+ * #### Versions #
+ * <tt>
+ * phaseret_gla_init_d(const ltfat_complex_d cinit[], const double g[],
+ *                     ltfatInt L, ltfatInt gl, ltfatInt W, ltfatInt a, ltfatInt M,
+ *                     double alpha, ltfat_complex_d c[], phaseret_dgtreal_hint hint,
+ *                     unsigned flags, phaseret_gla_plan_d** p);
+ *
+ * phaseret_gla_init_s(const ltfat_complex_s cinit[], const double g[],
+ *                     ltfatInt L, ltfatInt gl, ltfatInt W, ltfatInt a, ltfatInt M,
+ *                     double alpha, ltfat_complex_s c[], phaseret_dgtreal_hint hint,
+ *                     unsigned flags, phaseret_gla_plan_s** p);
+ * </tt>
  *  \returns
  *  Status code           | Description
  *  ----------------------|-----------------------
  *  LTFATERR_SUCCESS      | No error occurred
  *  LTFATERR_NULLPOINTER  | \a cinit or \a g or or \a p was NULL or \a c was NULL and flags != FFTW_ESTIMATE
  *  LTFATERR_BADSIZE      | Signal length L is less or equal to 0.
- *  LTFATERR_NOTPOSARG    | At least one of \f W, \f a, \f M, \f gl was less or equal to zero. 
- *  LTFATERR_BADTRALEN    | \a L is not divisible by both \a a and \a M. 
+ *  LTFATERR_NOTPOSARG    | At least one of \f W, \f a, \f M, \f gl was less or equal to zero.
+ *  LTFATERR_BADTRALEN    | \a L is not divisible by both \a a and \a M.
  *  LTFATERR_NOTAFRAME    | System does not form a frame
- *  LTFATERR_INITFAILED   | The FFTW plan creation failed 
+ *  LTFATERR_INITFAILED   | The FFTW plan creation failed
  *  LTFATERR_NOTSUPPORTED | This is a non-painless system but its support was not compiled
- *  LTFATERR_BADARG       | \a alpha was set to a negative number 
- *  LTFATERR_CANNOTHAPPEN | \a hint does not have a valid value from \a dgtreal_anasyn_hint or \a ptype is not valid value from \a ltfat_phaseconvention enum
+ *  LTFATERR_BADARG       | \a alpha was set to a negative number
+ *  LTFATERR_CANNOTHAPPEN | \a hint does not have a valid value from \a phaseret_dgtreal_hint or \a ptype is not valid value from \a ltfat_phaseconvention enum
  *  LTFATERR_NOMEM        | Memory allocation error occurred
  */
-int
-gla_init(const LTFAT_COMPLEX cinit[], const LTFAT_REAL g[], const int L, const int gl, const int W,
-         const int a, const int M, const double alpha,
-         LTFAT_COMPLEX c[], dgtreal_anasyn_hint hint, unsigned flags,
-         gla_plan** p);
+PHASERET_API int
+PHASERET_NAME(gla_init)(const LTFAT_COMPLEX cinit[], const LTFAT_REAL g[],
+                        const int L, const int gl, const int W, const int a,
+                        const int M, const double alpha, LTFAT_COMPLEX c[],
+                        phaseret_dgtreal_init_params* params,
+                        PHASERET_NAME(gla_plan)** p);
 
 /** Execute Griffin-Lim algorithm plan
  *
@@ -156,18 +224,25 @@ gla_init(const LTFAT_COMPLEX cinit[], const LTFAT_REAL g[], const int L, const i
  *
  *  \param[in]      p   Griffin-lim algorithm plan
  *  \patam[in]   iter   Number of iterations
+ *
+ * #### Versions #
+ * <tt>
+ * phaseret_gla_execute_d(phaseret_gla_plan_d* p, ltfatInt iter);
+ *
+ * phaseret_gla_execute_s(phaseret_gla_plan_s* p, ltfatInt iter);
+ * </tt>
  *  \returns
  *  Status code           | Description
  *  ----------------------|-----------------------
  *  LTFATERR_SUCCESS      | No error occurred
  *  LTFATERR_NULLPOINTER  | \a p was NULL or the plan was created with \a cinit or \a cout being NULL
  *  LTFATERR_NOTPOSARG    | \a iter was not positive
- *  LTFATERR_BADARG       | \a alpha was set to a negative number in the status callback 
+ *  LTFATERR_BADARG       | \a alpha was set to a negative number in the status callback
  *  LTFATERR_NOMEM        | Memory allocation error occurred
  *  any                   | Error code from some of the callbacks
  */
-int
-gla_execute(gla_plan* p, const int iter);
+PHASERET_API int
+PHASERET_NAME(gla_execute)(PHASERET_NAME(gla_plan)* p, const int iter);
 
 /** Execute Griffin-Lim algorithm plan on a new array
  *
@@ -177,75 +252,137 @@ gla_execute(gla_plan* p, const int iter);
  *  \param[in]  cinit   Initial set of coefficients, size M2 x N x W
  *  \patam[in]   iter   Number of iterations
  *  \param[in]   cout   Coefficients with reconstructed phase, size M2 x N x W
+ *
+ * #### Versions #
+ * <tt>
+ * phaseret_gla_execute_newarray_d(phaseret_gla_plan_d* p,
+ *                                 const ltfat_complex_d cinit[],
+ *                                 ltfatInt iter, ltfat_complex_d c[]);
+ *
+ * phaseret_gla_execute_newarray_s(phaseret_gla_plan_s* p,
+ *                                 const ltfat_complex_s cinit[],
+ *                                 ltfatInt iter, ltfat_complex_s c[]);
+ * </tt>
  *  \returns
  *  Status code           | Description
  *  ----------------------|-----------------------
  *  LTFATERR_SUCCESS      | No error occurred
  *  LTFATERR_NULLPOINTER  | \a p or \a cinit or \a cout was NULL
  *  LTFATERR_NOTPOSARG    | \a iter was not positive
- *  LTFATERR_BADARG       | \a alpha was set to a negative number in the status callback 
+ *  LTFATERR_BADARG       | \a alpha was set to a negative number in the status callback
  *  LTFATERR_NOMEM        | Memory allocation error occurred
  *  any                   | Error code from some of the callbacks
  */
-int
-gla_execute_newarray(gla_plan* p, const LTFAT_COMPLEX cinit[], const int iter,
-                     LTFAT_COMPLEX cout[]);
+PHASERET_API int
+PHASERET_NAME(gla_execute_newarray)(PHASERET_NAME(gla_plan)* p,
+                                    const LTFAT_COMPLEX cinit[], const int iter,
+                                    LTFAT_COMPLEX c[]);
 
 /** Destroy Griffin-Lim algorithm plan
  *
  *  \param[in]      p   Griffin-lim algorithm plan
+ *
+ * #### Versions #
+ * <tt>
+ * phaseret_gla_done_d(phaseret_gla_plan_d** p);
+ *
+ * phaseret_gla_done_s(phaseret_gla_plan_s** p);
+ * </tt>
  *  \returns
  *  Status code           | Description
  *  ----------------------|-----------------------
  *  LTFATERR_SUCCESS      | No error occurred
  *  LTFATERR_NULLPOINTER  | \a p or \a *p was NULL
  */
-int
-gla_done(gla_plan** p);
+PHASERET_API int
+PHASERET_NAME(gla_done)(PHASERET_NAME(gla_plan)** p);
 
 /** Register status callback
  *
  *  \param[in]         p   Griffin-lim algorithm plan
  *  \param[in]  callback   Callback function
  *  \param[in]  userdata   User defined data
+ *
+ * #### Versions #
+ * <tt>
+ * phaseret_gla_set_status_callback_d(phaseret_gla_plan_d* p,
+ *                                    phaseret_gla_callback_status_d* callback,
+ *                                    void* userdata);
+ *
+ * phaseret_gla_set_status_callback_s(phaseret_gla_plan_s* p,
+ *                                    phaseret_gla_callback_status_s* callback,
+ *                                    void* userdata);
+ * </tt>
  *  \returns
  *  Status code           | Description
  *  ----------------------|-----------------------
  *  LTFATERR_SUCCESS      | No error occurred
  *  LTFATERR_NULLPOINTER  | \a p or \a callback was NULL
  */
-int
-gla_set_status_callback(gla_plan* p, gla_callback_status* callback, void* userdata);
+PHASERET_API int
+PHASERET_NAME(gla_set_status_callback)(PHASERET_NAME(gla_plan)* p,
+                                       PHASERET_NAME(gla_callback_status)* callback,
+                                       void* userdata);
 
 /** Register coefficient modification callback
  *
  *  \param[in]         p   Griffin-lim algorithm plan
  *  \param[in]  callback   Callback function
  *  \param[in]  userdata   User defined data
+ *
+ * #### Versions #
+ * <tt>
+ * phaseret_gla_set_cmod_callback_d(phaseret_gla_plan_d* p,
+ *                                  phaseret_gla_callback_cmod_d* callback,
+ *                                  void* userdata);
+ *
+ * phaseret_gla_set_cmod_callback_s(phaseret_gla_plan_s* p,
+ *                                  phaseret_gla_callback_cmod_s* callback,
+ *                                  void* userdata);
+ * </tt>
  *  \returns
  *  Status code           | Description
  *  ----------------------|-----------------------
  *  LTFATERR_SUCCESS      | No error occurred
  *  LTFATERR_NULLPOINTER  | \a p or \a callback was NULL
  */
-int
-gla_set_cmod_callback(gla_plan* p, gla_callback_cmod* callback, void* userdata);
+PHASERET_API int
+PHASERET_NAME(gla_set_cmod_callback)(PHASERET_NAME(gla_plan)* p,
+                                     PHASERET_NAME(gla_callback_cmod)* callback,
+                                     void* userdata);
 
 /** Register signal modification callback
  *
  *  \param[in]         p   Griffin-lim algorithm plan
  *  \param[in]  callback   Callback function
  *  \param[in]  userdata   User defined data
+ *
+ * #### Versions #
+ * <tt>
+ * phaseret_set_fmod_callback_d(phaseret_gla_plan_d* p,
+ *                              phaseret_gla_callback_fmod_d* callback,
+ *                              void* userdata);
+ *
+ * phaseret_set_fmod_callback_s(phaseret_gla_plan_s* p,
+ *                              phaseret_gla_callback_fmod_s* callback,
+ *                              void* userdata);
+ * </tt>
  *  \returns
  *  Status code           | Description
  *  ----------------------|-----------------------
  *  LTFATERR_SUCCESS      | No error occurred
  *  LTFATERR_NULLPOINTER  | \a p or \a callback was NULL
  */
-int
-gla_set_fmod_callback(gla_plan* p, gla_callback_fmod* callback, void* userdata);
+PHASERET_API int
+PHASERET_NAME(gla_set_fmod_callback)(PHASERET_NAME(gla_plan)* p,
+                                     PHASERET_NAME(gla_callback_fmod)* callback,
+                                     void* userdata);
 
 /** @} */
 
 int
-fastupdate(LTFAT_COMPLEX* c, LTFAT_COMPLEX* t, double alpha, int L);
+PHASERET_NAME(fastupdate)(LTFAT_COMPLEX* c, LTFAT_COMPLEX* t, double alpha, int L);
+
+#ifdef __cplusplus
+}
+#endif
