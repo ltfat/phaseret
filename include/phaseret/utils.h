@@ -18,20 +18,20 @@ extern "C" {
  *                          If it is NULL, it is set to zeros.
  */
 int
-PHASERET_NAME(shiftcolsleft)(LTFAT_REAL cols[], int height, int N, const LTFAT_REAL newcol[]);
+PHASERET_NAME(shiftcolsleft)(LTFAT_REAL cols[], ltfat_int height, ltfat_int N, const LTFAT_REAL newcol[]);
 
 int
-PHASERET_NAME(force_magnitude)(LTFAT_COMPLEX cin[], const LTFAT_REAL s[], int L, LTFAT_COMPLEX cout[]);
+PHASERET_NAME(force_magnitude)(LTFAT_COMPLEX cin[], const LTFAT_REAL s[], ltfat_int L, LTFAT_COMPLEX cout[]);
 
 void
-PHASERET_NAME(realimag2absangle)(const LTFAT_COMPLEX cin[], const int L, LTFAT_COMPLEX c[]);
+PHASERET_NAME(realimag2absangle)(const LTFAT_COMPLEX cin[], ltfat_int L, LTFAT_COMPLEX c[]);
 
 void
-PHASERET_NAME(absangle2realimag)(const LTFAT_COMPLEX cin[], const int L, LTFAT_COMPLEX c[]);
+PHASERET_NAME(absangle2realimag)(const LTFAT_COMPLEX cin[], ltfat_int L, LTFAT_COMPLEX c[]);
 
 void
 PHASERET_NAME(absangle2realimag_split2inter)(const LTFAT_REAL s[],
-        const LTFAT_REAL phase[], const int L, LTFAT_COMPLEX c[]);
+        const LTFAT_REAL phase[], ltfat_int L, LTFAT_COMPLEX c[]);
 
 #ifdef __cplusplus
 }

@@ -4,7 +4,7 @@
 
 int
 PHASERET_NAME(ltfat_idgtreal_long_execute_wrapper)(void* plan,
-        const LTFAT_COMPLEX* c, int UNUSED(L), int UNUSED(W), LTFAT_REAL* f)
+        const LTFAT_COMPLEX* c, ltfat_int UNUSED(L), ltfat_int UNUSED(W), LTFAT_REAL* f)
 {
     return LTFAT_NAME(idgtreal_long_execute_newarray)(
                (LTFAT_NAME(idgtreal_long_plan)*) plan, c, f);
@@ -12,7 +12,7 @@ PHASERET_NAME(ltfat_idgtreal_long_execute_wrapper)(void* plan,
 
 int
 PHASERET_NAME(ltfat_dgtreal_long_execute_wrapper)(void* plan,
-        const LTFAT_REAL* f, int UNUSED(L), int UNUSED(W), LTFAT_COMPLEX* c)
+        const LTFAT_REAL* f, ltfat_int UNUSED(L), ltfat_int UNUSED(W), LTFAT_COMPLEX* c)
 {
     return LTFAT_NAME(dgtreal_long_execute_newarray)(
                (LTFAT_NAME(dgtreal_long_plan)*) plan, f, c);
@@ -20,7 +20,7 @@ PHASERET_NAME(ltfat_dgtreal_long_execute_wrapper)(void* plan,
 
 int
 PHASERET_NAME(ltfat_idgtreal_fb_execute_wrapper)(void* plan,
-        const LTFAT_COMPLEX* c, int L, int W, LTFAT_REAL* f)
+        const LTFAT_COMPLEX* c, ltfat_int L, ltfat_int W, LTFAT_REAL* f)
 {
     return LTFAT_NAME(idgtreal_fb_execute)(
                (LTFAT_NAME(idgtreal_fb_plan)*) plan, c, L, W, f);
@@ -28,7 +28,7 @@ PHASERET_NAME(ltfat_idgtreal_fb_execute_wrapper)(void* plan,
 
 int
 PHASERET_NAME(ltfat_dgtreal_fb_execute_wrapper)(void* plan,
-        const LTFAT_REAL* f, int L, int W, LTFAT_COMPLEX* c)
+        const LTFAT_REAL* f, ltfat_int L, ltfat_int W, LTFAT_COMPLEX* c)
 {
     return LTFAT_NAME(dgtreal_fb_execute)(
                (LTFAT_NAME(dgtreal_fb_plan)*) plan, f, L, W, c);
@@ -111,8 +111,8 @@ error:
 
 
 PHASERET_API int
-PHASERET_NAME(dgtreal_init)(const LTFAT_REAL g[], int gl, int L, int W,
-                            int a, int M, LTFAT_COMPLEX c[],
+PHASERET_NAME(dgtreal_init)(const LTFAT_REAL g[], ltfat_int gl, ltfat_int L, ltfat_int W,
+                            ltfat_int a, ltfat_int M, LTFAT_COMPLEX c[],
                             phaseret_dgtreal_init_params* params, PHASERET_NAME(dgtreal_plan)** pout)
 {
     int status = LTFATERR_SUCCESS;
@@ -120,9 +120,9 @@ PHASERET_NAME(dgtreal_init)(const LTFAT_REAL g[], int gl, int L, int W,
     phaseret_dgtreal_init_params paramsLoc;
     int ispainless = gl <= M;
     LTFAT_REAL* g2 = NULL;
-    int g2l = 0;
+    ltfat_int g2l = 0;
 
-    int minL = ltfat_lcm(a, M);
+    ltfat_int minL = ltfat_lcm(a, M);
 
     if (params)
         paramsLoc = *params;

@@ -4,11 +4,11 @@
 #include "float.h"
 
 PHASERET_API int
-PHASERET_NAME(spsi)(const LTFAT_REAL* s, int L, int W, int a, int M,
+PHASERET_NAME(spsi)(const LTFAT_REAL* s, ltfat_int L, ltfat_int W, ltfat_int a, ltfat_int M,
                     LTFAT_REAL* initphase, LTFAT_COMPLEX* c)
 {
-    int M2 = M / 2 + 1;
-    int N = L / a;
+    ltfat_int M2 = M / 2 + 1;
+    ltfat_int N = L / a;
     LTFAT_REAL* tmpphase = initphase;
 
     int status = LTFATERR_SUCCESS;
@@ -29,17 +29,17 @@ PHASERET_NAME(spsi)(const LTFAT_REAL* s, int L, int W, int a, int M,
         s = chalf;
     }
 
-    for (int w = 0; w < W; w++)
+    for (ltfat_int w = 0; w < W; w++)
     {
         LTFAT_REAL* tmpphasecol = tmpphase + w * M2;
-        for (int n = 0; n < N; n++)
+        for (ltfat_int n = 0; n < N; n++)
         {
             const LTFAT_REAL* scol = s + n * M2 + w * M2 * N;
             LTFAT_COMPLEX* ccol = c + n * M2 + w * M2 * N;
 
             PHASERET_NAME(spsiupdate)(scol, 1, a, M, tmpphasecol);
 
-            for (int m = 0; m < M2; m++)
+            for (ltfat_int m = 0; m < M2; m++)
                 ccol[m] = scol[m] * exp(I * tmpphasecol[m]);
         }
     }
@@ -51,11 +51,11 @@ error:
 }
 
 PHASERET_API int
-PHASERET_NAME(spsi_withmask)(const LTFAT_COMPLEX* cinit, const int* mask, int L,
-                             int W, int a, int M, LTFAT_REAL* initphase, LTFAT_COMPLEX* c)
+PHASERET_NAME(spsi_withmask)(const LTFAT_COMPLEX* cinit, const int* mask, ltfat_int L,
+                             ltfat_int W, ltfat_int a, ltfat_int M, LTFAT_REAL* initphase, LTFAT_COMPLEX* c)
 {
-    int M2 = M / 2 + 1;
-    int N = L / a;
+    ltfat_int M2 = M / 2 + 1;
+    ltfat_int N = L / a;
     LTFAT_REAL* tmpphase = initphase;
 
     int status = LTFATERR_SUCCESS;
@@ -70,10 +70,10 @@ PHASERET_NAME(spsi_withmask)(const LTFAT_COMPLEX* cinit, const int* mask, int L,
     if (!initphase)
         CHECKMEM(tmpphase = LTFAT_NAME_REAL(calloc)(M2 * W));
 
-    for (int w = 0; w < W; w++)
+    for (ltfat_int w = 0; w < W; w++)
     {
         LTFAT_REAL* tmpphasecol = tmpphase + w * M2;
-        for (int n = 0; n < N; n++)
+        for (ltfat_int n = 0; n < N; n++)
         {
             LTFAT_COMPLEX* ccol = c + n * M2 + w * M2 * N;
             const LTFAT_COMPLEX* cinitcol = cinit + n * M2 + w * M2 * N;
@@ -86,11 +86,11 @@ PHASERET_NAME(spsi_withmask)(const LTFAT_COMPLEX* cinit, const int* mask, int L,
             PHASERET_NAME(spsiupdate)(absptr, 2, a, M, tmpphasecol);
 
             /* Overwrite with known phase */
-            for (int m = 0; m < M2; m++)
+            for (ltfat_int m = 0; m < M2; m++)
                 if (maskcol[m])
                     tmpphasecol[m] = angleptr[2 * m];
 
-            for (int m = 0; m < M2; m++)
+            for (ltfat_int m = 0; m < M2; m++)
                 ccol[m] = absptr[2 * m] * exp(I * tmpphasecol[m]);
         }
     }
@@ -103,18 +103,18 @@ error:
 }
 
 void
-PHASERET_NAME(spsiupdate)(const LTFAT_REAL* scol, int stride, int a, int M,
+PHASERET_NAME(spsiupdate)(const LTFAT_REAL* scol, ltfat_int stride, ltfat_int a, ltfat_int M,
                           LTFAT_REAL* tmpphase)
 {
-    int M2 = M / 2 + 1;
+    ltfat_int M2 = M / 2 + 1;
 
-    for (int m = 1; m < M2 - 1; m++)
+    for (ltfat_int m = 1; m < M2 - 1; m++)
     {
         if (scol[stride * m] > scol[stride * (m - 1)]
             && scol[stride * m] > scol[stride * (m + 1)])
         {
             LTFAT_REAL p;
-            int binup = m, bindown = m;
+            ltfat_int binup = m, bindown = m;
             LTFAT_REAL alpha = log(scol[stride * (m - 1)] + DBL_MIN);
             LTFAT_REAL beta = log(scol[stride * m] + DBL_MIN);
             LTFAT_REAL gamma = log(scol[stride * (m + 1)] + DBL_MIN);
@@ -144,7 +144,7 @@ PHASERET_NAME(spsiupdate)(const LTFAT_REAL* scol, int stride, int a, int M,
             }
 
             // Go towards low frequency bins
-            int bin = bindown;
+            ltfat_int bin = bindown;
 
             while (bin > 0 && scol[stride * bin] < scol[stride * (bin + 1)])
             {

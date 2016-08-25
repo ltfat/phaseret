@@ -35,10 +35,10 @@ extern "C" {
  *
  * #### Versions #
  * <tt>
- * phaseret_spsi_d(const double s[], ltfatInt L, ltfatInt W, ltfatInt a, ltfatInt M,
+ * phaseret_spsi_d(const double s[], ltfat_int L, ltfat_int W, ltfat_int a, ltfat_int M,
  *                 double initphase[], ltfat_complex_d c[]);
  *
- * phaseret_spsi_s(const float s[], ltfatInt L, ltfatInt W, ltfatInt a, ltfatInt M,
+ * phaseret_spsi_s(const float s[], ltfat_int L, ltfat_int W, ltfat_int a, ltfat_int M,
  *                 float initphase[], ltfat_complex_s c[]);
  * </tt>
  *  \returns
@@ -50,7 +50,7 @@ extern "C" {
  *  LTFATERR_NOMEM       | Heap allocation failed
  */
 PHASERET_API int
-PHASERET_NAME(spsi)(const LTFAT_REAL s[], int L, int W, int a, int M, LTFAT_REAL initphase[], LTFAT_COMPLEX c[]);
+PHASERET_NAME(spsi)(const LTFAT_REAL s[], ltfat_int L, ltfat_int W, ltfat_int a, ltfat_int M, LTFAT_REAL initphase[], LTFAT_COMPLEX c[]);
 
 /** Masked SPSI algorithm implementation
  *
@@ -72,11 +72,11 @@ PHASERET_NAME(spsi)(const LTFAT_REAL s[], int L, int W, int a, int M, LTFAT_REAL
  * #### Versions #
  * <tt>
  * phaseret_spsi_withmask_d(const ltfat_complex_d cin[], const int mask[],
- *                          ltfatInt L, ltfatInt W, ltfatInt a, ltfatInt M,
+ *                          ltfat_int L, ltfat_int W, ltfat_int a, ltfat_int M,
  *                          double initphase[], ltfat_complex_d c[]);
  *
  * phaseret_spsi_withmask_s(const ltfat_complex_s cin[], const int mask[],
- *                          ltfatInt L, ltfatInt W, ltfatInt a, ltfatInt M,
+ *                          ltfat_int L, ltfat_int W, ltfat_int a, ltfat_int M,
  *                          float initphase[], ltfat_complex_s c[]);
  * </tt>
  *  \returns
@@ -88,13 +88,13 @@ PHASERET_NAME(spsi)(const LTFAT_REAL s[], int L, int W, int a, int M, LTFAT_REAL
  *  LTFATERR_NOMEM       | Heap allocation failed
  */
 PHASERET_API int
-PHASERET_NAME(spsi_withmask)(const LTFAT_COMPLEX cin[], const int mask[], int L, int W, int a, int M,
+PHASERET_NAME(spsi_withmask)(const LTFAT_COMPLEX cin[], const int mask[], ltfat_int L, ltfat_int W, ltfat_int a, ltfat_int M,
                              LTFAT_REAL initphase[], LTFAT_COMPLEX c[]);
 
 
 /** \} */
 void
-PHASERET_NAME(spsiupdate)(const LTFAT_REAL* scol, int stride, int a, int M, LTFAT_REAL* tmpphase);
+PHASERET_NAME(spsiupdate)(const LTFAT_REAL* scol, ltfat_int stride, ltfat_int a, ltfat_int M, LTFAT_REAL* tmpphase);
 
 #ifdef __cplusplus
 }

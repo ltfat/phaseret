@@ -40,14 +40,14 @@ typedef struct PHASERET_NAME(gla_plan) PHASERET_NAME(gla_plan);
  * <tt>
  * phaseret_gla_callback_status_d(phaseret_dgtreal_plan_d* p,
  *                                void* userdata, ltfat_complex_d c[],
- *                                ltfatInt L, ltfatInt W, ltfatInt a,
- *                                ltfatint M, double* alpha, ltfatInt iter);
+ *                                ltfat_int L, ltfat_int W, ltfat_int a,
+ *                                ltfat_int M, double* alpha, ltfat_int iter);
  *
  *
  * phaseret_gla_callback_status_s(phaseret_dgtreal_plan_s* p,
  *                                void* userdata, ltfat_complex_s c[],
- *                                ltfatInt L, ltfatInt W, ltfatInt a,
- *                                ltfatint M, double* alpha, ltfatInt iter);
+ *                                ltfat_int L, ltfat_int W, ltfat_int a,
+ *                                ltfat_int M, double* alpha, ltfat_int iter);
  * </tt>
  *  \returns
  *  Status code | Meaning
@@ -61,7 +61,7 @@ typedef struct PHASERET_NAME(gla_plan) PHASERET_NAME(gla_plan);
 typedef int
 PHASERET_NAME(gla_callback_status)(PHASERET_NAME(dgtreal_plan)* p,
                                    void* userdata, LTFAT_COMPLEX c[],
-                                   int L, int W, int a, int M, double* alpha, int iter);
+                                   ltfat_int L, ltfat_int W, ltfat_int a, ltfat_int M, double* alpha, ltfat_int iter);
 
 /** Function prototype for coefficient modification callback
  *
@@ -77,10 +77,10 @@ PHASERET_NAME(gla_callback_status)(PHASERET_NAME(dgtreal_plan)* p,
  * #### Versions #
  * <tt>
  * phaseret_gla_callback_cmod_d(void* userdata, ltfat_complex_d c[],
- *                              ltfatInt L, ltfatInt W, ltfatInt a, ltfatInt M);
+ *                              ltfat_int L, ltfat_int W, ltfat_int a, ltfat_int M);
  *
  * phaseret_gla_callback_cmod_s(void* userdata, ltfat_complex_s c[],
- *                              ltfatInt L, ltfatInt W, ltfatInt a, ltfatInt M);
+ *                              ltfat_int L, ltfat_int W, ltfat_int a, ltfat_int M);
  * </tt>
  *  \returns
  *  Status code | Meaning
@@ -89,7 +89,7 @@ PHASERET_NAME(gla_callback_status)(PHASERET_NAME(dgtreal_plan)* p,
  *  <0          | Callback exited with error
  */
 typedef int
-PHASERET_NAME(gla_callback_cmod)(void* userdata, LTFAT_COMPLEX c[], int L, int W, int a, int M);
+PHASERET_NAME(gla_callback_cmod)(void* userdata, LTFAT_COMPLEX c[], ltfat_int L, ltfat_int W, ltfat_int a, ltfat_int M);
 
 /** Function prototype for signal modification callback
  *
@@ -103,10 +103,10 @@ PHASERET_NAME(gla_callback_cmod)(void* userdata, LTFAT_COMPLEX c[], int L, int W
  * #### Versions #
  * <tt>
  * phaseret_gla_callback_fmod_d(void* userdata, double f[],
- *                              ltfatInt L, ltfatInt W, ltfatInt a, ltfatInt M);
+ *                              ltfat_int L, ltfat_int W, ltfat_int a, ltfat_int M);
  *
  * phaseret_gla_callback_fmod_s(void* userdata, float f[],
- *                              ltfatInt L, ltfatInt W, ltfatInt a, ltfatInt M);
+ *                              ltfat_int L, ltfat_int W, ltfat_int a, ltfat_int M);
  * </tt>
  *  \returns
  *  Status code | Meaning
@@ -115,7 +115,7 @@ PHASERET_NAME(gla_callback_cmod)(void* userdata, LTFAT_COMPLEX c[], int L, int W
  *  <0          | Callback exited with error
  */
 typedef int
-PHASERET_NAME(gla_callback_fmod)(void* userdata, LTFAT_REAL f[], int L, int W, int a, int M);
+PHASERET_NAME(gla_callback_fmod)(void* userdata, LTFAT_REAL f[], ltfat_int L, ltfat_int W, ltfat_int a, ltfat_int M);
 
 
 /** Griffin-Lim algorithm
@@ -135,12 +135,12 @@ PHASERET_NAME(gla_callback_fmod)(void* userdata, LTFAT_REAL f[], int L, int W, i
  * #### Versions #
  * <tt>
  * phaseret_gla_d(const ltfat_complex_d cinit[], const double g[],
- *                ltfatInt L, ltfatInt gl, ltfatInt W, ltfatInt a, ltfatInt M,
- *                ltfatInt iter, ltfat_complex_d c[]);
+ *                ltfat_int L, ltfat_int gl, ltfat_int W, ltfat_int a, ltfat_int M,
+ *                ltfat_int iter, ltfat_complex_d c[]);
  *
  * phaseret_gla_s(const ltfat_complex_s cinit[], const float g[],
- *                ltfatInt L, ltfatInt gl, ltfatInt W, ltfatInt a, ltfatInt M,
- *                ltfatInt iter, ltfat_complex_s c[]);
+ *                ltfat_int L, ltfat_int gl, ltfat_int W, ltfat_int a, ltfat_int M,
+ *                ltfat_int iter, ltfat_complex_s c[]);
  * </tt>
  *  \returns
  *  Status code           | Description
@@ -157,8 +157,8 @@ PHASERET_NAME(gla_callback_fmod)(void* userdata, LTFAT_REAL f[], int L, int W, i
  */
 PHASERET_API int
 PHASERET_NAME(gla)(const LTFAT_COMPLEX cinit[], const LTFAT_REAL g[],
-                   const int L, const int gl, const int W,
-                   const int a, const int M, const int iter, LTFAT_COMPLEX c[]);
+                   ltfat_int L, ltfat_int gl, ltfat_int W,
+                   ltfat_int a, ltfat_int M, ltfat_int iter, LTFAT_COMPLEX c[]);
 
 /** Initialize Griffin-Lim algorithm plan
  *
@@ -187,12 +187,12 @@ PHASERET_NAME(gla)(const LTFAT_COMPLEX cinit[], const LTFAT_REAL g[],
  * #### Versions #
  * <tt>
  * phaseret_gla_init_d(const ltfat_complex_d cinit[], const double g[],
- *                     ltfatInt L, ltfatInt gl, ltfatInt W, ltfatInt a, ltfatInt M,
+ *                     ltfat_int L, ltfat_int gl, ltfat_int W, ltfat_int a, ltfat_int M,
  *                     double alpha, ltfat_complex_d c[], phaseret_dgtreal_hint hint,
  *                     unsigned flags, phaseret_gla_plan_d** p);
  *
  * phaseret_gla_init_s(const ltfat_complex_s cinit[], const double g[],
- *                     ltfatInt L, ltfatInt gl, ltfatInt W, ltfatInt a, ltfatInt M,
+ *                     ltfat_int L, ltfat_int gl, ltfat_int W, ltfat_int a, ltfat_int M,
  *                     double alpha, ltfat_complex_s c[], phaseret_dgtreal_hint hint,
  *                     unsigned flags, phaseret_gla_plan_s** p);
  * </tt>
@@ -213,8 +213,8 @@ PHASERET_NAME(gla)(const LTFAT_COMPLEX cinit[], const LTFAT_REAL g[],
  */
 PHASERET_API int
 PHASERET_NAME(gla_init)(const LTFAT_COMPLEX cinit[], const LTFAT_REAL g[],
-                        const int L, const int gl, const int W, const int a,
-                        const int M, const double alpha, LTFAT_COMPLEX c[],
+                        ltfat_int L, ltfat_int gl, ltfat_int W, ltfat_int a,
+                        ltfat_int M, const double alpha, LTFAT_COMPLEX c[],
                         phaseret_dgtreal_init_params* params,
                         PHASERET_NAME(gla_plan)** p);
 
@@ -227,9 +227,9 @@ PHASERET_NAME(gla_init)(const LTFAT_COMPLEX cinit[], const LTFAT_REAL g[],
  *
  * #### Versions #
  * <tt>
- * phaseret_gla_execute_d(phaseret_gla_plan_d* p, ltfatInt iter);
+ * phaseret_gla_execute_d(phaseret_gla_plan_d* p, ltfat_int iter);
  *
- * phaseret_gla_execute_s(phaseret_gla_plan_s* p, ltfatInt iter);
+ * phaseret_gla_execute_s(phaseret_gla_plan_s* p, ltfat_int iter);
  * </tt>
  *  \returns
  *  Status code           | Description
@@ -242,7 +242,7 @@ PHASERET_NAME(gla_init)(const LTFAT_COMPLEX cinit[], const LTFAT_REAL g[],
  *  any                   | Error code from some of the callbacks
  */
 PHASERET_API int
-PHASERET_NAME(gla_execute)(PHASERET_NAME(gla_plan)* p, const int iter);
+PHASERET_NAME(gla_execute)(PHASERET_NAME(gla_plan)* p, ltfat_int iter);
 
 /** Execute Griffin-Lim algorithm plan on a new array
  *
@@ -257,11 +257,11 @@ PHASERET_NAME(gla_execute)(PHASERET_NAME(gla_plan)* p, const int iter);
  * <tt>
  * phaseret_gla_execute_newarray_d(phaseret_gla_plan_d* p,
  *                                 const ltfat_complex_d cinit[],
- *                                 ltfatInt iter, ltfat_complex_d c[]);
+ *                                 ltfat_int iter, ltfat_complex_d c[]);
  *
  * phaseret_gla_execute_newarray_s(phaseret_gla_plan_s* p,
  *                                 const ltfat_complex_s cinit[],
- *                                 ltfatInt iter, ltfat_complex_s c[]);
+ *                                 ltfat_int iter, ltfat_complex_s c[]);
  * </tt>
  *  \returns
  *  Status code           | Description
@@ -275,7 +275,7 @@ PHASERET_NAME(gla_execute)(PHASERET_NAME(gla_plan)* p, const int iter);
  */
 PHASERET_API int
 PHASERET_NAME(gla_execute_newarray)(PHASERET_NAME(gla_plan)* p,
-                                    const LTFAT_COMPLEX cinit[], const int iter,
+                                    const LTFAT_COMPLEX cinit[], ltfat_int iter,
                                     LTFAT_COMPLEX c[]);
 
 /** Destroy Griffin-Lim algorithm plan
@@ -381,7 +381,7 @@ PHASERET_NAME(gla_set_fmod_callback)(PHASERET_NAME(gla_plan)* p,
 /** @} */
 
 int
-PHASERET_NAME(fastupdate)(LTFAT_COMPLEX* c, LTFAT_COMPLEX* t, double alpha, int L);
+PHASERET_NAME(fastupdate)(LTFAT_COMPLEX* c, LTFAT_COMPLEX* t, double alpha, ltfat_int L);
 
 #ifdef __cplusplus
 }

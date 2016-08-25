@@ -75,8 +75,10 @@ else
 endif
 
 ifdef USECPP
+ifeq ($(USECPP),1)
 	CC = $(CXX)
 	CFLAGS = $(CXXFLAGS)
+endif
 endif
 
 ifdef NOBLASLAPACK
@@ -91,12 +93,13 @@ SO_DTARGET=$(buildprefix)/$(DSHARED)
 SO_STARGET=$(buildprefix)/$(SSHARED)
 SO_DSTARGET=$(buildprefix)/$(DSSHARED)
 
-FFTWLIB ?= -lfftw3 -lfftw3f
+#FFTWLIB ?= -lfftw3 -lfftw3f
 LTFATFLIB ?= -lltfatf
 LTFATDLIB ?= -lltfatd
 LTFATLIB ?= -lltfat
 
-LIBS=$(FFTWLIB) -lm
+#LIBS=$(FFTWLIB) -lm
+LIBS=-lm
 
 DDEP = $(buildprefix) $(objprefix)/double $(objprefix)/common
 SDEP = $(buildprefix) $(objprefix)/single $(objprefix)/common
@@ -167,7 +170,7 @@ shared: $(SO_DSTARGET) $(SO_DTARGET) $(SO_STARGET)
 
 all: lib matlab octave
 
-.PHONY: all doc doxy mat2doc mat2docmat clean cleanlib octave matlab cleandoc cleandoxy cleanmat2doc static shared
+.PHONY: all doc doxy mat2doc mat2docmat clean cleanlib octave matlab cleandoc cleandoxy cleanmat2doc static shared munit
 doc: doxy mat2doc
 
 cleanmat2doc:
@@ -186,6 +189,11 @@ mat2doc: mat2docmat
 
 mat2docmat:
 	mat2doc . mat
+
+munit:
+	$(MAKE) clean
+	$(MAKE) $(SO_DSTARGET)
+	$(MAKE) $(buildprefix)/phaseret.h USECPP=0
 
 $(buildprefix)/phaseret.h: $(buildprefix)
 	$(CC) -E -P -DNOSYSTEMHEADERS -nostdinc include/phaseret.h -Iinclude -I../libltfat/include -o $(buildprefix)/phaseret.h

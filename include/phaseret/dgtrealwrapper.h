@@ -64,7 +64,7 @@ typedef struct PHASERET_NAME(dgtreal_plan) PHASERET_NAME(dgtreal_plan);
  * LTFATERR_NOMEM          | Signalizes memory allocation error
  */
 PHASERET_API int
-PHASERET_NAME(dgtreal_init)(const LTFAT_REAL g[], int gl, int L, int W, int a, int M,
+PHASERET_NAME(dgtreal_init)(const LTFAT_REAL g[], ltfat_int gl, ltfat_int L, ltfat_int W, ltfat_int a, ltfat_int M,
                             LTFAT_COMPLEX c[], phaseret_dgtreal_init_params* params,
                             PHASERET_NAME(dgtreal_plan)** p);
 

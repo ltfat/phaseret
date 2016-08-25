@@ -1,7 +1,7 @@
 #include "phaseret/rtpghi.h"
 
 PHASERET_API double
-phaseret_firwin2gamma(LTFAT_FIRWIN win, int gl)
+phaseret_firwin2gamma(LTFAT_FIRWIN win, ltfat_int gl)
 {
     if ( gl <= 0)
     {

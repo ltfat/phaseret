@@ -5,9 +5,9 @@
 
 struct PHASERET_NAME(rtpghi_state)
 {
-    int M;
-    int a;
-    int W;
+    ltfat_int M;
+    ltfat_int a;
+    ltfat_int W;
     int* mask;
     int do_causal;
     LTFAT_REAL* slog;
@@ -19,8 +19,8 @@ struct PHASERET_NAME(rtpghi_state)
     double tol;
     double gamma;
     LTFAT_REAL* randphase; //!< Precomputed array of random phase
-    int randphaseLen;
-    int randphaseId;
+    ltfat_int randphaseLen;
+    ltfat_int randphaseId;
     struct LTFAT_NAME(heapinttask)* hit;
 };
 
@@ -35,12 +35,12 @@ error:
 }
 
 PHASERET_API int
-PHASERET_NAME(rtpghi_init)(double gamma, int W, int a, int M, double tol,
+PHASERET_NAME(rtpghi_init)(double gamma, ltfat_int W, ltfat_int a, ltfat_int M, double tol,
                            int do_causal, PHASERET_NAME(rtpghi_state)** pout)
 {
     int status = LTFATERR_SUCCESS;
 
-    int M2 = M / 2 + 1;
+    ltfat_int M2 = M / 2 + 1;
     PHASERET_NAME(rtpghi_state)* p = NULL;
     CHECKMEM( p = (PHASERET_NAME(rtpghi_state)*) ltfat_calloc(1, sizeof * p));
 
@@ -54,14 +54,14 @@ PHASERET_NAME(rtpghi_init)(double gamma, int W, int a, int M, double tol,
     p->randphaseLen = 10 * M2 * W;
     CHECKMEM( p->randphase = LTFAT_NAME_REAL(malloc)(p->randphaseLen));
 
-    for (int ii = 0; ii < p->randphaseLen; ii++)
+    for (ltfat_int ii = 0; ii < p->randphaseLen; ii++)
         p->randphase[ii] = 2.0 * M_PI * ((double)rand()) / RAND_MAX;
 
     CHECKMEM( p->mask = (int*) ltfat_malloc(2 * M2 * W * sizeof * p->mask));
 
-    for (int w = 0; w < W; ++w)
+    for (ltfat_int w = 0; w < W; ++w)
     {
-        for (int ii = 0; ii < M2; ++ii)
+        for (ltfat_int ii = 0; ii < M2; ++ii)
         {
             p->mask[ii + w * 2 * M2] = 1;
             p->mask[ii + M2 + w * 2 * M2] = 0;
@@ -87,7 +87,7 @@ PHASERET_API int
 PHASERET_NAME(rtpghi_reset)(PHASERET_NAME(rtpghi_state)* p)
 {
     int status = LTFATERR_SUCCESS;
-    int M2, W;
+    ltfat_int M2, W;
     CHECKNULL(p);
     M2 = p->M / 2 + 1;
     W = p->W;
@@ -112,12 +112,12 @@ PHASERET_NAME(rtpghi_execute)(PHASERET_NAME(rtpghi_state)* p,
 {
     // n, n-1, n-2 frames
     // s is n-th
-    int M2 = p->M / 2 + 1;
-    int W = p->W;
+    ltfat_int M2 = p->M / 2 + 1;
+    ltfat_int W = p->W;
     int status = LTFATERR_SUCCESS;
     CHECKNULL(p); CHECKNULL(s); CHECKNULL(c);
 
-    for (int w = 0; w < W; ++w)
+    for (ltfat_int w = 0; w < W; ++w)
     {
         LTFAT_REAL* slogCol = p->slog + w * 3 * M2;
         LTFAT_REAL* sCol = p->s + w * 2 * M2;
@@ -152,7 +152,7 @@ PHASERET_NAME(rtpghi_execute)(PHASERET_NAME(rtpghi_state)* p,
         // Fill in the missing phase from the precomputed random array
         int* donemask = LTFAT_NAME(heapinttask_get_mask)(p->hit);
 
-        for (int ii = 0; ii < M2; ii++)
+        for (ltfat_int ii = 0; ii < M2; ii++)
         {
             if (donemask[M2 + ii] <= LTFAT_MASK_UNKNOWN)
             {
@@ -192,11 +192,11 @@ error:
 }
 
 PHASERET_API int
-PHASERET_NAME(rtpghioffline)(const LTFAT_REAL* s, double gamma, int L, int W,
-                             int a, int M, double tol, int do_causal, LTFAT_COMPLEX* c)
+PHASERET_NAME(rtpghioffline)(const LTFAT_REAL* s, double gamma, ltfat_int L, ltfat_int W,
+                             ltfat_int a, ltfat_int M, double tol, int do_causal, LTFAT_COMPLEX* c)
 {
-    int N = L / a;
-    int M2 = M / 2 + 1;
+    ltfat_int N = L / a;
+    ltfat_int M2 = M / 2 + 1;
     PHASERET_NAME(rtpghi_state)* p = NULL;
     int status = LTFATERR_SUCCESS;
     CHECKNULL(s); CHECKNULL(c);
@@ -206,11 +206,11 @@ PHASERET_NAME(rtpghioffline)(const LTFAT_REAL* s, double gamma, int L, int W,
 
     if (do_causal)
     {
-        for (int w = 0; w < W; w++)
+        for (ltfat_int w = 0; w < W; w++)
         {
             PHASERET_NAME(rtpghi_reset)(p);
 
-            for (int n = 0; n < N; ++n)
+            for (ltfat_int n = 0; n < N; ++n)
             {
                 const LTFAT_REAL* sncol = s + n * M2 + w * N * M2;
                 LTFAT_COMPLEX* cncol =    c + n * M2 + w * N * M2;
@@ -220,12 +220,12 @@ PHASERET_NAME(rtpghioffline)(const LTFAT_REAL* s, double gamma, int L, int W,
     }
     else
     {
-        for (int w = 0; w < W; w++)
+        for (ltfat_int w = 0; w < W; w++)
         {
             PHASERET_NAME(rtpghi_reset)(p);
             PHASERET_NAME(rtpghi_execute)(p, s + w * N * M2, c + w * N * M2);
 
-            for (int n = 0, nahead = 1; nahead < N; ++n, ++nahead)
+            for (ltfat_int n = 0, nahead = 1; nahead < N; ++n, ++nahead)
             {
                 const LTFAT_REAL* sncol = s + nahead * M2 + w * N * M2;
                 LTFAT_COMPLEX* cncol =    c + n * M2 + w * N * M2;
@@ -243,10 +243,10 @@ error:
 
 
 void
-PHASERET_NAME(rtpghifgrad)(const LTFAT_REAL* logs, int a, int M, double gamma,
+PHASERET_NAME(rtpghifgrad)(const LTFAT_REAL* logs, ltfat_int a, ltfat_int M, double gamma,
                            int do_causal, LTFAT_REAL* fgrad)
 {
-    int M2 = M / 2 + 1;
+    ltfat_int M2 = M / 2 + 1;
 
     const LTFAT_REAL fgradmul = -gamma / (2.0 * a * M);
     const LTFAT_REAL* scol0 = logs;
@@ -256,21 +256,21 @@ PHASERET_NAME(rtpghifgrad)(const LTFAT_REAL* logs, int a, int M, double gamma,
     {
         const LTFAT_REAL* scol1 = logs + M2;
 
-        for (int m = 0; m < M2; ++m)
+        for (ltfat_int m = 0; m < M2; ++m)
             fgrad[m] = fgradmul * (3.0 * scol2[m] - 4.0 * scol1[m] + scol0[m]);
     }
     else
     {
-        for (int m = 0; m < M2; ++m)
+        for (ltfat_int m = 0; m < M2; ++m)
             fgrad[m] = fgradmul * (scol2[m] - scol0[m]);
     }
 }
 
 void
-PHASERET_NAME(rtpghitgrad)(const LTFAT_REAL* logs, int a, int M, double gamma,
+PHASERET_NAME(rtpghitgrad)(const LTFAT_REAL* logs, ltfat_int a, ltfat_int M, double gamma,
                            LTFAT_REAL* tgrad)
 {
-    int M2 = M / 2 + 1;
+    ltfat_int M2 = M / 2 + 1;
 
     const LTFAT_REAL tgradmul = (a * M) / (gamma * 2.0);
     const LTFAT_REAL tgradplus = 2.0 * M_PI * a / M;
@@ -278,23 +278,23 @@ PHASERET_NAME(rtpghitgrad)(const LTFAT_REAL* logs, int a, int M, double gamma,
     tgrad[0]      = 0.0;
     tgrad[M2 - 1] = 0.0;
 
-    for (int m = 1; m < M2 - 1; m++)
+    for (ltfat_int m = 1; m < M2 - 1; m++)
         tgrad[m] = tgradmul * (logs[m + 1] - logs[m - 1]) + tgradplus * m;
 }
 
 void
-PHASERET_NAME(rtpghilog)(const LTFAT_REAL* in, int L, LTFAT_REAL* out)
+PHASERET_NAME(rtpghilog)(const LTFAT_REAL* in, ltfat_int L, LTFAT_REAL* out)
 {
-    for (int l = 0; l < L; l++)
+    for (ltfat_int l = 0; l < L; l++)
         out[l] = log(in[l] + DBL_MIN);
 
 }
 
 void
 PHASERET_NAME(rtpghimagphase)(const LTFAT_REAL* s, const LTFAT_REAL* phase,
-                              int L,
+                              ltfat_int L,
                               LTFAT_COMPLEX* c)
 {
-    for (int l = 0; l < L; l++)
+    for (ltfat_int l = 0; l < L; l++)
         c[l] = s[l] * exp(I * phase[l]);
 }

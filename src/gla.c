@@ -24,8 +24,8 @@ struct PHASERET_NAME(gla_plan)
 
 PHASERET_API int
 PHASERET_NAME(gla)(const LTFAT_COMPLEX cinit[], const LTFAT_REAL g[],
-                   const int L,
-                   const int gl, const int W, const int a, const int M, const int iter,
+                   ltfat_int L,
+                   ltfat_int gl, ltfat_int W, ltfat_int a, ltfat_int M, ltfat_int iter,
                    LTFAT_COMPLEX cout[])
 {
     PHASERET_NAME(gla_plan)* p = NULL;
@@ -44,15 +44,15 @@ error:
 
 PHASERET_API int
 PHASERET_NAME(gla_init)(const LTFAT_COMPLEX cinit[], const LTFAT_REAL g[],
-                        const int L, const int gl, const int W, const int a,
-                        const int M, const double alpha, LTFAT_COMPLEX c[],
+                        ltfat_int L, ltfat_int gl, ltfat_int W, ltfat_int a,
+                        ltfat_int M, const double alpha, LTFAT_COMPLEX c[],
                         phaseret_dgtreal_init_params* params,
                         PHASERET_NAME(gla_plan)** pout)
 {
     int status = LTFATERR_SUCCESS;
     PHASERET_NAME(gla_plan)* p = NULL;
-    int N = L / a;
-    int M2 = M / 2 + 1;
+    ltfat_int N = L / a;
+    ltfat_int M2 = M / 2 + 1;
 
     CHECK(LTFATERR_BADARG, alpha >= 0.0, "alpha cannot be negative");
     CHECKMEM( p = (PHASERET_NAME(gla_plan)*) ltfat_calloc(1, sizeof * p));
@@ -101,7 +101,7 @@ error:
 
 PHASERET_API int
 PHASERET_NAME(gla_execute_newarray)(PHASERET_NAME(gla_plan)* p,
-                                    const LTFAT_COMPLEX cinit[], const int iter,
+                                    const LTFAT_COMPLEX cinit[], ltfat_int iter,
                                     LTFAT_COMPLEX cout[])
 {
     int status = LTFATERR_SUCCESS;
@@ -120,10 +120,10 @@ error:
 }
 
 PHASERET_API int
-PHASERET_NAME(gla_execute)(PHASERET_NAME(gla_plan)* p, const int iter)
+PHASERET_NAME(gla_execute)(PHASERET_NAME(gla_plan)* p, ltfat_int iter)
 {
     int status = LTFATERR_SUCCESS;
-    int M, L, W, a, M2, N;
+    ltfat_int M, L, W, a, M2, N;
     PHASERET_NAME(dgtreal_plan)* pp;
     CHECKNULL(p);
     CHECK(LTFATERR_NOTPOSARG, iter > 0,
@@ -139,7 +139,7 @@ PHASERET_NAME(gla_execute)(PHASERET_NAME(gla_plan)* p, const int iter)
     N = L / a;
 
     // Store the magnitude
-    for (int ii = 0; ii < N * M2 * W; ii++)
+    for (ltfat_int ii = 0; ii < N * M2 * W; ii++)
         p->s[ii] = ltfat_abs(p->cinit[ii]);
 
     // Copy to the output array if we are not working inplace
@@ -150,7 +150,7 @@ PHASERET_NAME(gla_execute)(PHASERET_NAME(gla_plan)* p, const int iter)
     if (p->do_fast)
         memcpy(p->t, pp->c, (N * M2 * W) * sizeof * p->t );
 
-    for (int ii = 0; ii < iter; ii++)
+    for (ltfat_int ii = 0; ii < iter; ii++)
     {
         // Perform idgtreal
         CHECKSTATUS( PHASERET_NAME(dgtreal_execute_syn)(pp, pp->c, pp->f),
@@ -250,9 +250,9 @@ error:
 
 int
 PHASERET_NAME(fastupdate)(LTFAT_COMPLEX* c, LTFAT_COMPLEX* t, double alpha,
-                          int L)
+                          ltfat_int L)
 {
-    for (int ii = 0; ii < L; ii++)
+    for (ltfat_int ii = 0; ii < L; ii++)
     {
         LTFAT_COMPLEX cold = c[ii];
         c[ii] = c[ii] + ((LTFAT_REAL)alpha) * (c[ii] - t[ii]);

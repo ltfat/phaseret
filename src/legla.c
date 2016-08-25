@@ -23,12 +23,12 @@ struct PHASERET_NAME(legla_plan)
 
 struct PHASERET_NAME(leglaupdate_plan)
 {
-    int kNo;
+    ltfat_int kNo;
     LTFAT_COMPLEX** k;
     LTFAT_COMPLEX* buf;
-    int a;
-    int N;
-    int W;
+    ltfat_int a;
+    ltfat_int N;
+    ltfat_int W;
     PHASERET_NAME(leglaupdate_plan_col)* plan_col;
 };
 
@@ -36,14 +36,14 @@ struct PHASERET_NAME(leglaupdate_plan_col)
 {
     phaseret_size ksize;
     phaseret_size ksize2;
-    int M;
+    ltfat_int M;
     int flags;
 };
 
 PHASERET_API int
 PHASERET_NAME(legla)(const LTFAT_COMPLEX cinit[], const LTFAT_REAL g[],
-                     const int L, const int gl, const int W, const int a, const int M,
-                     const int iter, LTFAT_COMPLEX cout[])
+                     ltfat_int L, ltfat_int gl, ltfat_int W, ltfat_int a, ltfat_int M,
+                     ltfat_int iter, LTFAT_COMPLEX cout[])
 {
     PHASERET_NAME(legla_plan)* p = NULL;
     int status = LTFATERR_SUCCESS;
@@ -62,7 +62,7 @@ error:
 
 PHASERET_API int
 PHASERET_NAME(legla_init)(const LTFAT_COMPLEX cinit[], const LTFAT_REAL g[],
-                          const int L, const int gl, const int W, const int a, const int M,
+                          ltfat_int L, ltfat_int gl, ltfat_int W, ltfat_int a, ltfat_int M,
                           const double alpha, LTFAT_COMPLEX c[],
                           phaseret_legla_init_params* params, PHASERET_NAME(legla_plan)** pout)
 {
@@ -71,8 +71,8 @@ PHASERET_NAME(legla_init)(const LTFAT_COMPLEX cinit[], const LTFAT_REAL g[],
     phaseret_dgtreal_init_params dparams2;
     phaseret_size ksize;
     LTFAT_COMPLEX* kernsmall = NULL;
-    int M2 = M / 2 + 1;
-    int N = L / a;
+    ltfat_int M2 = M / 2 + 1;
+    ltfat_int N = L / a;
 
     int status = LTFATERR_SUCCESS;
 
@@ -187,10 +187,10 @@ error:
 }
 
 PHASERET_API int
-PHASERET_NAME(legla_execute)(PHASERET_NAME(legla_plan)* p, const int iter)
+PHASERET_NAME(legla_execute)(PHASERET_NAME(legla_plan)* p, ltfat_int iter)
 {
     int status = LTFATERR_SUCCESS;
-    int M, L, W, a, M2, N;
+    ltfat_int M, L, W, a, M2, N;
     PHASERET_NAME(dgtreal_plan)* pp;
     CHECKNULL(p);
     CHECK(LTFATERR_NOTPOSARG, iter > 0, "At least one iteration is required");
@@ -204,7 +204,7 @@ PHASERET_NAME(legla_execute)(PHASERET_NAME(legla_plan)* p, const int iter)
     N = L / a;
 
     // Store the magnitude
-    for (int ii = 0; ii < N * M2 * W; ii++)
+    for (ltfat_int ii = 0; ii < N * M2 * W; ii++)
         p->s[ii] = ltfat_abs(p->cinit[ii]);
 
     // Copy to the output array if we are not working inplace
@@ -214,7 +214,7 @@ PHASERET_NAME(legla_execute)(PHASERET_NAME(legla_plan)* p, const int iter)
     if (p->do_fast)
         memcpy(p->t, pp->c, (N * M2 * W) * sizeof * p->t );
 
-    for (int ii = 0; ii < iter; ii++)
+    for (ltfat_int ii = 0; ii < iter; ii++)
     {
         PHASERET_NAME(leglaupdate_execute)(p->updateplan, p->s, pp->c, pp->c);
 
@@ -262,13 +262,13 @@ PHASERET_NAME(legla_big2small_kernel)(LTFAT_COMPLEX* bigc,
                                       phaseret_size bigsize,
                                       phaseret_size ksize, LTFAT_COMPLEX* smallc)
 {
-    div_t wmod = div(ksize.width, 2);
-    div_t hmod = div(ksize.height, 2);
-    int kernh2 = hmod.quot + 1;
+    ltfat_div_t wmod = ltfat_idiv(ksize.width, 2);
+    ltfat_div_t hmod = ltfat_idiv(ksize.height, 2);
+    ltfat_int kernh2 = hmod.quot + 1;
 
-    int M2 = bigsize.height / 2 + 1;
+    ltfat_int M2 = bigsize.height / 2 + 1;
 
-    for (int ii = 0; ii < wmod.quot + wmod.rem; ii++)
+    for (ltfat_int ii = 0; ii < wmod.quot + wmod.rem; ii++)
     {
         LTFAT_COMPLEX* smallcCol = smallc + kernh2 * ii;
         LTFAT_COMPLEX* bigcCol = bigc + M2 * ii;
@@ -276,7 +276,7 @@ PHASERET_NAME(legla_big2small_kernel)(LTFAT_COMPLEX* bigc,
         memcpy(smallcCol, bigcCol, kernh2 * sizeof * smallcCol);
     }
 
-    for (int ii = 1; ii < wmod.quot + 1; ii++)
+    for (ltfat_int ii = 1; ii < wmod.quot + 1; ii++)
     {
         LTFAT_COMPLEX* smallcCol = smallc + kernh2 * ( ksize.width - ii);
         LTFAT_COMPLEX* bigcCol = bigc + M2 * ( bigsize.width - ii);
@@ -292,23 +292,23 @@ PHASERET_NAME(legla_findkernelsize)(LTFAT_COMPLEX* bigc, phaseret_size bigsize,
 
 {
     double thr = relthr * ltfat_abs(bigc[0]);
-    int realHeight = bigsize.height / 2 + 1;
-    div_t wmod = div(ksize->width, 2);
-    div_t hmod = div(ksize->height, 2);
+    ltfat_int realHeight = bigsize.height / 2 + 1;
+    ltfat_div_t wmod = ltfat_idiv(ksize->width, 2);
+    ltfat_div_t hmod = ltfat_idiv(ksize->height, 2);
 
-    int lastrow = 0;
-    for (int n = 0; n < wmod.quot + wmod.rem - 1; n++)
-        for (int m = 1; m < hmod.quot + hmod.rem - 1; m++)
+    ltfat_int lastrow = 0;
+    for (ltfat_int n = 0; n < wmod.quot + wmod.rem - 1; n++)
+        for (ltfat_int m = 1; m < hmod.quot + hmod.rem - 1; m++)
             if ( ltfat_abs(bigc[n * realHeight + m]) > thr && m > lastrow )
                 lastrow = m;
 
     ksize->height = 2 * lastrow + 1;
-    hmod = div(ksize->height, 2);
+    hmod = ltfat_idiv(ksize->height, 2);
 
     // Kernel is always symmetric in the horizontal direction
-    int lastcol = 0;
-    for (int m = 0; m <  hmod.quot + hmod.rem - 1; m++)
-        for (int n = 1; n < wmod.quot + wmod.rem - 1; n++)
+    ltfat_int lastcol = 0;
+    for (ltfat_int m = 0; m <  hmod.quot + hmod.rem - 1; m++)
+        for (ltfat_int n = 1; n < wmod.quot + wmod.rem - 1; n++)
             if ( ltfat_abs(bigc[n * realHeight + m]) > thr && n > lastcol )
                 lastcol = n;
 
@@ -320,7 +320,7 @@ PHASERET_NAME(legla_findkernelsize)(LTFAT_COMPLEX* bigc, phaseret_size bigsize,
 PHASERET_API int
 PHASERET_NAME(legla_execute_newarray)(PHASERET_NAME(legla_plan)* p,
                                       const LTFAT_COMPLEX cinit[],
-                                      const int iter, LTFAT_COMPLEX c[])
+                                      ltfat_int iter, LTFAT_COMPLEX c[])
 {
     int status = LTFATERR_SUCCESS;
     PHASERET_NAME(legla_plan) p2;
@@ -340,7 +340,7 @@ error:
 
 
 int
-PHASERET_NAME(leglaupdate_col_init)( int M, phaseret_size ksize, int flags,
+PHASERET_NAME(leglaupdate_col_init)( ltfat_int M, phaseret_size ksize, int flags,
                                      PHASERET_NAME(leglaupdate_plan_col)** pout)
 {
     PHASERET_NAME(leglaupdate_plan_col)* p = NULL;
@@ -396,12 +396,12 @@ error:
 
 int
 PHASERET_NAME(leglaupdate_init)(const LTFAT_COMPLEX kern[], phaseret_size ksize,
-                                int L, int W, int a, int M, int flags,
+                                ltfat_int L, ltfat_int W, ltfat_int a, ltfat_int M, ltfat_int flags,
                                 PHASERET_NAME(leglaupdate_plan)** pout)
 {
-    int N = L / a;
-    int M2 = M / 2 + 1;
-    int kernh2;
+    ltfat_int N = L / a;
+    ltfat_int M2 = M / 2 + 1;
+    ltfat_int kernh2;
     int status = LTFATERR_SUCCESS;
 
     PHASERET_NAME(leglaupdate_plan)* p = NULL;
@@ -430,19 +430,19 @@ PHASERET_NAME(leglaupdate_init)(const LTFAT_COMPLEX kern[], phaseret_size ksize,
 
     CHECKMEM( ktmp = LTFAT_NAME_COMPLEX(calloc)( ksize.width * kernh2));
     // Involute
-    for (int ii = 0; ii < kernh2; ii++)
+    for (ltfat_int ii = 0; ii < kernh2; ii++)
     {
         const LTFAT_COMPLEX* kRow = kern + ii;
         LTFAT_COMPLEX* kmodRow = ktmp + ii;
 
         kmodRow[0] = kRow[0];
-        for (int jj = 1; jj < ksize.width; jj++)
+        for (ltfat_int jj = 1; jj < ksize.width; jj++)
             kmodRow[jj * kernh2] = conj(kRow[(ksize.width - jj) * kernh2]);
     }
 
     if (flags & MOD_MODIFIEDUPDATE) ktmp[0] = LTFAT_COMPLEX(0, 0);
 
-    for (int n = 0; n < p->kNo; n++)
+    for (ltfat_int n = 0; n < p->kNo; n++)
     {
         CHECKMEM( p->k[n] = LTFAT_NAME_COMPLEX(calloc)( ksize.width * kernh2));
         PHASERET_NAME(kernphasefi)(ktmp, ksize, n, a, M, p->k[n]);
@@ -463,7 +463,7 @@ PHASERET_NAME(leglaupdate_done)(PHASERET_NAME(leglaupdate_plan)** plan)
 {
 
     PHASERET_NAME(leglaupdate_plan)* pp = *plan;
-    for (int n = 0; n < pp->kNo; n++)
+    for (ltfat_int n = 0; n < pp->kNo; n++)
         ltfat_safefree(pp->k[n]);
 
     ltfat_safefree(pp->k);
@@ -476,27 +476,27 @@ PHASERET_NAME(leglaupdate_done)(PHASERET_NAME(leglaupdate_plan)** plan)
 
 void
 PHASERET_NAME(kernphasefi)(const LTFAT_COMPLEX kern[], phaseret_size ksize,
-                           int n, int a, int M, LTFAT_COMPLEX kernmod[])
+                           ltfat_int n, ltfat_int a, ltfat_int M, LTFAT_COMPLEX kernmod[])
 {
-    /* int kernh2 = ksize.height / 2 + 1; */
-    /* int kernw2 = ksize.width / 2; */
-    div_t wmod = div(ksize.width, 2);
-    div_t hmod = div(ksize.height, 2);
-    int kernh2 = hmod.quot + 1;
+    /* ltfat_int kernh2 = ksize.height / 2 + 1; */
+    /* ltfat_int kernw2 = ksize.width / 2; */
+    ltfat_div_t wmod = ltfat_idiv(ksize.width, 2);
+    ltfat_div_t hmod = ltfat_idiv(ksize.height, 2);
+    ltfat_int kernh2 = hmod.quot + 1;
     /*Modulate */
     /* double idx = - ( ksize.height - kernh2); */
 
-    for (int ii = 0; ii < hmod.quot + hmod.rem; ii++)
+    for (ltfat_int ii = 0; ii < hmod.quot + hmod.rem; ii++)
     {
         const LTFAT_COMPLEX* kRow = kern + ii;
         LTFAT_COMPLEX* kmodRow = kernmod + ii;
         LTFAT_REAL arg = (LTFAT_REAL) ( -2.0 * M_PI * n * a / M * (ii) );
 
         // fftshift
-        for (int jj = 0; jj < wmod.quot + wmod.rem - 1; jj++)
+        for (ltfat_int jj = 0; jj < wmod.quot + wmod.rem - 1; jj++)
             kmodRow[(jj + wmod.quot)*kernh2] = exp(I * arg) * kRow[jj * kernh2];
 
-        for (int jj = 0; jj < wmod.quot; jj++)
+        for (ltfat_int jj = 0; jj < wmod.quot; jj++)
             kmodRow[jj * kernh2] = exp(I * arg) * kRow[(jj + wmod.quot + wmod.rem) *
                                    kernh2];
     }
@@ -508,12 +508,12 @@ PHASERET_NAME(leglaupdate_execute)(PHASERET_NAME(leglaupdate_plan)* plan,
                                    LTFAT_COMPLEX c[], LTFAT_COMPLEX cout[])
 {
     PHASERET_NAME(leglaupdate_plan_col)* p = plan->plan_col;
-    int M2 = p->M / 2 + 1;
-    int N = plan->N;
-    int W = plan->W;
-    //int kernh2 = p->ksize2.height;
-    //int kernw = p->ksize.width;
-    int M2buf = M2 + p->ksize.height - 1;
+    ltfat_int M2 = p->M / 2 + 1;
+    ltfat_int N = plan->N;
+    ltfat_int W = plan->W;
+    //ltfat_int kernh2 = p->ksize2.height;
+    //ltfat_int kernw = p->ksize.width;
+    ltfat_int M2buf = M2 + p->ksize.height - 1;
     int do_onthefly = p->flags & MOD_COEFFICIENTWISE;
     int do_framewise = p->flags & MOD_FRAMEWISE;
     //int do_revorder = p->flags & ORDER_REV;
@@ -521,9 +521,9 @@ PHASERET_NAME(leglaupdate_execute)(PHASERET_NAME(leglaupdate_plan)* plan,
     LTFAT_COMPLEX** k = plan->k;
     LTFAT_COMPLEX* buf = plan->buf;
 
-    int nfirst;
+    ltfat_int nfirst;
 
-    for (int w = 0; w < W; w++)
+    for (ltfat_int w = 0; w < W; w++)
     {
         const LTFAT_REAL* sChan =  s + w * M2 * N;
         LTFAT_COMPLEX* cChan = c + w * M2 * N;
@@ -549,7 +549,7 @@ PHASERET_NAME(leglaupdate_execute)(PHASERET_NAME(leglaupdate_plan)* plan,
         if (!do_onthefly && !do_framewise)
         {
             /* Update the phase only after the projection has been done. */
-            for (int n = 0; n < N * M2; n++)
+            for (ltfat_int n = 0; n < N * M2; n++)
                 coutChan[n] = sChan[n] * exp(I * ltfat_arg(coutChan[n]));
         }
     }
@@ -563,15 +563,15 @@ PHASERET_NAME(leglaupdate_col_execute)(
     LTFAT_COMPLEX cColFirst[],
     LTFAT_COMPLEX coutCol[])
 {
-    int m, mfirst, mlast;
-    int M2 = plan->M / 2 + 1;
-    int kernh = plan->ksize.height;
-    int kernw = plan->ksize.width;
-    int kernh2 = plan->ksize2.height;
-    int kernw2 = plan->ksize2.width;
-    int M2buf = M2 + kernh - 1;
-    int kernhMidId = kernh2 - 1;
-    int kernwMidId = kernw2 - 1;
+    ltfat_int m, mfirst, mlast;
+    ltfat_int M2 = plan->M / 2 + 1;
+    ltfat_int kernh = plan->ksize.height;
+    ltfat_int kernw = plan->ksize.width;
+    ltfat_int kernh2 = plan->ksize2.height;
+    ltfat_int kernw2 = plan->ksize2.width;
+    ltfat_int M2buf = M2 + kernh - 1;
+    ltfat_int kernhMidId = kernh2 - 1;
+    ltfat_int kernwMidId = kernw2 - 1;
 
     /* mwSignedIndex Nbuf = N + kernw -1; */
     int do_onthefly = plan->flags & MOD_COEFFICIENTWISE;
@@ -584,14 +584,14 @@ PHASERET_NAME(leglaupdate_col_execute)(
         LTFAT_COMPLEX accum = LTFAT_COMPLEX(0, 0);
 
         /* inner loop over all cols of the kernel*/
-        for (int kn = 0; kn < kernw; kn++)
+        for (ltfat_int kn = 0; kn < kernw; kn++)
         {
             /* mexPrintf("kn-loop: %d\n",kn); */
             const LTFAT_COMPLEX* actKCol = actK + kn * kernh2 +  kernh2 - 1;
             LTFAT_COMPLEX* cCol = cColFirst + kn * M2buf;
 
             /* Inner loop over half of the rows of the kernel excluding the middle row */
-            for (int km = 0; km < kernh2 - 1; km++)
+            for (ltfat_int km = 0; km < kernh2 - 1; km++)
             {
                 /* Doing the complex conjugated kernel elements simulteneously */
                 LTFAT_REAL ar  = ltfat_real(actKCol[-km]);
@@ -632,16 +632,16 @@ PHASERET_NAME(leglaupdate_col_execute)(
 
 void
 PHASERET_NAME(extendborders)(PHASERET_NAME(leglaupdate_plan_col)* plan,
-                             const LTFAT_COMPLEX c[], int N, LTFAT_COMPLEX buf[])
+                             const LTFAT_COMPLEX c[], ltfat_int N, LTFAT_COMPLEX buf[])
 {
-    int m, n;
-    int M2 = plan->M / 2 + 1;
-    int kernh = plan->ksize.height;
-    int kernw = plan->ksize.width;
-    int kernh2 = plan->ksize2.height;
-    int kernw2 = plan->ksize2.width;
-    int M2buf = M2 + kernh - 1;
-    int Nbuf = N + kernw - 1;
+    ltfat_int m, n;
+    ltfat_int M2 = plan->M / 2 + 1;
+    ltfat_int kernh = plan->ksize.height;
+    ltfat_int kernw = plan->ksize.width;
+    ltfat_int kernh2 = plan->ksize2.height;
+    ltfat_int kernw2 = plan->ksize2.width;
+    ltfat_int M2buf = M2 + kernh - 1;
+    ltfat_int Nbuf = N + kernw - 1;
 
     if ( plan->flags & EXT_UPDOWN) Nbuf = N;
 

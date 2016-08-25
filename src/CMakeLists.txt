@@ -4,7 +4,7 @@ if (MSVC)
     endif (NOBLASLAPACK)
 else (MSVC)
     SET(CMAKE_C_FLAGS "-fPIC -Wall -std=c99")
-    SET(CMAKE_CXX_FLAGS "-fPIC -Wall -std=c++11")
+    SET(CMAKE_CXX_FLAGS "-fPIC -Wall -std=c++11 -fno-exceptions -fno-rtti")
     if (NOBLASLAPACK)
         SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DNOBLASLAPACK")
         SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DNOBLASLAPACK")
@@ -77,9 +77,9 @@ endif(MSVC)
 
 
 
-target_link_libraries(phaseret  ${LTFAT_LIB} ${FFTW3_LIB} ${FFTW3F_LIB} ${LIBS})
-target_link_libraries(phaseretf ${LTFATF_LIB} ${FFTW3F_LIB} ${LIBS})
-target_link_libraries(phaseretd ${LTFATD_LIB} ${FFTW3_LIB} ${LIBS})
+target_link_libraries(phaseret  ${LTFAT_LIB} ${LIBS})
+target_link_libraries(phaseretf ${LTFATF_LIB} ${LIBS})
+target_link_libraries(phaseretd ${LTFATD_LIB} ${LIBS})
 
 
 set(CMAKE_BUILD_TYPE Release)

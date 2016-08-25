@@ -1,10 +1,10 @@
 #include "phaseret/utils.h"
 
 int
-PHASERET_NAME(shiftcolsleft)(LTFAT_REAL* cols, int height, int N,
+PHASERET_NAME(shiftcolsleft)(LTFAT_REAL* cols, ltfat_int height, ltfat_int N,
                              const LTFAT_REAL* newcol)
 {
-    for (int n = 0; n < N - 1; n++)
+    for (ltfat_int n = 0; n < N - 1; n++)
         memcpy(cols + n * height, cols + (n + 1)*height, height * sizeof * cols);
 
     if (newcol)
@@ -16,10 +16,10 @@ PHASERET_NAME(shiftcolsleft)(LTFAT_REAL* cols, int height, int N,
 }
 
 int
-PHASERET_NAME(force_magnitude)(LTFAT_COMPLEX* cin, const LTFAT_REAL* s, int L,
+PHASERET_NAME(force_magnitude)(LTFAT_COMPLEX* cin, const LTFAT_REAL* s, ltfat_int L,
                                LTFAT_COMPLEX* cout)
 {
-    for (int ii = 0; ii < L; ii++)
+    for (ltfat_int ii = 0; ii < L; ii++)
         cout[ii] = s[ii] * exp(I * ltfat_arg(cin[ii]));
 
     return 0;
@@ -27,12 +27,12 @@ PHASERET_NAME(force_magnitude)(LTFAT_COMPLEX* cin, const LTFAT_REAL* s, int L,
 
 
 void
-PHASERET_NAME(realimag2absangle)(const LTFAT_COMPLEX* cin, const int L,
+PHASERET_NAME(realimag2absangle)(const LTFAT_COMPLEX* cin, ltfat_int L,
                                  LTFAT_COMPLEX* c)
 {
     LTFAT_REAL* cplain = (LTFAT_REAL*) c;
 
-    for (int l = 0; l < L; l++)
+    for (ltfat_int l = 0; l < L; l++)
     {
         LTFAT_COMPLEX cel = cin[l];
         cplain[2 * l] = ltfat_abs(cel);
@@ -41,12 +41,12 @@ PHASERET_NAME(realimag2absangle)(const LTFAT_COMPLEX* cin, const int L,
 }
 
 void
-PHASERET_NAME(absangle2realimag)(const LTFAT_COMPLEX* cin, const int L,
+PHASERET_NAME(absangle2realimag)(const LTFAT_COMPLEX* cin, ltfat_int L,
                                  LTFAT_COMPLEX* c)
 {
     LTFAT_REAL* cinplain = (LTFAT_REAL*) cin;
 
-    for (int l = 0; l < L; l++)
+    for (ltfat_int l = 0; l < L; l++)
     {
         LTFAT_REAL absval = cinplain[2 * l];
         LTFAT_REAL phaseval = cinplain[2 * l + 1];
@@ -56,10 +56,10 @@ PHASERET_NAME(absangle2realimag)(const LTFAT_COMPLEX* cin, const int L,
 
 void
 PHASERET_NAME(absangle2realimag_split2inter)(const LTFAT_REAL* s,
-        const LTFAT_REAL* phase, const int L,
+        const LTFAT_REAL* phase, ltfat_int L,
         LTFAT_COMPLEX* c)
 {
-    for (int l = 0; l < L; l++)
+    for (ltfat_int l = 0; l < L; l++)
     {
         LTFAT_REAL absval = s[l];
         LTFAT_REAL phaseval = phase[l];

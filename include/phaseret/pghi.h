@@ -29,11 +29,11 @@ typedef struct PHASERET_NAME(pghi_plan) PHASERET_NAME(pghi_plan);
  *
  * #### Versions #
  * <tt>
- * phaseret_pghi_d(const double s[], double gamma, ltfatInt L, ltfatInt W,
- *                 ltfatInt a, ltfatInt M, ltfat_complex_d c[]);
+ * phaseret_pghi_d(const double s[], double gamma, ltfat_int L, ltfat_int W,
+ *                 ltfat_int a, ltfat_int M, ltfat_complex_d c[]);
  *
- * phaseret_pghi_s(const double s[], double gamma, ltfatInt L, ltfatInt W,
- *                 ltfatInt a, ltfatInt M, ltfat_complex_s c[]);
+ * phaseret_pghi_s(const double s[], double gamma, ltfat_int L, ltfat_int W,
+ *                 ltfat_int a, ltfat_int M, ltfat_complex_s c[]);
  * </tt>
  * \returns
  * Status code              | Description
@@ -47,8 +47,8 @@ typedef struct PHASERET_NAME(pghi_plan) PHASERET_NAME(pghi_plan);
  * \see firwin2gamma
  */
 PHASERET_API int
-PHASERET_NAME(pghi)(const LTFAT_REAL s[], double gamma, const int L, const int W,
-                    const int a, const int M, LTFAT_COMPLEX c[]);
+PHASERET_NAME(pghi)(const LTFAT_REAL s[], double gamma, ltfat_int L, ltfat_int W,
+                    ltfat_int a, ltfat_int M, LTFAT_COMPLEX c[]);
 
 /** Reconstruct complex coefficients from the magnitude using PGHI algorithm
  * ... using some known coefficients.
@@ -67,12 +67,12 @@ PHASERET_NAME(pghi)(const LTFAT_REAL s[], double gamma, const int L, const int W
  * #### Versions #
  * <tt>
  * phaseret_pghi_withmask_d(const ltfat_complex_d s[], const int mask[],
- *                          double gamma, ltfatInt L, ltfatInt W,
- *                          ltfatInt a, ltfatInt M, ltfat_complex_d c[]);
+ *                          double gamma, ltfat_int L, ltfat_int W,
+ *                          ltfat_int a, ltfat_int M, ltfat_complex_d c[]);
  * 
  * phaseret_pghi_withmask_s(const ltfat_complex_s s[], const int mask[],
- *                          double gamma, ltfatInt L, ltfatInt W,
- *                          ltfatInt a, ltfatInt M, ltfat_complex_s c[]);
+ *                          double gamma, ltfat_int L, ltfat_int W,
+ *                          ltfat_int a, ltfat_int M, ltfat_complex_s c[]);
  * </tt>
  * \returns
  * Status code              | Description
@@ -87,8 +87,8 @@ PHASERET_NAME(pghi)(const LTFAT_REAL s[], double gamma, const int L, const int W
  */
 PHASERET_API int
 PHASERET_NAME(pghi_withmask)(const LTFAT_COMPLEX cin[], const int mask[],
-                             double gamma, const int L, const int W,
-                             const int a, const int M, LTFAT_COMPLEX c[]);
+                             double gamma, ltfat_int L, ltfat_int W,
+                             ltfat_int a, ltfat_int M, LTFAT_COMPLEX c[]);
 
 /** Initialize PGHI plan
  *
@@ -107,12 +107,12 @@ PHASERET_NAME(pghi_withmask)(const LTFAT_COMPLEX cin[], const int mask[],
  *
  * #### Versions #
  * <tt>
- * phaseret_pghi_init_d(double gamma, ltfatInt L, ltfatInt W, 
- *                      ltfatInt a, ltfatInt M, double tol1, double tol2,
+ * phaseret_pghi_init_d(double gamma, ltfat_int L, ltfat_int W, 
+ *                      ltfat_int a, ltfat_int M, double tol1, double tol2,
  *                      phaseret_pghi_plan_d** p);
  *
- * phaseret_pghi_init_s(double gamma, ltfatInt L, ltfatInt W, 
- *                      ltfatInt a, ltfatInt M, double tol1, double tol2,
+ * phaseret_pghi_init_s(double gamma, ltfat_int L, ltfat_int W, 
+ *                      ltfat_int a, ltfat_int M, double tol1, double tol2,
  *                      phaseret_pghi_plan_s** p);
  * </tt>
  * \returns
@@ -128,8 +128,8 @@ PHASERET_NAME(pghi_withmask)(const LTFAT_COMPLEX cin[], const int mask[],
  * \see firwin2gamma
  */
 PHASERET_API int
-PHASERET_NAME(pghi_init)(double gamma, const int L, const int W,
-                         const int a, const int M, double tol1, double tol2,
+PHASERET_NAME(pghi_init)(double gamma, ltfat_int L, ltfat_int W,
+                         ltfat_int a, ltfat_int M, double tol1, double tol2,
                          PHASERET_NAME(pghi_plan)** p);
 
 /** Execute PGHI plan
@@ -213,16 +213,16 @@ PHASERET_NAME(pghi_done)(PHASERET_NAME(pghi_plan)** p);
 
 void
 PHASERET_NAME(pghimagphase)(const LTFAT_REAL s[], const LTFAT_REAL phase[],
-                            int L, LTFAT_COMPLEX c[]);
+                            ltfat_int L, LTFAT_COMPLEX c[]);
 
 void
-PHASERET_NAME(pghilog)(const LTFAT_REAL in[], int L, LTFAT_REAL out[]);
+PHASERET_NAME(pghilog)(const LTFAT_REAL in[], ltfat_int L, LTFAT_REAL out[]);
 
 void
-PHASERET_NAME(pghitgrad)(const LTFAT_REAL logs[], double gamma, int a, int M, int N, LTFAT_REAL tgrad[]);
+PHASERET_NAME(pghitgrad)(const LTFAT_REAL logs[], double gamma, ltfat_int a, ltfat_int M, ltfat_int N, LTFAT_REAL tgrad[]);
 
 void
-PHASERET_NAME(pghifgrad)(const LTFAT_REAL logs[], double gamma, int a, int M, int N, LTFAT_REAL fgrad[]);
+PHASERET_NAME(pghifgrad)(const LTFAT_REAL logs[], double gamma, ltfat_int a, ltfat_int M, ltfat_int N, LTFAT_REAL fgrad[]);
 
 
 #ifdef __cplusplus

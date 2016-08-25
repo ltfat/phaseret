@@ -33,14 +33,14 @@ typedef enum
 
 typedef struct
 {
-    int height;
-    int width;
+    ltfat_int height;
+    ltfat_int width;
 } phaseret_size;
 
 // typedef struct
 // {
-//     int y;
-//     int x;
+//     ltfat_int y;
+//     ltfat_int x;
 // } phaseret_point;
 
 typedef struct
@@ -73,10 +73,6 @@ PHASERET_API int
 phaseret_legla_init_params_defaults(phaseret_legla_init_params* params);
 
 /** @} */
-/* Util */
-int phaseret_gcd(int m, int n);
-int phaseret_lcm(int m, int n);
-
 #endif
 
 typedef struct PHASERET_NAME(legla_plan) PHASERET_NAME(legla_plan);
@@ -102,10 +98,10 @@ typedef struct PHASERET_NAME(leglaupdate_plan_col) PHASERET_NAME(leglaupdate_pla
  * #### Versions #
  * <tt>
  * phaseret_legla_callback_cmod_d(void* userdata, ltfat_complex_d c[],
- *                                ltfatInt L, ltfatInt W, ltfatInt a, ltfatInt M);
+ *                                ltfat_int L, ltfat_int W, ltfat_int a, ltfat_int M);
  *
  * phaseret_legla_callback_cmod_s(void* userdata, ltfat_complex_s c[],
- *                                ltfatInt L, ltfatInt W, ltfatInt a, ltfatInt M);
+ *                                ltfat_int L, ltfat_int W, ltfat_int a, ltfat_int M);
  * </tt>
  *  \returns
  *  Status code | Meaning
@@ -114,7 +110,7 @@ typedef struct PHASERET_NAME(leglaupdate_plan_col) PHASERET_NAME(leglaupdate_pla
  *  <0          | Callback exited with error
  */
 typedef int
-PHASERET_NAME(legla_callback_cmod)(void* userdata, LTFAT_COMPLEX c[], int L, int W, int a, int M);
+PHASERET_NAME(legla_callback_cmod)(void* userdata, LTFAT_COMPLEX c[], ltfat_int L, ltfat_int W, ltfat_int a, ltfat_int M);
 
 /** Function prototype for status callback
  *
@@ -136,14 +132,14 @@ PHASERET_NAME(legla_callback_cmod)(void* userdata, LTFAT_COMPLEX c[], int L, int
  * <tt>
  * phaseret_legla_callback_status_d(phaseret_dgtreal_plan_d* p,
  *                                 void* userdata, ltfat_complex_d c[],
- *                                 ltfatInt L, ltfatInt W, ltfatInt a,
- *                                 ltfatint M, double* alpha, ltfatInt iter);
+ *                                 ltfat_int L, ltfat_int W, ltfat_int a,
+ *                                 ltfat_int M, double* alpha, ltfat_int iter);
  *
  *
  * phaseret_legla_callback_status_s(phaseret_dgtreal_plan_s* p,
  *                                 void* userdata, ltfat_complex_s c[],
- *                                 ltfatInt L, ltfatInt W, ltfatInt a,
- *                                 ltfatint M, double* alpha, ltfatInt iter);
+ *                                 ltfat_int L, ltfat_int W, ltfat_int a,
+ *                                 ltfat_int M, double* alpha, ltfat_int iter);
  * </tt>
  *  \returns
  *  Status code | Meaning
@@ -156,7 +152,7 @@ PHASERET_NAME(legla_callback_cmod)(void* userdata, LTFAT_COMPLEX c[], int L, int
  */
 typedef int
 PHASERET_NAME(legla_callback_status)(PHASERET_NAME(dgtreal_plan)* p, void* userdata, LTFAT_COMPLEX c[],
-                                     int L, int W, int a, int M, double* alpha, int iter);
+                                     ltfat_int L, ltfat_int W, ltfat_int a, ltfat_int M, double* alpha, ltfat_int iter);
 
 /** Le Roux's Griffin-Lim algorithm
  *
@@ -175,12 +171,12 @@ PHASERET_NAME(legla_callback_status)(PHASERET_NAME(dgtreal_plan)* p, void* userd
  * #### Versions #
  * <tt>
  * phaseret_legla_d(const ltfat_complex_d cinit[], const double g[],
- *                  ltfatInt L, ltfatInt gl, ltfatInt W, ltfatInt a, ltfatInt M,
- *                  ltfatInt iter, ltfat_complex_d c[]);
+ *                  ltfat_int L, ltfat_int gl, ltfat_int W, ltfat_int a, ltfat_int M,
+ *                  ltfat_int iter, ltfat_complex_d c[]);
  *
  * phaseret_legla_s(const ltfat_complex_s cinit[], const float g[],
- *                  ltfatInt L, ltfatInt gl, ltfatInt W, ltfatInt a, ltfatInt M,
- *                  ltfatInt iter, ltfat_complex_s c[]);
+ *                  ltfat_int L, ltfat_int gl, ltfat_int W, ltfat_int a, ltfat_int M,
+ *                  ltfat_int iter, ltfat_complex_s c[]);
  * </tt>
  *  \returns
  *  Status code           | Description
@@ -191,8 +187,8 @@ PHASERET_NAME(legla_callback_status)(PHASERET_NAME(dgtreal_plan)* p, void* userd
  *  LTFATERR_NOMEM        | Memory allocation error occurred
  */
 PHASERET_API int
-PHASERET_NAME(legla)(const LTFAT_COMPLEX cinit[], const LTFAT_REAL g[], const int L, const int gl,
-                     const int W, const int a, const int M, const int iter, LTFAT_COMPLEX c[]);
+PHASERET_NAME(legla)(const LTFAT_COMPLEX cinit[], const LTFAT_REAL g[], ltfat_int L, ltfat_int gl,
+                     ltfat_int W, ltfat_int a, ltfat_int M, ltfat_int iter, LTFAT_COMPLEX c[]);
 
 /** Le Roux's Griffin-Lim algorithm struct initialization
  *
@@ -214,12 +210,12 @@ PHASERET_NAME(legla)(const LTFAT_COMPLEX cinit[], const LTFAT_REAL g[], const in
  * #### Versions #
  * <tt>
  * phaseret_legla_init_d(const ltfat_complex_d cinit[], const double g[],
- *                       ltfatInt L, ltfatInt gl, ltfatInt W, ltfatInt a, ltfatInt M,
+ *                       ltfat_int L, ltfat_int gl, ltfat_int W, ltfat_int a, ltfat_int M,
  *                       double alpha, ltfat_complex_d c[], phaseret_legla_init_params* params,
  *                       phaseret_legla_plan_d** p);
  *
  * phaseret_legla_init_s(const ltfat_complex_s cinit[], const double g[],
- *                       ltfatInt L, ltfatInt gl, ltfatInt W, ltfatInt a, ltfatInt M,
+ *                       ltfat_int L, ltfat_int gl, ltfat_int W, ltfat_int a, ltfat_int M,
  *                       double alpha, ltfat_complex_s c[], phaseret_legla_init_params* params,
  *                       phaseret_legla_plan_s** p);
  * </tt>
@@ -235,8 +231,8 @@ PHASERET_NAME(legla)(const LTFAT_COMPLEX cinit[], const LTFAT_REAL g[], const in
  *  LTFATERR_NOMEM        | Memory allocation error occurred
  */
 PHASERET_API int
-PHASERET_NAME(legla_init)(const LTFAT_COMPLEX cinit[], const LTFAT_REAL g[], const int L,
-                          const int gl, const int W, const int a, const int M,
+PHASERET_NAME(legla_init)(const LTFAT_COMPLEX cinit[], const LTFAT_REAL g[], ltfat_int L,
+                          ltfat_int gl, ltfat_int W, ltfat_int a, ltfat_int M,
                           const double alpha, LTFAT_COMPLEX c[],
                           phaseret_legla_init_params* params, PHASERET_NAME(legla_plan)** p);
 
@@ -249,9 +245,9 @@ PHASERET_NAME(legla_init)(const LTFAT_COMPLEX cinit[], const LTFAT_REAL g[], con
  *
  * #### Versions #
  * <tt>
- * phaseret_legla_execute_d(phaseret_legla_plan_d* p, ltfatInt iter);
+ * phaseret_legla_execute_d(phaseret_legla_plan_d* p, ltfat_int iter);
  *
- * phaseret_legla_execute_s(phaseret_legla_plan_s* p, ltfatInt iter);
+ * phaseret_legla_execute_s(phaseret_legla_plan_s* p, ltfat_int iter);
  * </tt>
  * \returns
  * Status code          |  Description
@@ -264,7 +260,7 @@ PHASERET_NAME(legla_init)(const LTFAT_COMPLEX cinit[], const LTFAT_REAL g[], con
  * any                  | Status code from any of the callbacks
  */
 PHASERET_API int
-PHASERET_NAME(legla_execute)(PHASERET_NAME(legla_plan)* p, const int iter);
+PHASERET_NAME(legla_execute)(PHASERET_NAME(legla_plan)* p, ltfat_int iter);
 
 /** Execute LEGLA plan on new arrays
  *
@@ -279,11 +275,11 @@ PHASERET_NAME(legla_execute)(PHASERET_NAME(legla_plan)* p, const int iter);
  * <tt>
  * phaseret_legla_execute_newarray_d(phaseret_legla_plan_d* p,
  *                                   const ltfat_complex_d cinit[],
- *                                   ltfatInt iter, ltfat_complex_d c[]);
+ *                                   ltfat_int iter, ltfat_complex_d c[]);
  *
  * phaseret_legla_execute_newarray_s(phaseret_legla_plan_s* p,
  *                                   const ltfat_complex_s cinit[],
- *                                   ltfatInt iter, ltfat_complex_s c[]);
+ *                                   ltfat_int iter, ltfat_complex_s c[]);
  * </tt>
  * \returns
  * Status code          |  Description
@@ -298,7 +294,7 @@ PHASERET_NAME(legla_execute)(PHASERET_NAME(legla_plan)* p, const int iter);
 PHASERET_API int
 PHASERET_NAME(legla_execute_newarray)(PHASERET_NAME(legla_plan)* p,
                                       const LTFAT_COMPLEX cinit[],
-                                      const int iter, LTFAT_COMPLEX c[]);
+                                      ltfat_int iter, LTFAT_COMPLEX c[]);
 
 /** Delete LEGLA plan
  *
@@ -377,7 +373,7 @@ PHASERET_NAME(legla_set_cmod_callback)(PHASERET_NAME(legla_plan)* p,
 /* Single iteration  */
 int
 PHASERET_NAME(leglaupdate_init)(const LTFAT_COMPLEX kern[], phaseret_size ksize,
-                                int L, int W, int a, int M, int flags,
+                                ltfat_int L, ltfat_int W, ltfat_int a, ltfat_int M, ltfat_int flags,
                                 PHASERET_NAME(leglaupdate_plan)** pout);
 
 extern void
@@ -390,7 +386,7 @@ PHASERET_NAME(leglaupdate_done)(PHASERET_NAME(leglaupdate_plan)** plan);
 
 /* Single col update */
 int
-PHASERET_NAME(leglaupdate_col_init)(int M, phaseret_size ksize, int flags,
+PHASERET_NAME(leglaupdate_col_init)(ltfat_int M, phaseret_size ksize, int flags,
                                     PHASERET_NAME(leglaupdate_plan_col)** pout);
 
 int
@@ -407,7 +403,7 @@ PHASERET_NAME(leglaupdate_col_execute)(
 /* Utils */
 void
 PHASERET_NAME(extendborders)(PHASERET_NAME(leglaupdate_plan_col)* plan,
-                             const LTFAT_COMPLEX c[], int N, LTFAT_COMPLEX buf[]);
+                             const LTFAT_COMPLEX c[], ltfat_int N, LTFAT_COMPLEX buf[]);
 
 int
 PHASERET_NAME(legla_big2small_kernel)(LTFAT_COMPLEX* bigc, phaseret_size bigsize,
@@ -420,13 +416,13 @@ PHASERET_NAME(legla_findkernelsize)(LTFAT_COMPLEX* bigc, phaseret_size bigsize,
 /* Modulate kernel */
 void
 PHASERET_NAME(kernphasefi)(const LTFAT_COMPLEX kern[], phaseret_size ksize,
-                           int n, int a, int M, LTFAT_COMPLEX kernmod[]);
+                           ltfat_int n, ltfat_int a, ltfat_int M, LTFAT_COMPLEX kernmod[]);
 
 /* Format kernel */
 void
 PHASERET_NAME(formatkernel)(LTFAT_REAL* kernr, LTFAT_REAL* kerni,
-                            int kernh, int kernw,
-                            int kernwskip, LTFAT_REAL* kernmodr, LTFAT_REAL* kernmodi);
+                            ltfat_int kernh, ltfat_int kernw,
+                            ltfat_int kernwskip, LTFAT_REAL* kernmodr, LTFAT_REAL* kernmodi);
 
 
 

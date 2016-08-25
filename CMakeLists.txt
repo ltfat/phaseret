@@ -13,8 +13,8 @@ else (MSVC)
 endif (MSVC)
 
 
-FIND_LIBRARY(FFTW3_LIB NAMES fftw3 libfftw3)
-FIND_LIBRARY(FFTW3F_LIB NAMES fftw3f libfftw3f)
+# FIND_LIBRARY(FFTW3_LIB NAMES fftw3 libfftw3)
+# FIND_LIBRARY(FFTW3F_LIB NAMES fftw3f libfftw3f)
 
 FIND_LIBRARY(LTFAT_LIB NAMES ltfat libltfat)
 FIND_LIBRARY(LTFATF_LIB NAMES ltfatf libltfatf)

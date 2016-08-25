@@ -11,11 +11,11 @@
 #       define PHASERET_API
 #   endif
 #else
-#   if __GNUC__ >= 4
-#       define PHASERET_API __attribute__((visibility("default")))
-#   else
+// #   if __GNUC__ >= 4
+// #       define PHASERET_API __attribute__((visibility("default")))
+// #   else
 #       define PHASERET_API
-#   endif
+// #   endif
 #endif
 #endif
 

@@ -23,7 +23,7 @@ extern "C" {
  * \returns \a gamma or NAN if \a win was not recognized
  */
 PHASERET_API double
-phaseret_firwin2gamma(LTFAT_FIRWIN win, int gl);
+phaseret_firwin2gamma(LTFAT_FIRWIN win, ltfat_int gl);
 
 /** @} */
 
@@ -53,10 +53,10 @@ typedef struct PHASERET_NAME(rtpghi_state) PHASERET_NAME(rtpghi_state);
  *
  * #### Versions #
  * <tt>
- * phaseret_rtpghi_init_d(double gamma, ltfatInt W, ltfatInt a, ltfatInt M,
+ * phaseret_rtpghi_init_d(double gamma, ltfat_int W, ltfat_int a, ltfat_int M,
  *                        double tol, int do_causal, phaseret_rtpghi_state_d** p);
  *
- * phaseret_rtpghi_init_s(double gamma, ltfatInt W, ltfatInt a, ltfatInt M,
+ * phaseret_rtpghi_init_s(double gamma, ltfat_int W, ltfat_int a, ltfat_int M,
  *                        double tol, int do_causal, phaseret_rtpghi_state_s** p);
  * </tt>
  * \returns
@@ -64,7 +64,7 @@ typedef struct PHASERET_NAME(rtpghi_state) PHASERET_NAME(rtpghi_state);
  * \see phaseret_firwin2gamma
  */
 PHASERET_API int
-PHASERET_NAME(rtpghi_init)(double gamma, int W, int a, int M, double tol,
+PHASERET_NAME(rtpghi_init)(double gamma, ltfat_int W, ltfat_int a, ltfat_int M, double tol,
                            int do_causal, PHASERET_NAME(rtpghi_state)** p);
 
 
@@ -161,18 +161,18 @@ PHASERET_NAME(rtpghi_done)(PHASERET_NAME(rtpghi_state)** p);
  * #### Versions #
  * <tt>
  * phaseret_rtpghioffline_d(const double s[], double gamma,
- *                          ltfatInt L, ltfatInt W, ltfatInt a, ltfatInt M,
+ *                          ltfat_int L, ltfat_int W, ltfat_int a, ltfat_int M,
  *                          double tol, int do_causal, ltfat_complex_d c[]);
  *
  * phaseret_rtpghioffline_s(const float s[], double gamma,
- *                          ltfatInt L, ltfatInt W, ltfatInt a, ltfatInt M,
+ *                          ltfat_int L, ltfat_int W, ltfat_int a, ltfat_int M,
  *                          double tol, int do_causal, ltfat_complex_s c[]);
  * </tt>
  *
  * \see phaseret_firwin2gamma ltfat_dgtreal_phaseunlock
  */
 PHASERET_API int
-PHASERET_NAME(rtpghioffline)(const LTFAT_REAL s[], double gamma, int L, int W, int a, int M,
+PHASERET_NAME(rtpghioffline)(const LTFAT_REAL s[], double gamma, ltfat_int L, ltfat_int W, ltfat_int a, ltfat_int M,
                              double tol, int do_causal, LTFAT_COMPLEX c[]);
 
 /** @}*/
@@ -188,7 +188,7 @@ PHASERET_NAME(rtpghioffline)(const LTFAT_REAL s[], double gamma, int L, int W, i
  * \param[out]    fgrad      Frequency gradient, array of length M2
  */
 void
-PHASERET_NAME(rtpghifgrad)(const LTFAT_REAL logs[], int a, int M, double gamma,
+PHASERET_NAME(rtpghifgrad)(const LTFAT_REAL logs[], ltfat_int a, ltfat_int M, double gamma,
                            int do_causal, LTFAT_REAL fgrad[]);
 
 /** Compute phase time gradient by differentiation in frequency
@@ -200,7 +200,7 @@ PHASERET_NAME(rtpghifgrad)(const LTFAT_REAL logs[], int a, int M, double gamma,
  * \param[out]    tgrad      Time gradient, array of length M2
  */
 void
-PHASERET_NAME(rtpghitgrad)(const LTFAT_REAL logs[], int a, int M, double gamma,
+PHASERET_NAME(rtpghitgrad)(const LTFAT_REAL logs[], ltfat_int a, ltfat_int M, double gamma,
                            LTFAT_REAL tgrad[]);
 
 /** Compute log of input
@@ -209,7 +209,7 @@ PHASERET_NAME(rtpghitgrad)(const LTFAT_REAL logs[], int a, int M, double gamma,
  * \param[out] out  Output array of length L
  */
 void
-PHASERET_NAME(rtpghilog)(const LTFAT_REAL in[], int L, LTFAT_REAL out[]);
+PHASERET_NAME(rtpghilog)(const LTFAT_REAL in[], ltfat_int L, LTFAT_REAL out[]);
 
 /** Combine magnitude and phase to a complex array
  * \param[in]        s      Magnitude, array of length L
@@ -218,7 +218,7 @@ PHASERET_NAME(rtpghilog)(const LTFAT_REAL in[], int L, LTFAT_REAL out[]);
  * \param[out]       c      Output array of length L
  */
 void
-PHASERET_NAME(rtpghimagphase)(const LTFAT_REAL s[], const LTFAT_REAL phase[], int L, LTFAT_COMPLEX c[]);
+PHASERET_NAME(rtpghimagphase)(const LTFAT_REAL s[], const LTFAT_REAL phase[], ltfat_int L, LTFAT_COMPLEX c[]);
 
 #ifdef __cplusplus
 }
