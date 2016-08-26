@@ -13,6 +13,8 @@ extern "C" {
 
 #ifndef _phaseret_dgtrealwrapper_h
 #define _phaseret_dgtrealwrapper_h
+typedef struct phaseret_dgtreal_params phaseret_dgtreal_params;
+
 /** \addtogroup dgtrealwrapper
  * @{ */
 typedef enum
@@ -22,21 +24,66 @@ typedef enum
     phaseret_dgtreal_fb
 } phaseret_dgtreal_hint;
 
-typedef struct
-{
-    ltfat_phaseconvention ptype;
-    unsigned fftw_flags;
-    phaseret_dgtreal_hint hint;
-} phaseret_dgtreal_init_params;
+/** Allocate dgtreal_params structure and initialize to default values
+ *
+ * \warning The structure must be freed using phaseret_dgtreal_params_free()
+ *
+ * \returns Allocated struct (or NULL if the memory allocation failed
+ * \see phaseret_dgtreal_params_free
+ */
+PHASERET_API phaseret_dgtreal_params*
+phaseret_dgtreal_params_allocdef();
 
-
-/** Intilialize extra param struct for dgtreal_init
- * 
+/** Set DGT phase convention
+ *
+ * \returns
+ * Status code          |  Description
+ * ---------------------|----------------
+ * LTFATERR_SUCESS      |  No error occured
+ * LTFATERR_NULLPOINTER |  \a params was NULL
  */
 PHASERET_API int
-phaseret_dgtreal_init_params_defaults(phaseret_dgtreal_init_params* params);
+phaseret_dgtreal_params_set_phaseconv(phaseret_dgtreal_params* params, ltfat_phaseconvention ptype);
+
+/** Set FFTW flags
+ *
+ * \returns
+ * Status code          |  Description
+ * ---------------------|----------------
+ * LTFATERR_SUCESS      |  No error occured
+ * LTFATERR_NULLPOINTER |  \a params was NULL
+ */
+PHASERET_API int
+phaseret_dgtreal_params_set_fftwflags(phaseret_dgtreal_params* params, unsigned fftw_flags);
+
+/** Set algorithm hint
+ *
+ * \returns
+ * Status code          |  Description
+ * ---------------------|----------------
+ * LTFATERR_SUCESS      |  No error occured
+ * LTFATERR_NULLPOINTER |  \a params was NULL
+ */
+PHASERET_API int
+phaseret_dgtreal_params_set_hint(phaseret_dgtreal_params* params, phaseret_dgtreal_hint hint);
+
+/** Destroy struct
+ *
+ * \returns
+ * Status code          |  Description
+ * ---------------------|----------------
+ * LTFATERR_SUCESS      |  No error occured
+ * LTFATERR_NULLPOINTER |  \a params was NULL
+ */
+PHASERET_API int
+phaseret_dgtreal_params_free(phaseret_dgtreal_params* params);
 
 /** @} */
+
+// The following function is not part of API
+int
+phaseret_dgtreal_params_defaults(phaseret_dgtreal_params* params);
+
 #endif
 
 typedef struct PHASERET_NAME(dgtreal_plan) PHASERET_NAME(dgtreal_plan);
@@ -65,7 +112,7 @@ typedef struct PHASERET_NAME(dgtreal_plan) PHASERET_NAME(dgtreal_plan);
  */
 PHASERET_API int
 PHASERET_NAME(dgtreal_init)(const LTFAT_REAL g[], ltfat_int gl, ltfat_int L, ltfat_int W, ltfat_int a, ltfat_int M,
-                            LTFAT_COMPLEX c[], phaseret_dgtreal_init_params* params,
+                            LTFAT_COMPLEX c[], phaseret_dgtreal_params* params,
                             PHASERET_NAME(dgtreal_plan)** p);
 
 

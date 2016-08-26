@@ -1,3 +1,19 @@
+#ifndef _phaseret_dgtrealwrapper_private_h
+#define _phaseret_dgtrealwrapper_private_h
+
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+struct phaseret_dgtreal_params
+{
+    ltfat_phaseconvention ptype;
+    unsigned fftw_flags;
+    phaseret_dgtreal_hint hint;
+};
+
+
 typedef int PHASERET_NAME(complextorealtransform)(void* userdata, const LTFAT_COMPLEX* c, ltfat_int L, ltfat_int W, LTFAT_REAL* f);
 typedef int PHASERET_NAME(realtocomplextransform)(void* userdata, const LTFAT_REAL* f, ltfat_int L, ltfat_int W, LTFAT_COMPLEX* c);
 typedef int PHASERET_NAME(donefunc)(void** pla);
@@ -18,9 +34,6 @@ struct PHASERET_NAME(dgtreal_plan)
     PHASERET_NAME(donefunc)* fwddonefunc;
 };
 
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 int
 PHASERET_NAME(ltfat_idgtreal_long_execute_wrapper)(void* plan, const LTFAT_COMPLEX* c,
@@ -52,5 +65,7 @@ PHASERET_NAME(ltfat_dgtreal_fb_done_wrapper)(void** plan);
 
 #ifdef __cplusplus
 }
+#endif
+
 #endif
 

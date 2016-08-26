@@ -113,11 +113,11 @@ error:
 PHASERET_API int
 PHASERET_NAME(dgtreal_init)(const LTFAT_REAL g[], ltfat_int gl, ltfat_int L, ltfat_int W,
                             ltfat_int a, ltfat_int M, LTFAT_COMPLEX c[],
-                            phaseret_dgtreal_init_params* params, PHASERET_NAME(dgtreal_plan)** pout)
+                            phaseret_dgtreal_params* params, PHASERET_NAME(dgtreal_plan)** pout)
 {
     int status = LTFATERR_SUCCESS;
     PHASERET_NAME(dgtreal_plan)* p = NULL;
-    phaseret_dgtreal_init_params paramsLoc;
+    phaseret_dgtreal_params paramsLoc;
     int ispainless = gl <= M;
     LTFAT_REAL* g2 = NULL;
     ltfat_int g2l = 0;
@@ -127,7 +127,7 @@ PHASERET_NAME(dgtreal_init)(const LTFAT_REAL g[], ltfat_int gl, ltfat_int L, ltf
     if (params)
         paramsLoc = *params;
     else
-        phaseret_dgtreal_init_params_defaults(&paramsLoc);
+        phaseret_dgtreal_params_defaults(&paramsLoc);
 
     CHECK(LTFATERR_BADTRALEN, !(L % minL),
           "L must divisible by lcm(a,M)=%d.", minL);

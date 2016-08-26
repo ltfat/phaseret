@@ -15,9 +15,8 @@ extern "C" {
 
 #ifndef _phaseret_legla_h
 #define _phaseret_legla_h
-/** \addtogroup legla
- *  @{
- */
+typedef struct phaseret_legla_params phaseret_legla_params;
+
 
 typedef enum
 {
@@ -31,6 +30,9 @@ typedef enum
     ORDER_REV = (1 << 11)
 } leglaupdate_frameorder;
 
+/** \addtogroup legla
+ *  @{
+ */
 typedef struct
 {
     ltfat_int height;
@@ -43,14 +45,6 @@ typedef struct
 //     ltfat_int x;
 // } phaseret_point;
 
-typedef struct
-{
-    double relthr; ///< Relative threshold for automatic determination of kernel size, default 1e-3
-    phaseret_size ksize; ///< Maximum allowed kernel size (default 2*ceil(M/a) -1) or kernel size directly if relthr==0.0
-    unsigned leglaflags; ///< LEGLA algorithm flags, default MOD_COEFFICIENTWISE | MOD_MODIFIEDUPDATE
-    phaseret_dgtreal_init_params dparams;
-} phaseret_legla_init_params;
-
 typedef enum
 {
     MOD_STEPWISE = (1 << 0),  // << DEFAULT
@@ -60,19 +54,77 @@ typedef enum
     MOD_MODIFIEDUPDATE = (1 << 4),
 } leglaupdate_mod;
 
-/** Initialize parameter struct for legla_init
+/** Allocate legla_params struct and initialize to default values
  *
- * \param[in,out]  params  Pointer to a structure to be inilialized
- * \returns
+ * \warning The structure must be freed using phaseret_legla_params_free()
+ *
+ * \returns Allocated struct (or NULL if the memory allocation failed)
+ * \see phaseret_legla_params_free
+ */
+PHASERET_API phaseret_legla_params*
+phaseret_legla_params_allocdef();
+
+/** Set relative threshold 
+ *
+ * \returns 
  * Status code          |  Description
- * ---------------------|-------------------
- * LTFATERR_SUCCESS     | No error occurred
- * LTFATERR_NULLPOINTER | \a params was NULL
+ * ---------------------|----------------
+ * LTFATERR_SUCESS      |  No error occured
+ * LTFATERR_NULLPOINTER |  \a params was NULL 
  */
 PHASERET_API int
-phaseret_legla_init_params_defaults(phaseret_legla_init_params* params);
+phaseret_legla_params_set_relthr(phaseret_legla_params* params, double relthr);
+
+/** Set kernel size 
+ *
+ * \returns 
+ * Status code          |  Description
+ * ---------------------|----------------
+ * LTFATERR_SUCESS      |  No error occured
+ * LTFATERR_NULLPOINTER |  \a params was NULL 
+ */
+PHASERET_API int
+phaseret_legla_params_set_kernelsize(phaseret_legla_params* params, phaseret_size ksize);
+
+/** Set legla flags
+ *
+ * \returns 
+ * Status code          |  Description
+ * ---------------------|----------------
+ * LTFATERR_SUCESS      |  No error occured
+ * LTFATERR_NULLPOINTER |  \a params was NULL 
+ */
+PHASERET_API int
+phaseret_legla_params_set_leglaflags(phaseret_legla_params* params, unsigned leglaflags);
+
+/** Get dgtreal_params struct 
+ *  
+ *
+ * \note There is no need to free the returned struct.
+ *
+ * \returns Struct (or NULL if \a params was NULL)
+ * \see phaseret_dgtreal_params_set_phaseconv phaseret_dgtreal_params_set_fftwflags
+ * \see phaseret_dgtreal_params_set_hint
+ */
+PHASERET_API phaseret_dgtreal_params*
+phaseret_legla_params_get_dgtreal_params(phaseret_legla_params* params);
+
+/** Destroy struct
+ *
+ * \returns 
+ * Status code          |  Description
+ * ---------------------|----------------
+ * LTFATERR_SUCESS      |  No error occured
+ * LTFATERR_NULLPOINTER |  \a params was NULL 
+ */
+PHASERET_API int
+phaseret_legla_params_free(phaseret_legla_params* params);
 
 /** @} */
+
+// This function is not part of API
+int
+phaseret_legla_params_defaults(phaseret_legla_params* params);
 #endif
 
 typedef struct PHASERET_NAME(legla_plan) PHASERET_NAME(legla_plan);
@@ -211,12 +263,12 @@ PHASERET_NAME(legla)(const LTFAT_COMPLEX cinit[], const LTFAT_REAL g[], ltfat_in
  * <tt>
  * phaseret_legla_init_d(const ltfat_complex_d cinit[], const double g[],
  *                       ltfat_int L, ltfat_int gl, ltfat_int W, ltfat_int a, ltfat_int M,
- *                       double alpha, ltfat_complex_d c[], phaseret_legla_init_params* params,
+ *                       double alpha, ltfat_complex_d c[], phaseret_legla_params* params,
  *                       phaseret_legla_plan_d** p);
  *
  * phaseret_legla_init_s(const ltfat_complex_s cinit[], const double g[],
  *                       ltfat_int L, ltfat_int gl, ltfat_int W, ltfat_int a, ltfat_int M,
- *                       double alpha, ltfat_complex_s c[], phaseret_legla_init_params* params,
+ *                       double alpha, ltfat_complex_s c[], phaseret_legla_params* params,
  *                       phaseret_legla_plan_s** p);
  * </tt>
  *  \returns
@@ -227,14 +279,14 @@ PHASERET_NAME(legla)(const LTFAT_COMPLEX cinit[], const LTFAT_REAL g[], ltfat_in
  *  LTFATERR_BADARG       | \a alpha must be greater or equal to 0.0
  *  LTFATERR_NOTINRAGE    | \a params->relthr must be in range [0-1]
  *  LTFATERR_BADSIZE      | \a Invalid kernel size: params->ksize
- *  LTFATERR_CANNOTHAPPEN | \a params was not inilialized with phaseret_legla_init_params_defaults
+ *  LTFATERR_CANNOTHAPPEN | \a params was not inilialized with phaseret_legla_params_defaults
  *  LTFATERR_NOMEM        | Memory allocation error occurred
  */
 PHASERET_API int
 PHASERET_NAME(legla_init)(const LTFAT_COMPLEX cinit[], const LTFAT_REAL g[], ltfat_int L,
                           ltfat_int gl, ltfat_int W, ltfat_int a, ltfat_int M,
                           const double alpha, LTFAT_COMPLEX c[],
-                          phaseret_legla_init_params* params, PHASERET_NAME(legla_plan)** p);
+                          phaseret_legla_params* params, PHASERET_NAME(legla_plan)** p);
 
 
 

@@ -215,7 +215,7 @@ PHASERET_API int
 PHASERET_NAME(gla_init)(const LTFAT_COMPLEX cinit[], const LTFAT_REAL g[],
                         ltfat_int L, ltfat_int gl, ltfat_int W, ltfat_int a,
                         ltfat_int M, const double alpha, LTFAT_COMPLEX c[],
-                        phaseret_dgtreal_init_params* params,
+                        phaseret_dgtreal_params* params,
                         PHASERET_NAME(gla_plan)** p);
 
 /** Execute Griffin-Lim algorithm plan

@@ -1,6 +1,7 @@
 #include "phaseret/legla.h"
 #include "phaseret/gla.h"
 #include "dgtrealwrapper_private.h"
+#include "legla_private.h"
 #include "ltfat/macros.h"
 
 struct PHASERET_NAME(legla_plan)
@@ -64,11 +65,11 @@ PHASERET_API int
 PHASERET_NAME(legla_init)(const LTFAT_COMPLEX cinit[], const LTFAT_REAL g[],
                           ltfat_int L, ltfat_int gl, ltfat_int W, ltfat_int a, ltfat_int M,
                           const double alpha, LTFAT_COMPLEX c[],
-                          phaseret_legla_init_params* params, PHASERET_NAME(legla_plan)** pout)
+                          phaseret_legla_params* params, PHASERET_NAME(legla_plan)** pout)
 {
     PHASERET_NAME(legla_plan)* p = NULL;
-    phaseret_legla_init_params pLoc;
-    phaseret_dgtreal_init_params dparams2;
+    phaseret_legla_params pLoc;
+    phaseret_dgtreal_params dparams2;
     phaseret_size ksize;
     LTFAT_COMPLEX* kernsmall = NULL;
     ltfat_int M2 = M / 2 + 1;
@@ -82,15 +83,15 @@ PHASERET_NAME(legla_init)(const LTFAT_COMPLEX cinit[], const LTFAT_REAL g[],
     if (params)
     {
         /* CHECK(LTFATERR_CANNOTHAPPEN, */
-        /*       params->private_hash_do_not_use == phaseret_legla_init_params_hash, */
-        /*       "params were not initialized with phaseret_legla_init_params_defaults"); */
+        /*       params->private_hash_do_not_use == phaseret_legla_params_hash, */
+        /*       "params were not initialized with phaseret_legla_params_defaults"); */
         CHECK(LTFATERR_NOTINRANGE, params->relthr >= 0 && params->relthr <= 1,
               "relthr must be in range [0-1]");
 
         pLoc = *params;
     }
     else
-        phaseret_legla_init_params_defaults(&pLoc);
+        phaseret_legla_params_defaults(&pLoc);
 
     ksize = pLoc.ksize;
 
