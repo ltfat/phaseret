@@ -211,6 +211,9 @@ PHASERET_API int
 PHASERET_NAME(pghi_done)(PHASERET_NAME(pghi_plan)** p);
 /** @} */
 
+PHASERET_API int*
+PHASERET_NAME(pghi_get_mask)(PHASERET_NAME(pghi_plan)* p);
+
 void
 PHASERET_NAME(pghimagphase)(const LTFAT_REAL s[], const LTFAT_REAL phase[],
                             ltfat_int L, LTFAT_COMPLEX c[]);

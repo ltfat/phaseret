@@ -248,6 +248,13 @@ error:
     return status;
 }
 
+PHASERET_API int*
+PHASERET_NAME(pghi_get_mask)(PHASERET_NAME(pghi_plan)* p)
+{
+    if (p == NULL) return NULL;
+    return LTFAT_NAME(heapinttask_get_mask)(p->hit);
+}
+
 void
 PHASERET_NAME(pghimagphase)(const LTFAT_REAL s[], const LTFAT_REAL phase[],
                             ltfat_int L,
@@ -266,7 +273,8 @@ PHASERET_NAME(pghilog)(const LTFAT_REAL* in, ltfat_int L, LTFAT_REAL* out)
 }
 
 void
-PHASERET_NAME(pghitgrad)(const LTFAT_REAL* logs, double gamma, ltfat_int a, ltfat_int M,
+PHASERET_NAME(pghitgrad)(const LTFAT_REAL* logs, double gamma, ltfat_int a,
+                         ltfat_int M,
                          ltfat_int N,
                          LTFAT_REAL* tgrad)
 {
@@ -290,7 +298,8 @@ PHASERET_NAME(pghitgrad)(const LTFAT_REAL* logs, double gamma, ltfat_int a, ltfa
 }
 
 void
-PHASERET_NAME(pghifgrad)(const LTFAT_REAL* logs, double gamma, ltfat_int a, ltfat_int M,
+PHASERET_NAME(pghifgrad)(const LTFAT_REAL* logs, double gamma, ltfat_int a,
+                         ltfat_int M,
                          ltfat_int N,
                          LTFAT_REAL* fgrad)
 {
