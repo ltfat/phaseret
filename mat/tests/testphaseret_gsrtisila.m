@@ -1,0 +1,67 @@
+function test_failed=testphaseret_gsrtisila
+%TEST_CONSTRUCTPHASE
+%
+test_failed = 0;
+
+f = cocktailparty;
+a = 256;
+M = 1024;
+g = {'hamming',1024};
+
+for pcId = 1:2
+    % Complex case
+    phaseconv = getat({'timeinv','freqinv'},pcId);
+
+    tra = @(f) dgtreal(f,g,a,M,phaseconv);
+    itra = @(c) idgtreal(c,{'dual',g},a,M,phaseconv);
+    proj = @(c) tra(itra(c));
+    c = tra(f);
+    s = abs(c);
+
+    [chat]=gsrtisila(s,g,a,M,phaseconv);
+
+    E = magnitudeerrdb(s,proj(chat));
+    fail = '';
+    if E>-20
+        test_failed = test_failed + 1;
+        fail = 'FAILED';
+    end
+
+    fprintf('GSRTISILA %s W=%d E=%.2f %s\n',phaseconv,1,E,fail);
+
+    [chat]=gsrtisila(s,g,a,M,phaseconv,'maxit',20);
+
+    E = magnitudeerrdb(s,proj(chat));
+    fail = '';
+    if E>-20
+        test_failed = test_failed + 1;
+        fail = 'FAILED';
+    end
+
+    fprintf('GSRTISILA %s W=%d E=%.2f %s\n',phaseconv,1,E,fail);
+
+    [chat]=gsrtisila(s,g,a,M,phaseconv,'maxit',1,'lookahead',0,'spsi');
+
+    E = magnitudeerrdb(s,proj(chat));
+    fail = '';
+    if E>-20
+        test_failed = test_failed + 1;
+        fail = 'FAILED';
+    end
+
+    fprintf('GSRTISILA lookahead=2 %s W=%d E=%.2f %s\n',phaseconv,1,E,fail);
+
+end
+
+
+
+function el = getat(collection,id)
+if iscell(collection)
+    el = collection{id};
+else
+    el = collection(id);
+end
+
+
+
+
