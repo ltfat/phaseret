@@ -1,5 +1,5 @@
-function [c,relres,iter,f]=rtisila(s,g,a,M,varargin)
-%RTISILA Real-Time Iterative Spectrogram Inversion (RTISI) for real signals
+function [c,f,relres,iter]=rtisila(s,g,a,M,varargin)
+%RTISILA Real-Time Iterative Spectrogram Inversion with Look Ahead
 %   Usage: f = rtisila(s,g,a,M)
 %          f = rtisila(s,g,a,M,Ls)
 %          [f,relres,iter,c] = rtisila(...)
@@ -11,10 +11,10 @@ function [c,relres,iter,f]=rtisila(s,g,a,M,varargin)
 %         M       : Number of channels
 %         Ls      : length of signal.
 %   Output parameters:
+%         c       : Coefficients with the reconstructed phase.
 %         f       : Reconstructed signal.
 %         relres  : Final residual error.
 %         iter    : Number of per-frame iterations done.
-%         c       : Coefficients with the reconstructed phase.
 %
 %   `rtisila(s,g,a,M)` attempts to find Gabor coefficients *c* such
 %   that::
@@ -23,7 +23,7 @@ function [c,relres,iter,f]=rtisila(s,g,a,M,varargin)
 %
 %   using the Real-Time Iterative Spectrogram Inversion with Look Ahead.
 %
-%   `[c,relres,iter,f]=rtisila(...)` additionally returns the final
+%   `[c,f,relres,iter]=rtisila(...)` additionally returns the final
 %   residual `relres`, the number of per-frame iterations done `iter` and the
 %   coefficients *c* with the reconstructed phase. The relationship between
 %   *f* and *c* is::
@@ -92,7 +92,7 @@ if numel(gnum) > M
 end
 
 abss = abs(s);
-norm_s = norm(abss,'fro');
+
 
 lookback = max([ceil(M/a) - 1, kv.lookahead]);
 
@@ -120,8 +120,6 @@ cframes = zeros(M ,lookback + kv.lookahead+1);
 sframes = zeros(M2,kv.lookahead+1);
 
 c = zeros(M2,N);
-
-%recframes = zeros(M,N);
 
 % Preread modulus
 sframes(:,2:end) = abss(:,1:kv.lookahead);
@@ -164,16 +162,13 @@ if ~flags.do_timeinv
 end
 
 f = idgtreal(c,gd,a,M,flags.phase);
-
-if nargout>1
-    relres = norm(dgtreal(f,g,a,M,'timeinv')-abss,'fro')/norm_s;
-end
-
-
-
 % Cur or extend and reformat f
 f = comp_sigreshape_post(f,Ls,0,[0; W]);
 
+if nargout>2
+    norm_s = norm(abss,'fro');
+    relres = norm(dgtreal(f,g,a,M,flags.phase)-abss,'fro')/norm_s;
+end
 
 function partrec = overlayframes(cframes,a,M)
 
