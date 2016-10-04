@@ -61,7 +61,6 @@ definput.keyvals.g = [];
 definput.flags.phase={'timeinv','freqinv'};
 definput.flags.variant={'normal','causal'};
 [flags,kv,tol]=ltfatarghelper({'tol','mask'},definput,varargin);
-g = kv.g;
 [M2,N,W] = size(s);
 
 if W>1
@@ -76,36 +75,8 @@ end
 
 abss = abs(s);
 
-if flags.do_timeinv
-    fgradmul = @(fgrad) -gamma/(a*M)*fgrad;
-    tgradmul = @(tgrad) bsxfun(@plus,a*M/gamma*tgrad, 2*pi*a*(0:M2-1)'/M);
-elseif flags.do_freqinv
-    fgradmul = @(fgrad) bsxfun(@plus,-gamma/(a*M)*fgrad, -2*pi*a*(0:N-1)/M);
-    tgradmul = @(tgrad) a*M/gamma*tgrad;    
-end
+[tgrad, fgrad] = comp_pghiphasegrad( abss, gamma, a, M, flags.do_timeinv, flags.do_causal);
 
-logs=log(abss+realmin);
-tt=-10;
-logs(logs<max(logs(:))+tt)=tt;
-
-difforder = 2;
-
-if flags.do_normal
-    fgrad = pderiv(logs,2,difforder)/size(logs,2);
-elseif flags.do_causal
-    fgrad = (circshift(logs,[0,2]) -4*circshift(logs,[0,1])+3*logs)/2;
-end
-
-% Undo the scaling done by pderiv and scale properly
-tgrad = pderiv(logs,1,difforder)/size(logs,1);
-
-% Fix the first and last rows .. the
-% borders are symmetric so the centered difference is 0
-tgrad(1,:) = 0;
-tgrad(end,:) = 0;
-
-tgrad = tgradmul(tgrad);
-fgrad = fgradmul(fgrad);
 usephase = zeros(M2,2);
 tmpmask = zeros(M2,2);
 tmpmask(:,1) = 1;
