@@ -1,8 +1,8 @@
 function [c,f,relres,iter]=gsrtisila(s,g,a,M,varargin)
-%RTISILA Gnann and Spiertz’s Real-Time Iterative Spectrogram Inversion
+%GSRTISILA Gnann and Spiertz’s Real-Time Iterative Spectrogram Inversion
 %   Usage: c = gsrtisila(s,g,a,M)
 %          c = gsrtisila(s,g,a,M,Ls)
-%          [c,f,relres,iter] = rtisila(...)
+%          [c,f,relres,iter] = gsrtisila(...)
 %
 %   Input parameters:
 %         s       : Modulus of coefficients.
@@ -16,7 +16,7 @@ function [c,f,relres,iter]=gsrtisila(s,g,a,M,varargin)
 %         relres  : Final residual error.
 %         iter    : Number of per-frame iterations done.
 %
-%   `dpspecsyn(s,g,a,M)` attempts to find Gabor coefficients *c* of some
+%   `gsrtisila(s,g,a,M)` attempts to find Gabor coefficients *c* of some
 %   signal *f* such that::
 %
 %     c = dgtreal(f,g,a,M);
@@ -71,7 +71,8 @@ definput.keyvals.Ls=[];
 definput.keyvals.maxit=5;
 definput.keyvals.lookahead = [];
 definput.flags.phase={'freqinv','timeinv'};
-definput.flags.lastbufinit={'zeros','unwrap','input','spsi'};
+definput.flags.lastbufinit={'zeros','unwrap','input','spsi','rtpghi'};
+definput.keyvals.rtpghi = {};
 definput.keyvals.unwrappar=0.3;
 definput.flags.frameorder={'reverse','energy'};
 [flags,kv,Ls]=ltfatarghelper({'Ls','maxit'},definput,varargin);
@@ -86,6 +87,25 @@ end
 if kv.lookahead < 0 || kv.lookahead > N - 1
     error('%s: lookahead must be in range [0-%d]',upper(mfilename),N-1);
 end
+
+if flags.do_rtpghi
+    if isempty(kv.rtpghi)
+        error('%s: RTPGHI parameters cell is empty.',upper(mfilename));
+    end
+    
+    if ~iscell(kv.rtpghi) && isscalar(kv.rtpghi)
+        kv.rtpghi = { kv.rtpghi };
+    end
+    
+    definput2.keyvals.gamma = [];
+    definput2.keyvals.tol=[1e-6];
+    definput2.flags.variant={'normal','causal'};
+    [flags2,~,gamma,tol]=ltfatarghelper({'gamma','tol'},definput2,kv.rtpghi);   
+    if isempty(gamma)
+        error('%s: RTPGHI gamma parameter is missing.',upper(mfilename));
+    end
+end
+
 
 % Analysis window (as array)
 gnum = gabwin(g,a,M);
@@ -126,8 +146,13 @@ cframes = zeros(M ,lookback + kv.lookahead+1);
 sframes = zeros(M2,kv.lookahead+1);
 coefbuf = zeros(M2 ,lookback + kv.lookahead+1);
 
-c = zeros(M2,N);
+if flags.do_rtpghi
+    [tgrad, fgrad] = comp_pghiphasegrad( abss, gamma, a, M, 1, flags2.do_causal);
+    tmpmask = zeros(M2,2); tmpmask(:,1) = 1;
+end
 
+
+c = zeros(M2,N);
 % Preread modulus
 sframes(:,2:end) = abss(:,1:kv.lookahead);
 
@@ -135,6 +160,8 @@ sframes(:,2:end) = abss(:,1:kv.lookahead);
 for n=1:N
     % Index of the submit and the look-ahead frames in the spectrogram
     nextnewframeidx = mod(n - 1 + kv.lookahead,N) + 1;
+    nextframeidx = mod(n - 1 - 1 + kv.lookahead,N) + 1;
+    idx = mod(n - 1 - 1 + kv.lookahead:n - 1 + kv.lookahead,N) + 1;
 
     sframes(:,1:end-1)   = sframes(:,2:end);
     sframes(:,end) = abss(:,nextnewframeidx);
@@ -159,6 +186,11 @@ for n=1:N
         cframes(:,end) = 0.0*fftshift(comp_ifftreal(coefbuf(:,end),M))*M;
     elseif flags.do_input
         cframes(:,end) = gdnum.*fftshift(comp_ifftreal(s(:,nextnewframeidx),M))*M;
+    elseif flags.do_rtpghi
+        oldphase = angle(coefbuf(:,end-1:end));
+        newphasetmp = comp_constructphasereal(abss(:,[nextframeidx,nextnewframeidx]),tgrad(:,idx),fgrad(:,idx),a,M,tol,2,tmpmask,oldphase);
+        coefbuf(:,end) = sframes(:,end).*exp(1i*newphasetmp(:,2));
+        cframes(:,end) = gdnum.*fftshift(comp_ifftreal(coefbuf(:,end),M))*M;
     end
 
     % Update the lookahead frames and the submit frame
