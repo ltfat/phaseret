@@ -392,21 +392,23 @@ PHASERET_NAME(rtisila_init)(const LTFAT_REAL* g, ltfat_int gl, ltfat_int W,
     return status;
 error:
     if (wins) ltfat_free(wins);
-    if (p)
-    {
-        if (p->uplan)
-        {
-            if (p->uplan->g) ltfat_free((void*)p->uplan->g);
-            if (p->uplan->gd) ltfat_free((void*)p->uplan->gd);
-            if (p->uplan->specg1) ltfat_free((void*)p->uplan->specg1);
-            if (p->uplan->specg2) ltfat_free((void*)p->uplan->specg2);
-            if (p->garbageBin) ltfat_free(p->garbageBin);
-            PHASERET_NAME(rtisilaupdate_done)(&p->uplan);
-        }
-        if (p->s) ltfat_free(p->s);
-        if (p->frames) ltfat_free(p->frames);
-        ltfat_free(p);
-    }
+    PHASERET_NAME(rtisila_done)(&p);
+
+    /* if (p) */
+    /* { */
+    /*     if (p->uplan) */
+    /*     { */
+    /*         if (p->uplan->g) ltfat_free((void*)p->uplan->g); */
+    /*         if (p->uplan->gd) ltfat_free((void*)p->uplan->gd); */
+    /*         if (p->uplan->specg1) ltfat_free((void*)p->uplan->specg1); */
+    /*         if (p->uplan->specg2) ltfat_free((void*)p->uplan->specg2); */
+    /*         if (p->garbageBin) ltfat_free(p->garbageBin); */
+    /*         PHASERET_NAME(rtisilaupdate_done)(&p->uplan); */
+    /*     } */
+    /*     if (p->s) ltfat_free(p->s); */
+    /*     if (p->frames) ltfat_free(p->frames); */
+    /*     ltfat_free(p); */
+    /* } */
     *pout = NULL;
     return status;
 }
@@ -445,13 +447,14 @@ PHASERET_NAME(rtisila_done)(PHASERET_NAME(rtisila_state)** p)
     CHECKSTATUS( PHASERET_NAME(rtisilaupdate_done)(&pp->uplan),
                  "rtisilaupdate done failed");
 
-    ltfat_free(pp->s);
-    ltfat_free(pp->frames);
+    if (pp->s) ltfat_free(pp->s);
+    if (pp->frames) ltfat_free(pp->frames);
 
     if (pp->garbageBinSize)
     {
         for (ltfat_int ii = 0; ii < pp->garbageBinSize; ii++)
-            ltfat_free(pp->garbageBin[ii]);
+            if (pp->garbageBin[ii])
+                ltfat_free(pp->garbageBin[ii]);
 
         ltfat_free(pp->garbageBin);
     }
