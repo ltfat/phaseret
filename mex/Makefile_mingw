@@ -41,7 +41,7 @@ endif
 MEXSOURCES = $(wildcard *.c)
 MEXTARGETS = $(patsubst %.c,%.$(EXT),$(MEXSOURCES))
 
-TARGETUP = ../libphaseret/build/libphaseretd.a
+TARGETUP = ../libphaseret/build/libphaseretd.a ../libltfat/build/libphaseretd.a
 
 CFLAGS=-shared -s -Wall -std=c99 -I../libphaseret/include
 
@@ -55,10 +55,9 @@ MEXCOMPFLAGS?=-I"$(MATLABROOT)\extern\include"
 MEXLINKFLAGS?= -L"$(MATLABROOT)\bin\$(ARCH)" -lmex -lmx
 
 matlab: $(MEXTARGETS)
-	
 
 %.$(EXT): %.c 
-	$(CC) $(CFLAGS) $(MEXCOMPFLAGS) $< -o $@ -Wl,--dll -L./  $(MEXLINKFLAGS) $(FFTWLIB) -static-libgcc $(TARGETUP)
+	$(CC) $(CFLAGS) $(MEXCOMPFLAGS) $< -o $@ -Wl,--dll -L./  $(MEXLINKFLAGS) $(TARGETUP) $(FFTWLIB) -static-libgcc 
 
 clean: 
 	del /Q /F *.$(EXT)

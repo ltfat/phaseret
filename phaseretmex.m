@@ -28,8 +28,15 @@ end
 try
 
     if do_compilelib
+        cd([thisdir,filesep,'libltfat']);
+        disp('********* Compiling libltfat **********');
+        [status,res] = system([makecmd,' static NOBLASLAPACK=1']);
+        if status ~=0
+            error(res);
+        end
+        
         cd([thisdir,filesep,'libphaseret']);
-        disp('********* Compiling library **********');
+        disp('********* Compiling libphaseret **********');
         [status,res] = system([makecmd,' static']);
         if status ~=0
             error(res);
