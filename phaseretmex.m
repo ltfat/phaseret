@@ -28,7 +28,7 @@ end
 try
 
     if do_compilelib
-        cd([thisdir,filesep,'..']);
+        cd([thisdir,filesep,'libphaseret']);
         disp('********* Compiling library **********');
         [status,res] = system([makecmd,' static']);
         if status ~=0
@@ -37,7 +37,7 @@ try
     end
 
     if do_compilemex
-        cd([thisdir,filesep,'..',filesep,'mex']);
+        cd([thisdir,filesep,'mex']);
 
         disp('********* Compiling MEX files **********');
         if ~isoctave()
@@ -57,7 +57,7 @@ try
     end
 
     if do_clean
-        cd([thisdir,filesep,'..',filesep,'mex']);
+        cd([thisdir,filesep,'mex']);
         disp('********* Cleaning MEX files **********');
         if ispc && ~isoctave()
             [status,res] = system([makecmd,' -f Makefile_mingw clean']);
@@ -68,7 +68,7 @@ try
             error(res);
         end
 
-        cd([thisdir,filesep,'..']);
+        cd([thisdir,filesep,'libphaseret']);
         disp('********* Cleaning lib **********');
         [status,res] = system([makecmd,' cleanlib']);
         if status ~=0

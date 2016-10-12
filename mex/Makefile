@@ -3,9 +3,9 @@ MEXSOURCES = $(wildcard *.c)
 MEXTARGETS = $(patsubst %.c,%.mexa64,$(MEXSOURCES))
 OCTAVEMEXTARGETS = $(patsubst %.c,%.mex,$(MEXSOURCES))
 
-export TARGETUP = ../build/libphaseret.a
+export TARGETUP = ../libphaseret/build/libphaseretd.a
 
-MYCFLAGS = -std=c99 -pedantic -Wall -Wextra -I../include -I../thirdparty -fPIC -Wl,--no-undefined
+MYCFLAGS = -std=c99 -pedantic -Wall -Wextra -I../libphaseret/include -fPIC -Wl,--no-undefined
 
 ifeq ($(CONFIG), debug)
 	CFLAGS += -O0 -g
@@ -23,7 +23,7 @@ matlab: $(MEXTARGETS)
 # and also only supresses warnings from mex (about old compiler) but not from
 # the compiler itself.
 %.mexa64 : %.c
-	$(MEX) CFLAGS='$(MYCFLAGS)' $<  $(TARGETUP) -lfftw3 -lltfat -lm > /dev/null
+	$(MEX) CFLAGS='$(MYCFLAGS)' $<  $(TARGETUP) -lfftw3 -lltfatd -lm > /dev/null
 
 # OCTAVE MEX files
 # := $(shell ...) runs shell immediatelly even if we do not use the octave

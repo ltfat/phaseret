@@ -41,9 +41,9 @@ endif
 MEXSOURCES = $(wildcard *.c)
 MEXTARGETS = $(patsubst %.c,%.$(EXT),$(MEXSOURCES))
 
-TARGETUP = ../build/libphaseret.a
+TARGETUP = ../libphaseret/build/libphaseretd.a
 
-CFLAGS=-shared -s -Wall -std=c99 -I../include -I../thirdparty
+CFLAGS=-shared -s -Wall -std=c99 -I../libphaseret/include
 
 ifeq ($(CONFIG), debug)
 	CFLAGS += -O0 -g

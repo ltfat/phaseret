@@ -18,7 +18,7 @@ end
 requiredLTFAT = '2.1.2';
 pgausspath = which('comp_pgauss');
 thispath = fileparts(which(mfilename));
-basepath = thispath(1:end-4);
+basepath = thispath;
 
 phaseretver = deblank(fileread(fullfile(basepath,'phaseret_version')));
 
@@ -35,9 +35,12 @@ else
 end
 
 addpath(thispath);
-addpath(fullfile(basepath,'mex'));
 addpath(fullfile(thispath,'tests'));
 addpath(fullfile(thispath,'comp'));
+% MEX must be last so tat mex files shadow m files
+addpath(fullfile(basepath,'mex'));
+addpath(fullfile(basepath,'gabor'));
+addpath(fullfile(basepath,'demos'));
 
 if verbose
     fprintf('PHASERET version %s. Copyright 2016 Zdenek Prusa.\n',phaseretver);
