@@ -1,9 +1,7 @@
 # PhaseReT
-Matlab/Octave toolbox and C library collecting implementations of
+PhaseReT is a Matlab/GNU Octave toolbox collecting implementations of
 phase-reconstruction algorithms for complex time-frequency representations
 (like STFT).
-
-# Matlab/Octave toolbox
 
 ## Requirements
 
@@ -21,22 +19,25 @@ In order to use the toolbox it is necessary to run
 ```
 phaseretstart;
 ```
-from the [phaseret]/mat subdirectory. The command checks whether LTFAT has
+from the [path_to_phaseret] directory. The command checks whether LTFAT has
 already been started and whether MEX interfaces are already compiled.
+
+If you are using the pre-compiled Windows package, the next step is not necessary.
+
 The mex interfaces can be compiled by running
 ```
 phaseretmex;
 ```
 from within Matlab/Octave command line. Note that
 the [FFTW library](http://fftw.org/) has to be installed
-(by e.g. `apt-get install libfftw3-dev` on Debian-based systems or manually
-by downloading the archive from [here](http://fftw.org/install/windows.html) and placing
-libfftw3-3.dll to the mex/ subdirectory on Windows).
+by e.g. `apt-get install libfftw3-dev` on Debian-based systems.
+On Windows, this has to be done manually by downloading the archive from [here](http://fftw.org/install/windows.html) and placing
+libfftw3-3.dll to the [path_to_phaseret]/mex subdirectory).
 
 To start the toolbox automatically add the following lines
 ```
 addpath(path_to_ltfat);
-addpath(path_to_phaseret/mat);
+addpath(path_to_phaseret);
 ltfatstart;
 phaseretstart;
 ```
@@ -48,38 +49,6 @@ Note that pre-compiled packages for Windows can be downloaded from
 
 ## Documentation
 Online documentation is available [here](http://ltfat.github.io/phaseret/mat).
-
-# C library: libphaseret
-
-The library can be compiled and used separatelly.
-
-## Requirements
-
-In addition to the [FFTW3 library](http://fftw.org/), libphaseret depends on
-[backend library of LTFAT](http://ltfat.github.io/libltfat).
-
-## Instalation and usage
-
-The following installs the library to /usr/local/lib and phaseret.h to /usr/local/include/
-
-```
-make
-sudo make install
-```
-
-The path can be changed by calling 
-
-```
-sudo make install PREFIX=/custom/path
-```
-
-Note that the compiled library is part of pre-compiled packages for Windows
-available at
-[the GitHub release page](https://github.com/ltfat/phaseret/releases).
-
-## Documentation
-
-Doxygen-generated documentation [webpage](http://ltfat.github.io/libphaseret).
 
 # References
 
