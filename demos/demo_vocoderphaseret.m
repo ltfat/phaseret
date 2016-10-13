@@ -51,9 +51,8 @@ newN = ceil(N*newa/Lsmallestnewa)*Lsmallestnewa/newa;
 c = postpad(c,newN,'dim',2);
 
 % Phase reconstruction
-tol = [1e-1,1e-10];
 gl = numel(gnum);
-[chatint] = pghi(abs(c),0.17954*gl^2,newa,M,tol,'timeinv');
+[chatint] = pghi(abs(c),0.17954*gl^2,newa,M,'timeinv');
 
 % Synthesis
 fscale = idgtreal(chatint,{'dual',g},newa,M,'timeinv');
