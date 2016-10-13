@@ -144,8 +144,11 @@ PHASERET_NAME(rtisilaphaseupdate)(PHASERET_NAME(rtisilaupdate_plan)* p,
     ltfat_int gl = p->gl;
     ltfat_int M2 = M / 2 + 1;
 
+    LTFAT_NAME_REAL(circshift)(p->frame, M, -(gl/2), p->frame);
+
     // FFTREAL
     LTFAT_NAME(fftreal_execute)(p->fwdp);
+
 
     // Force the magnitude to target magnitude
     for (ltfat_int m = 0; m < M2; m++)
@@ -157,6 +160,8 @@ PHASERET_NAME(rtisilaphaseupdate)(PHASERET_NAME(rtisilaupdate_plan)* p,
 
     // IFFTREAL // Overwrites input p->fftframe
     LTFAT_NAME(ifftreal_execute)(p->backp);
+
+    LTFAT_NAME_REAL(circshift)(p->frame, M, (gl/2), p->frame);
 
     // Multiply with the synthesis window
     for (ltfat_int m = 0; m < gl; m++)
@@ -261,8 +266,8 @@ PHASERET_NAME(rtisilaupdate_execute)(PHASERET_NAME(rtisilaupdate_plan)* p,
         }
     }
 
-    if (c)
-        LTFAT_NAME_COMPLEX(fftrealcircshift)(c, M, -(gl / 2) , c);
+    /* if (c) */
+        /* LTFAT_NAME_COMPLEX(fftrealcircshift)(c, M, -(gl / 2) , c); */
 }
 
 void

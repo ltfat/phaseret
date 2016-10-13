@@ -87,7 +87,7 @@ PHASERET_NAME(gsrtisilaupdate_execute)(PHASERET_NAME(gsrtisilaupdate_plan)* p,
         memcpy(frames2, frames, gl * N  * sizeof * frames);
 
     if (cframes != cframes2)
-        memcpy(cframes2, cframes, M2 * (lookahead + 1)  * sizeof * frames);
+        memcpy(cframes2, cframes, M2 * N * sizeof * frames);
 
     for (ltfat_int it = 0; it < maxit; it++)
     {
@@ -101,12 +101,16 @@ PHASERET_NAME(gsrtisilaupdate_execute)(PHASERET_NAME(gsrtisilaupdate_plan)* p,
 
             PHASERET_NAME(rtisilaphaseupdate)(p->p2, s + nback * M2,
                                               frames2 +  indx * gl,
-                                              cframes2 + nback * M2);
+                                              cframes2 + indx * M2);
         }
     }
 
+    /* for (ltfat_int ii = lookback; ii < N; ii++) */
+    /*     LTFAT_NAME_COMPLEX(fftrealcircshift)(cframes2 + ii * M2, M, -(gl / 2) , */
+    /*                                          cframes2 + ii * M2); */
+
     if (c)
-        LTFAT_NAME_COMPLEX(fftrealcircshift)(c, M, -(gl / 2) , cframes2);
+        memcpy(c, cframes2 + lookback * M2, M2 * sizeof * c);
 }
 
 PHASERET_API int
@@ -116,7 +120,7 @@ PHASERET_NAME(gsrtisila_init)(const LTFAT_REAL* g, ltfat_int gl, ltfat_int W,
 {
     int status = LTFATERR_SUCCESS;
 
-    PHASERET_NAME(rtisila_state)* p = NULL;
+    PHASERET_NAME(gsrtisila_state)* p = NULL;
     LTFAT_REAL* wins = NULL;
     LTFAT_REAL* gd = NULL;
     LTFAT_REAL* gana = NULL;
