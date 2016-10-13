@@ -8,6 +8,12 @@ function demo_blockproc_phaseret2(source,varargin) %RUNASSCRIPT
 %   This file does real-time reconstruction from the STFT magnitude using
 %   4 algorithms. No effect, just plain reconstruction.
 %
+%   The order of the algorithms (Algorithm slider) is the following::
+%       0 - RTPGHI
+%       1 - RTISI-LA
+%       2 - GSRTISI-LA
+%       3 - RTPGHI + GSRTISI-LA
+%
 %   Please note that you might experience some artifacts when switching
 %   between the algorithms or when changing their parameters. This
 %   does not have anything to do with the algorithms themselves.
@@ -15,7 +21,13 @@ function demo_blockproc_phaseret2(source,varargin) %RUNASSCRIPT
 %   `demo_blockproc_phaseret(...,'a',a)` allows setting the hop factor.
 %   Default value is 256.
 %
-%   References: ltfatnote048
+%   .. image:: ../images/phaseret2_common.png
+%   .. image:: ../images/phaseret2_rtpghi.png
+%   .. image:: ../images/phaseret2_rtisila.png
+%   .. image:: ../images/phaseret2_gsrtisila.png
+%   .. image:: ../images/phaseret2_proposed.png
+%
+%   References: ltfatnote048 ltfatnote043
 %
 
 % AUTHOR: Zdenek Prusa
@@ -270,9 +282,12 @@ while flag && p.flag
                 abssGSRTISI(:,1:end-1) = abssGSRTISI(:,2:end);
                 abssGSRTISI(:,1 + lookahead) = sii;
                 
-                cslicein = abssGSRTISI(:,lookahead-1:lookahead+1);
-                logs = log(cslicein + realmin);
+                cslicein(:,1:end-1) = cslicein(:,2:end);
+                cslicein(:,end) = sii;
                 
+                logs(:,1:end-1) = logs(:,2:end);
+                logs(:,end) = log(sii+realmin);
+               
                 % Compute the phase gradient
                 idx = 1:2;
                 if do_causal
@@ -282,10 +297,9 @@ while flag && p.flag
                     fgrad(:,2) = fgradmul((logs(:,3)-logs(:,1))/2);
                 end
                 tgrad(2:end-1,:) = tgradmul(conv2(logs(:,idx),[1;0;-1],'valid')/2);
-                
-                
+           
                
-                if do_causal
+                if do_causal || lookahead == 0
                     newphase = comp_constructphasereal(cslicein(:,idx),tgrad,fgrad,a,M,tol(1),2,tmpmask,angle(cframesGSRTISI(:,[0,1] + (lookback + lookahead))));
                     ctmp = abssGSRTISI(:,lookahead+1).*exp(1i*newphase(:,2));
                     ftmp = gdnum.*fftshift(comp_ifftreal(ctmp,M))*M;
