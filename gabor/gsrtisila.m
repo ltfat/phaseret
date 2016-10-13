@@ -117,29 +117,11 @@ end
 
 abss = abs(s);
 
-
 lookback = max([ceil(M/a) - 1, kv.lookahead]);
 
 % Synthesis window
 gd = gabdual(g,a,M,L);
-% ... as array
-gdnum = gabwin(gd,a,M);
-% Create and overlay several scaled dual windows
-wins = repmat(gnum.*gdnum*M,1,lookback+1+kv.lookahead);
-winsum = overlayframes(wins,a,M);
-rellim = 1e-3;
-idx = abs(winsum)<rellim;
-winsum(idx & winsum > 0) = rellim;
-winsum(idx & winsum == 0) = 1;
-winsum(idx & winsum < 0) = -rellim;
-
-gnums = zeros(numel(gnum),kv.lookahead+1);
-for la = 1:kv.lookahead + 1
-    idx = la + lookback - 1;
-    gnums(:,la) = fftshift(gnum)./winsum(a*idx+1:a*idx + M);
-end
-
-gdnum = fftshift(gdnum);
+[gnums,gdnum] = comp_gsrtisilawins(gnum,gd,a,M,kv.lookahead);
 
 % Buffer initialization
 cframes = zeros(M ,lookback + kv.lookahead+1);
@@ -150,7 +132,6 @@ if flags.do_rtpghi
     [tgrad, fgrad] = comp_pghiphasegrad( abss, gamma, a, M, 1, flags2.do_causal);
     tmpmask = zeros(M2,2); tmpmask(:,1) = 1;
 end
-
 
 c = zeros(M2,N);
 % Preread modulus

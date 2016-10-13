@@ -20,20 +20,18 @@ for iter=1:maxit
     for nback = frameorder
         indx = lookback+nback+1;
 
-        prd = overlaynthframe(cframes,indx,gnums(:,nback+1),a,M);
+        prd = overlaynthframe(cframes,indx,gnums(:,lookahead + 1 -nback),a,M);
         [cframes(:,indx), coefbuf(:,indx)] = phaseupdate(prd,sframes(:,nback+1),gdnum,M);
         %c = coefbuf(:,indx);
     end
 end
 
 % ifftshift 
-modd = ones(M2,lookahead + 1);
-modd(2:2:end,:) = -1;
-coefbuf(:,lookback + 1:end) = coefbuf(:,lookback + 1:end).*modd;
+% modd = ones(M2,lookahead + 1);
+% modd(2:2:end,:) = -1;
+% coefbuf(:,lookback + 1:end) = coefbuf(:,lookback + 1:end).*modd;
 c = coefbuf(:,lookback + 1);
-
 cframes2 = cframes;
-
 
 function partrec = overlaynthframe(cframes,n,gnum,a,M)
 % cframes are reconstructed frames right before overlap add
@@ -75,5 +73,6 @@ end
 
 function [frame,c] = phaseupdate(cbuf,s,gdnum,M)
 
-c = s.*exp(1i*angle(comp_fftreal((cbuf))));
-frame = gdnum.*(comp_ifftreal(c,M))*M;
+c = s.*exp(1i*angle(comp_fftreal(circshift(cbuf,-floor(M/2)))));
+frame = gdnum.*(circshift(comp_ifftreal(c,M),floor(M/2)))*M;
+

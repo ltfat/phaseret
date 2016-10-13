@@ -39,9 +39,9 @@ for iter=1:maxit
     end
 end
 
-modd = ones(size(c));
-modd(2:2:end) = -1;
-c = c.*modd;
+% modd = ones(size(c));
+% modd(2:2:end) = -1;
+% c = c.*modd;
 cframes2 = cframes;
 
 
@@ -85,5 +85,5 @@ end
 
 function [frame,c] = phaseupdate(cbuf,s,gdnum,M)
 
-c = s.*exp(1i*angle(comp_fftreal((cbuf))));
-frame = gdnum.*(comp_ifftreal(c,M))*M;
+c = s.*exp(1i*angle(comp_fftreal(circshift(cbuf,-floor(M/2)))));
+frame = gdnum.*(circshift(comp_ifftreal(c,M),floor(M/2)))*M;
