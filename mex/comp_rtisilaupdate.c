@@ -87,18 +87,7 @@ mexFunction(int nlhs, mxArray* plhs[],
                                          cout);
 
         if (nlhs > 1)
-        {
-            // Convert interleaved to split
-            double complex* cc = cout;
-            double* crChan = cr + w * M2;
-            double* ciChan = ci + w * M2;
-
-            for (int m = 0; m < M2; m++)
-            {
-                crChan[m] = creal(cc[m]);
-                ciChan[m] = cimag(cc[m]);
-            }
-        }
+            complex2split(cout, M2,  cr + w * M2, ci + w * M2);
     }
 
     if (nlhs > 1)

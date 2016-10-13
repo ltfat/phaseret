@@ -37,7 +37,7 @@ try
         
         cd([thisdir,filesep,'libphaseret']);
         disp('********* Compiling libphaseret **********');
-        [status,res] = system([makecmd,' static']);
+        [status,res] = system([makecmd,' static NOBLASLAPACK=1']);
         if status ~=0
             error(res);
         end
@@ -75,12 +75,14 @@ try
             error(res);
         end
 
+        disp('********* Cleaning libs **********');
         cd([thisdir,filesep,'libphaseret']);
-        disp('********* Cleaning lib **********');
-        [status,res] = system([makecmd,' cleanlib']);
-        if status ~=0
-            error(res);
-        end
+        [status,res] = system([makecmd,' clean']);
+        if status ~=0, error(res); end
+        
+        cd([thisdir,filesep,'libltfat']);
+        [status,res] = system([makecmd,' clean']);
+        if status ~=0, error(res); end
     end
 catch
     cd(currdir);

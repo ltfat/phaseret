@@ -43,7 +43,7 @@ MEXTARGETS = $(patsubst %.c,%.$(EXT),$(MEXSOURCES))
 
 TARGETUP = ../libphaseret/build/libphaseretd.a ../libltfat/build/libphaseretd.a
 
-CFLAGS=-shared -s -Wall -std=c99 -I../libphaseret/include
+CFLAGS=-shared -s -Wall -std=c99 -I../libphaseret/include -I../libltfat/include
 
 ifeq ($(CONFIG), debug)
 	CFLAGS += -O0 -g

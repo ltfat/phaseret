@@ -33,6 +33,7 @@
 #include "mex_helper.h"
 #define LTFAT_DOUBLE
 #include "phaseret/spsi.h"
+#include "phaseret/utils.h"
 
 void
 mexFunction(int nlhs, mxArray* plhs[],
