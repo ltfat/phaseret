@@ -14,10 +14,20 @@
 void
 complex2split(const complex double* in, int L, double* outr, double* outi)
 {
-    for (int ii = 0; ii < L; ++ii)
+    if(outi)
     {
-        outr[ii] = creal(in[ii]);
-        outi[ii] = cimag(in[ii]);
+        for (int ii = 0; ii < L; ++ii)
+        {
+            outr[ii] = creal(in[ii]);
+            outi[ii] = cimag(in[ii]);
+        }
+    }
+    else
+    {   
+        for (int ii = 0; ii < L; ++ii)
+        {
+            outr[ii] = creal(in[ii]);
+        }  
     }
 
 }
@@ -25,9 +35,22 @@ complex2split(const complex double* in, int L, double* outr, double* outi)
 void
 split2complex(const double* inr, const double* ini, int L, complex double* out)
 {
-    for (int ii = 0; ii < L; ++ii)
+    
+    if(ini)
     {
-        out[ii] = inr[ii] + I*ini[ii];
+        for (int ii = 0; ii < L; ++ii)
+        {
+            out[ii] = inr[ii] + I*ini[ii];
+        }
+    }
+    else
+    {
+        for (int ii = 0; ii < L; ++ii)
+        {
+            double* out2 = (double*) out;
+            out2[2*ii] = inr[ii];
+            out2[2*ii+1] = 0.0;
+        }       
     }
 
 }
