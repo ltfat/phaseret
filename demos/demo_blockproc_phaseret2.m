@@ -352,12 +352,12 @@ function [a,v] = parsevararginfora(v)
 % Parse out a from varargin
 apos = find(strcmp('a',v),1);
 if ~isempty(apos)
-    if apos==numel(varargin)
+    if apos==numel(v)
         error('%s: Forgotten value for key ''a''',upper(mfilename));
     end
     % Just let ltfatarghelper sort out the correct key-val format
     definput.keyvals.a = [];
-    [~,~,a] = ltfatarghelper({'a'},definput,varargin(apos:apos+1));
+    [~,~,a] = ltfatarghelper({'a'},definput,v(apos:apos+1));
     complainif_notposint(a,'a',mfilename);
     % And remove it from varargin such that it does not break the rest
     v(apos:apos+1) = [];
