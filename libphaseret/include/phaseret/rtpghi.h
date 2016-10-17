@@ -36,6 +36,7 @@ phaseret_firwin2gamma(LTFAT_FIRWIN win, ltfat_int gl);
  *
  */
 typedef struct PHASERET_NAME(rtpghi_state) PHASERET_NAME(rtpghi_state);
+typedef struct PHASERET_NAME(rtpghiupdate) PHASERET_NAME(rtpghiupdate);
 
 /** \addtogroup rtpghi
  *  @{
@@ -219,6 +220,25 @@ PHASERET_NAME(rtpghilog)(const LTFAT_REAL in[], ltfat_int L, LTFAT_REAL out[]);
  */
 void
 PHASERET_NAME(rtpghimagphase)(const LTFAT_REAL s[], const LTFAT_REAL phase[], ltfat_int L, LTFAT_COMPLEX c[]);
+
+PHASERET_API int
+PHASERET_NAME(rtpghiupdate_init)(ltfat_int M, ltfat_int W, double tol,
+                                       PHASERET_NAME(rtpghiupdate)** pout);
+
+PHASERET_API int
+PHASERET_NAME(rtpghiupdate_execute)(PHASERET_NAME(rtpghiupdate)* p,
+                                          const LTFAT_REAL slog[],
+                                          const LTFAT_REAL tgrad[],
+                                          const LTFAT_REAL fgrad[],
+                                          const LTFAT_REAL startphase[],
+                                          LTFAT_REAL phase[]);
+
+
+PHASERET_API int
+PHASERET_NAME(rtpghiupdate_done)(PHASERET_NAME(rtpghiupdate)** p);
+
+
+
 
 #ifdef __cplusplus
 }

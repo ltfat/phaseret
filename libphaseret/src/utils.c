@@ -19,8 +19,20 @@ int
 PHASERET_NAME(force_magnitude)(LTFAT_COMPLEX* cin, const LTFAT_REAL* s, ltfat_int L,
                                LTFAT_COMPLEX* cout)
 {
-    for (ltfat_int ii = 0; ii < L; ii++)
-        cout[ii] = s[ii] * exp(I * ltfat_arg(cin[ii]));
+    LTFAT_REAL maglim = 1e-10;
+    
+    for (ltfat_int m = 0; m < L; m++) 
+    {
+        LTFAT_REAL olds = ltfat_abs(cin[m]);
+        if (olds < maglim)
+            cout[m] = s[m];
+        else
+            cout[m] = s[m] * cin[m] / olds;
+    }
+
+    /* The following is much slower */
+    /* for (ltfat_int ii = 0; ii < L; ii++) */
+    /*     cout[ii] = s[ii] * exp(I * ltfat_arg(cin[ii])); */
 
     return 0;
 }

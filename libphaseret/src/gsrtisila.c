@@ -38,7 +38,7 @@ PHASERET_NAME(gsrtisilaupdate_init)(const LTFAT_REAL* g, const LTFAT_REAL* gd,
 {
     int status = LTFATERR_SUCCESS;
     PHASERET_NAME(gsrtisilaupdate_plan)* p = NULL;
-    ltfat_int M2 = M / 2 + 1;
+    /* ltfat_int M2 = M / 2 + 1; */
 
     CHECKMEM( p = (PHASERET_NAME(gsrtisilaupdate_plan)*)
                   ltfat_calloc(1, sizeof * p));
