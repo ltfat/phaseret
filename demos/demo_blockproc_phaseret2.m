@@ -59,26 +59,26 @@ commonpar = {
     };
 ... % Alg 0 params:
     alg0par = {
-    {'Thr','Thr',0,16,6,100},...
+    {'Thr','Thr',0,16,10,100},...
     {'rtpghila0' ,'RTPGHI(N)' ,0,1,1,2},...
     };
 alg0parNames = cellfun(@(aEl) aEl{1},alg0par,'UniformOutput',0);
 
 alg1par = {
     {'lookahead1','Lookahead',0,lookaheadmax,2,lookaheadmax+1},...
-    {'maxit1','Max. per-frame iter.',1,32,12,32},...
+    {'maxit1','Max. per-frame iter.',1,100,12,100},...
     };
 alg1parNames = cellfun(@(aEl) aEl{1},alg1par,'UniformOutput',0);
                
 alg2par = {
     {'lookahead2','Lookahead',0,lookaheadmax,2,lookaheadmax+1},...
-    {'maxit2','Max. per-frame iter.',1,32,12,32},...
+    {'maxit2','Max. per-frame iter.',1,100,12,100},...
     };
 alg2parNames = cellfun(@(aEl) aEl{1},alg2par,'UniformOutput',0);
 
 alg3par = {
     {'lookahead3','Lookahead',0,lookaheadmax,2,lookaheadmax+1},...
-    {'maxit3','Max. per-frame iter.',1,32,12,32},...
+    {'maxit3','Max. per-frame iter.',1,100,12,100},...
     {'rtpghila3' ,'RTPGHI(N)' ,0,1,1,2},...
     };
 alg3parNames = cellfun(@(aEl) aEl{1},alg3par,'UniformOutput',0);
@@ -118,15 +118,13 @@ abssRTISI = zeros(M2,1+lookaheadmax);
 %%%%% RTPGHI %%%%%%
 gamma = -pi/4*gl^2/log(h);
 mrange = (1:M2-2)';
+tgradmulconst = a*M/gamma/2;
+tgradplusconsts = 2*pi*a*mrange/M;
 fgradmul = @(fgrad) -gamma/(a*M)*fgrad;
-tgradmul = @(tgrad) bsxfun(@plus,a*M/gamma*tgrad, 2*pi*a*mrange/M);
+tgradmul = @(tgrad) tgradmulconst*tgrad + tgradplusconsts;
 
-tmpmask = zeros(M2,2);
-tmpmask(:,1) = 1;
 newphase = zeros(M2,2);
-
-fgrad = zeros(M2,2);
-tgrad = zeros(M2,2);
+tgrad = zeros(M2,3);
 
 %%%%% GSRTISI-LA %%%%%%%%
 framesGSRTISI = zeros(M,lookback+1+lookaheadmax);
@@ -219,19 +217,22 @@ while flag && p.flag
                 % Compute the phase gradient
                 idx = 1:2;
                 if do_causal
-                    fgrad(:,2) = fgradmul((3*logs(:,3)-4*logs(:,2)+logs(:,1))/2);
+                    fgrad = fgradmul((3*logs(:,3)-4*logs(:,2)+logs(:,1))/2);
                     idx = 2:3;
                 else
-                    fgrad(:,2) = fgradmul((logs(:,3)-logs(:,1))/2);
+                    fgrad = fgradmul((logs(:,3)-logs(:,1))/2);
                 end
-                tgrad(2:end-1,:) = tgradmul(conv2(logs(:,idx),[1;0;-1],'valid')/2);
+                tgrad(:,1:end-1) = tgrad(:,2:end);
+                tgrad(2:end-1,end) = tgradmul(conv2(logs(:,end),[1;0;-1],'valid'));
                 
                 % Integrate the gradient
-                tmp = comp_constructphasereal(cslicein(:,idx),tgrad,fgrad,a,M,tol(1),2,tmpmask,newphase);
-                newphase(:,1) = tmp(:,2);
-                
-                % Use the new phase
-                cnativeout(:,ii) = sii.*exp(1i*tmp(:,2));
+%                 tmp = comp_constructphasereal(cslicein(:,idx),tgrad,fgrad,a,M,tol(1),2,tmpmask,newphase);
+%                 newphase(:,1) = tmp(:,2);
+%                 
+%                 % Use the new phase
+%                 cnativeout(:,ii) = sii.*exp(1i*tmp(:,2));
+                newphase = comp_rtpghiupdate(logs(:,idx),tgrad(:,idx),fgrad,newphase,tol(1),M);  
+                cnativeout(:,ii) = sii.*exp(1i*newphase);
             end
         elseif algno==1
             % Do RTISI-LA
@@ -291,17 +292,19 @@ while flag && p.flag
                 % Compute the phase gradient
                 idx = 1:2;
                 if do_causal
-                    fgrad(:,2) = fgradmul((3*logs(:,3)-4*logs(:,2)+logs(:,1))/2);
+                    fgrad = fgradmul((3*logs(:,3)-4*logs(:,2)+logs(:,1))/2);
                     idx = 2:3;
                 else
-                    fgrad(:,2) = fgradmul((logs(:,3)-logs(:,1))/2);
+                    fgrad = fgradmul((logs(:,3)-logs(:,1))/2);
                 end
-                tgrad(2:end-1,:) = tgradmul(conv2(logs(:,idx),[1;0;-1],'valid')/2);
+                tgrad(:,1:end-1) = tgrad(:,2:end);
+                tgrad(2:end-1,end) = tgradmul(conv2(logs(:,end),[1;0;-1],'valid'));
            
                
                 if do_causal || lookahead == 0
-                    newphase = comp_constructphasereal(cslicein(:,idx),tgrad,fgrad,a,M,tol(1),2,tmpmask,angle(cframesGSRTISI(:,[0,1] + (lookback + lookahead))));
-                    ctmp = abssGSRTISI(:,lookahead+1).*exp(1i*newphase(:,2));
+                    newphase = comp_rtpghiupdate(logs(:,idx),tgrad(:,idx),fgrad,angle(cframesGSRTISI(:,lookback + lookahead)),tol(1),M);  
+                    %newphase = comp_constructphasereal(cslicein(:,idx),tgrad,fgrad,a,M,tol(1),2,tmpmask,angle(cframesGSRTISI(:,[0,1] + (lookback + lookahead))));
+                    ctmp = abssGSRTISI(:,lookahead+1).*exp(1i*newphase);
                     ftmp = gdnum.*fftshift(comp_ifftreal(ctmp,M))*M;
                     
                     framesGSRTISI(:,lookback + 1 + lookahead) = ftmp;
@@ -315,8 +318,9 @@ while flag && p.flag
                         gnums,gdnum,a,M,abssGSRTISI(:,1:lookahead+1),lookahead,floor(maxit/(lookahead+1)),0);
                     
                 else
-                    newphase = comp_constructphasereal(cslicein(:,idx),tgrad,fgrad,a,M,tol(1),2,tmpmask,angle(cframesGSRTISI(:,[-1,0] + (lookback + lookahead))));
-                    ctmp = abssGSRTISI(:,lookahead).*exp(1i*newphase(:,2));
+                    newphase = comp_rtpghiupdate(logs(:,idx),tgrad(:,idx),fgrad,angle(cframesGSRTISI(:,lookback + lookahead - 1)),tol(1),M);  
+                    %newphase = comp_constructphasereal(cslicein(:,idx),tgrad,fgrad,a,M,tol(1),2,tmpmask,angle(cframesGSRTISI(:,[-1,0] + (lookback + lookahead))));
+                    ctmp = abssGSRTISI(:,lookahead).*exp(1i*newphase);
                     ftmp = gdnum.*fftshift(comp_ifftreal(ctmp,M))*M;
                     
                     framesGSRTISI(:,lookback + lookahead) = ftmp;
