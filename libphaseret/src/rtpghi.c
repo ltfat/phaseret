@@ -5,7 +5,7 @@
 
 struct PHASERET_NAME(rtpghi_state)
 {
-    PHASERET_NAME(rtpghiupdate)* p;
+    PHASERET_NAME(rtpghiupdate_plan)* p;
     ltfat_int M;
     ltfat_int a;
     ltfat_int W;
@@ -18,7 +18,7 @@ struct PHASERET_NAME(rtpghi_state)
     double gamma;
 };
 
-struct PHASERET_NAME(rtpghiupdate)
+struct PHASERET_NAME(rtpghiupdate_plan)
 {
     LTFAT_NAME(heap)* h;
     int* donemask;
@@ -54,7 +54,7 @@ PHASERET_NAME(rtpghi_init)(double gamma, ltfat_int W, ltfat_int a, ltfat_int M, 
                  "rtpghiupdate_init failed");
     CHECKMEM( p->slog =  LTFAT_NAME_REAL(calloc)(3 * M2 * W));
     CHECKMEM( p->s =     LTFAT_NAME_REAL(calloc)(2 * M2 * W));
-    CHECKMEM( p->tgrad = LTFAT_NAME_REAL(calloc)(2 * M2 * W));
+    CHECKMEM( p->tgrad = LTFAT_NAME_REAL(calloc)(3 * M2 * W));
     CHECKMEM( p->fgrad = LTFAT_NAME_REAL(calloc)(M2 * W));
     CHECKMEM( p->phase = LTFAT_NAME_REAL(calloc)(M2 * W));
 
@@ -104,7 +104,7 @@ PHASERET_NAME(rtpghi_execute)(PHASERET_NAME(rtpghi_state)* p,
     {
         LTFAT_REAL* slogCol = p->slog + w * 3 * M2;
         LTFAT_REAL* sCol = p->s + w * 2 * M2;
-        LTFAT_REAL* tgradCol = p->tgrad + w * 2 * M2;
+        LTFAT_REAL* tgradCol = p->tgrad + w * 3 * M2;
         LTFAT_REAL* fgradCol = p->fgrad + w * M2;
         LTFAT_REAL* phaseCol = p->phase + w * M2;
 
@@ -145,14 +145,33 @@ error:
 }
 
 PHASERET_API int
+PHASERET_NAME(rtpghi_done)(PHASERET_NAME(rtpghi_state)** p)
+{
+    int status = LTFATERR_SUCCESS;
+    PHASERET_NAME(rtpghi_state)* pp;
+    CHECKNULL(p); CHECKNULL(*p);
+    pp = *p;
+    if (pp->p)     PHASERET_NAME(rtpghiupdate_done)(&pp->p);
+    if (pp->slog)  ltfat_free(pp->slog);
+    if (pp->s)     ltfat_free(pp->s);
+    if (pp->phase) ltfat_free(pp->phase);
+    if (pp->tgrad) ltfat_free(pp->tgrad);
+    if (pp->fgrad) ltfat_free(pp->fgrad);
+    ltfat_free(pp);
+    pp = NULL;
+error:
+    return status;
+}
+
+PHASERET_API int
 PHASERET_NAME(rtpghiupdate_init)(ltfat_int M, ltfat_int W, double tol,
-                                       PHASERET_NAME(rtpghiupdate)** pout)
+                                       PHASERET_NAME(rtpghiupdate_plan)** pout)
 {
     int status = LTFATERR_SUCCESS;
 
     ltfat_int M2 = M / 2 + 1;
-    PHASERET_NAME(rtpghiupdate)* p = NULL;
-    CHECKMEM( p = (PHASERET_NAME(rtpghiupdate)*) ltfat_calloc(1, sizeof * p));
+    PHASERET_NAME(rtpghiupdate_plan)* p = NULL;
+    CHECKMEM( p = (PHASERET_NAME(rtpghiupdate_plan)*) ltfat_calloc(1, sizeof * p));
     CHECKMEM( p->donemask = (int*) ltfat_calloc(M2, sizeof*p->donemask));
 
     p->randphaseLen = 10 * M2 * W;
@@ -165,6 +184,7 @@ PHASERET_NAME(rtpghiupdate_init)(ltfat_int M, ltfat_int W, double tol,
     p->tol = tol;
     p->M = M;
     p->randphaseId = 0;
+    p->h = LTFAT_NAME(heap_init)(2*M2, NULL);
 
     *pout = p;
     return status;
@@ -181,7 +201,7 @@ error:
 // donemask: M2 x 1
 // heap must be able to hold 2*M2 values
 PHASERET_API int
-PHASERET_NAME(rtpghiupdate_execute)(PHASERET_NAME(rtpghiupdate)* p,
+PHASERET_NAME(rtpghiupdate_execute)(PHASERET_NAME(rtpghiupdate_plan)* p,
                                           const LTFAT_REAL slog[],
                                           const LTFAT_REAL tgrad[],
                                           const LTFAT_REAL fgrad[],
@@ -198,8 +218,8 @@ PHASERET_NAME(rtpghiupdate_execute)(PHASERET_NAME(rtpghiupdate)* p,
     memset(donemask,0,M2*sizeof*donemask);
     // Find max and the absolute thtreshold
     LTFAT_REAL logabstol = slog[0];
-    for(ltfat_int m=1;m<2*M2;m++) if (slog[m] >= logabstol) logabstol = slog[m];
-    logabstol*=p->logtol;
+    for(ltfat_int m=1;m<2*M2;m++) if (slog[m] > logabstol) logabstol = slog[m];
+    logabstol+=p->logtol;
 
     LTFAT_NAME(heap_reset)(h, slog);
 
@@ -274,10 +294,10 @@ return 0;
 }
 
 PHASERET_API int
-PHASERET_NAME(rtpghiupdate_done)(PHASERET_NAME(rtpghiupdate)** p)
+PHASERET_NAME(rtpghiupdate_done)(PHASERET_NAME(rtpghiupdate_plan)** p)
 {
     int status = LTFATERR_SUCCESS;
-    PHASERET_NAME(rtpghiupdate)* pp;
+    PHASERET_NAME(rtpghiupdate_plan)* pp;
     CHECKNULL(p); CHECKNULL(*p);
     pp = *p;
     if (pp->h)         LTFAT_NAME(heap_done)(pp->h);
@@ -289,24 +309,7 @@ error:
     return status;
 }
 
-PHASERET_API int
-PHASERET_NAME(rtpghi_done)(PHASERET_NAME(rtpghi_state)** p)
-{
-    int status = LTFATERR_SUCCESS;
-    PHASERET_NAME(rtpghi_state)* pp;
-    CHECKNULL(p); CHECKNULL(*p);
-    pp = *p;
-    if (pp->p)     PHASERET_NAME(rtpghiupdate_done)(&pp->p);
-    if (pp->slog)  ltfat_free(pp->slog);
-    if (pp->s)     ltfat_free(pp->s);
-    if (pp->phase) ltfat_free(pp->phase);
-    if (pp->tgrad) ltfat_free(pp->tgrad);
-    if (pp->fgrad) ltfat_free(pp->fgrad);
-    ltfat_free(pp);
-    pp = NULL;
-error:
-    return status;
-}
+
 
 PHASERET_API int
 PHASERET_NAME(rtpghioffline)(const LTFAT_REAL* s, double gamma, ltfat_int L, ltfat_int W,
