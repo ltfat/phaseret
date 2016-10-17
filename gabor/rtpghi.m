@@ -77,18 +77,20 @@ abss = abs(s);
 
 [tgrad, fgrad] = comp_pghiphasegrad( abss, gamma, a, M, flags.do_timeinv, flags.do_causal);
 
-usephase = zeros(M2,2);
-tmpmask = zeros(M2,2);
-tmpmask(:,1) = 1;
+usephase = zeros(M2,1);
 newphase = zeros(M2,N);
 c = zeros(M2,N);
+% tmpmask = zeros(M2,2);
+% tmpmask(:,1) = 1;
 
 for n=1:N
-    idx = mod( n-1-1:n-1, N ) + 1;   
+    idx = mod( n-1-1:n-1, N ) + 1;
+    nprev = mod( n-2, N ) + 1;
 
-    newphasetmp = comp_constructphasereal(abss(:,idx),tgrad(:,idx),fgrad(:,idx),a,M,tol,2,tmpmask,usephase);
-    usephase(:,1) = newphasetmp(:,2);
-    newphase(:,n) = usephase(:,1);
+%     newphasetmp = comp_constructphasereal(abss(:,idx),tgrad(:,idx),fgrad(:,idx),a,M,tol,2,tmpmask,usephase);
+%     usephase(:,1) = newphasetmp(:,2);
+%     newphase(:,n) = usephase(:,1);
+    newphase(:,n) = comp_rtpghiupdate(abss(:,idx),tgrad(:,idx),fgrad(:,n),newphase(:,nprev),tol,M);
     
     % Build the coefficients
     c(:,n)=abss(:,n).*exp(1i*newphase(:,n));
