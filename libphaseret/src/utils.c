@@ -16,12 +16,12 @@ PHASERET_NAME(shiftcolsleft)(LTFAT_REAL* cols, ltfat_int height, ltfat_int N,
 }
 
 int
-PHASERET_NAME(force_magnitude)(LTFAT_COMPLEX* cin, const LTFAT_REAL* s, ltfat_int L,
-                               LTFAT_COMPLEX* cout)
+PHASERET_NAME(force_magnitude)(LTFAT_COMPLEX* cin, const LTFAT_REAL* s,
+                               ltfat_int L, LTFAT_COMPLEX* cout)
 {
     LTFAT_REAL maglim = 1e-10;
-    
-    for (ltfat_int m = 0; m < L; m++) 
+
+    for (ltfat_int m = 0; m < L; m++)
     {
         LTFAT_REAL olds = ltfat_abs(cin[m]);
         if (olds < maglim)
@@ -30,7 +30,7 @@ PHASERET_NAME(force_magnitude)(LTFAT_COMPLEX* cin, const LTFAT_REAL* s, ltfat_in
             cout[m] = s[m] * cin[m] / olds;
     }
 
-    /* The following is much slower */
+    /* The following is much slower, most probably because of ltfat_arg */
     /* for (ltfat_int ii = 0; ii < L; ii++) */
     /*     cout[ii] = s[ii] * exp(I * ltfat_arg(cin[ii])); */
 

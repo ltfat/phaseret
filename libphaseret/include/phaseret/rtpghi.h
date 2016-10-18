@@ -108,6 +108,24 @@ PHASERET_NAME(rtpghi_reset)(PHASERET_NAME(rtpghi_state)* p);
 PHASERET_API int
 PHASERET_NAME(rtpghi_set_causal)(PHASERET_NAME(rtpghi_state)* p, int do_causal);
 
+/** Change tolerance
+ *
+ * \note This is not thread safe
+ *
+ * \param[in] p     RTPGHI plan
+ * \param[in] tol   Relative tolerance
+ *
+ * #### Versions #
+ * <tt>
+ * phaseret_rtpghi_set_tol_d(phaseret_rtpghi_state_d* p, double tol);
+ *
+ * phaseret_rtpghi_set_tol_s(phaseret_rtpghi_state_s* p, double tol);
+ * </tt>
+ * \returns Status code
+ */
+PHASERET_API int
+PHASERET_NAME(rtpghi_set_tol)(PHASERET_NAME(rtpghi_state)* p, double tol);
+
 /** Execute RTPGHI plan for a single frame
  *
  *  The function is intedned to be called for consecutive stream of frames
@@ -232,7 +250,6 @@ PHASERET_NAME(rtpghiupdate_execute)(PHASERET_NAME(rtpghiupdate_plan)* p,
                                           const LTFAT_REAL fgrad[],
                                           const LTFAT_REAL startphase[],
                                           LTFAT_REAL phase[]);
-
 
 PHASERET_API int
 PHASERET_NAME(rtpghiupdate_done)(PHASERET_NAME(rtpghiupdate_plan)** p);
