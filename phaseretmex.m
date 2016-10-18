@@ -13,6 +13,15 @@ do_compilemex = 1;
 makecmd = 'make';
 fftwlibs = '';
 
+if ~exist('comp_rtisilaupdate','file')
+  disp(' ');
+  disp('--- PHASERET - Phase ReTrieval toolbox. ---');
+  disp(' ')
+  disp('To start the toolbox, call PHASERETSTART as the first command.');
+  disp(' ');
+  return;
+end;
+
 if ispc && ~isoctave()
     makecmd = 'mingw32-make';
 end
