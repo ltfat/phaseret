@@ -1,4 +1,4 @@
-function [ tgrad, fgrad ] = comp_pghiphasegrad( s, gamma, a, M, do_timeinv, do_causal )
+function [ tgrad, fgrad, logs ] = comp_pghiphasegrad( s, gamma, a, M, do_timeinv, do_causal )
 
 [M2,N] = size(s);
 
@@ -10,9 +10,9 @@ else
     tgradmul = @(tgrad) a*M/gamma*tgrad;    
 end
 
-logs=log(s+realmin);
-tt=-10;
-logs(logs<max(logs(:))+tt)=tt;
+logs=log(s + eps);
+% tt=-10;
+% logs(logs<max(logs(:))+tt)=tt;
 
 difforder = 2;
 

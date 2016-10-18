@@ -49,8 +49,8 @@ mexFunction(int nlhs, mxArray* plhs[],
     plhs[0] = mxCreateDoubleMatrix(M2, 1, mxREAL);
     double* phase = mxGetData(plhs[0]);
 
-    phaseret_rtpghiupdate_plan_d* plan = NULL;
-    phaseret_rtpghiupdate_init_d(M,1,tol,&plan);
-    phaseret_rtpghiupdate_execute_d(plan, slog, tgrad, fgrad, prevphase, phase);
-    phaseret_rtpghiupdate_done_d(&plan);
+     phaseret_rtpghiupdate_plan_d* plan = NULL;
+     phaseret_rtpghiupdate_init_d(M,1,tol,&plan);
+     phaseret_rtpghiupdate_execute_d(plan, slog, tgrad, fgrad, prevphase, phase);
+     phaseret_rtpghiupdate_done_d(&plan);
 }
