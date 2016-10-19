@@ -157,20 +157,20 @@ for n=1:N
     if flags.do_spsi
         oldphase = angle(coefbuf(:,end-1));
         coefbuf(:,end) = comp_spsi(sframes(:,end),a,M,oldphase);
-        cframes(:,end) = gdnum.*fftshift(comp_ifftreal(coefbuf(:,end),M))*M;
+        %cframes(:,end) = gdnum.*fftshift(comp_ifftreal(coefbuf(:,end),M))*M;
     elseif flags.do_unwrap
         nom = sframes(:,end).*coefbuf(:,end-1).^2.*sframes(:,end-2);
         denom = sframes(:,end-1).^2.*coefbuf(:,end-2);
         coefbuf(:,end) = nom./ denom;
         coefbuf(abs(denom)<1e-8,end) = 0;
-        cframes(:,end) = 0.0*fftshift(comp_ifftreal(coefbuf(:,end),M))*M;
+        %cframes(:,end) = fftshift(comp_ifftreal(coefbuf(:,end),M))*M;
     elseif flags.do_input
         cframes(:,end) = gdnum.*fftshift(comp_ifftreal(s(:,nextnewframeidx),M))*M;
     elseif flags.do_rtpghi
         oldphase = angle(coefbuf(:,end-1));
         newphase = comp_rtpghiupdate(logs(:,idx),tgrad(:,idx),fgrad(:,idx(2)),oldphase,tol,M);
         coefbuf(:,end) = sframes(:,end).*exp(1i*newphase);
-        cframes(:,end) = gdnum.*fftshift(comp_ifftreal(coefbuf(:,end),M))*M;
+        %cframes(:,end) = gdnum.*fftshift(comp_ifftreal(coefbuf(:,end),M))*M;
     end
 
     % Update the lookahead frames and the submit frame

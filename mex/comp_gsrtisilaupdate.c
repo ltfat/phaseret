@@ -91,7 +91,7 @@ mexFunction(int nlhs, mxArray* plhs[],
     }
 
     phaseret_gsrtisilaupdate_plan_d* p = NULL;
-    phaseret_gsrtisilaupdate_init_d(gnums, dgnum, gl, a, M, (lookahead + 1), &p);
+    phaseret_gsrtisilaupdate_init_d(gnums, dgnum, gl, a, M, (lookahead + 1), 0, &p);
 
     for (int w = 0; w < W; w++)
     {
