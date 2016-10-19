@@ -43,8 +43,8 @@ M = 2048;
 gl = 2048;
 % Window support is M
 h = 0.01;
-g = gabwin({'gauss','width',gl,'atheight',0.01},a,gl,10*gl);
-g = long2fir(g,gl);
+g = gabwin({'gauss','width',gl,'atheight',0.01,'inf'},a,gl,10*gl);
+g = gabwin(long2fir(g,gl),a,M);
 gd = gabdual(g,a,M);
 
 lookaheadmax = 11;
@@ -208,7 +208,7 @@ while flag && p.flag
                 cslicein(:,1:end-1) = cslicein(:,2:end);
                 cslicein(:,end) = sii;
                 
-                siilog = log(sii+realmin);
+                siilog = log(sii+eps);
                 % siilog(siilog<max(siilog(:))+tt)=tt;
                 % Store abss for later use
                 logs(:,1:end-1) = logs(:,2:end);
@@ -287,11 +287,11 @@ while flag && p.flag
                 cslicein(:,end) = sii;
                 
                 logs(:,1:end-1) = logs(:,2:end);
-                logs(:,end) = log(sii+realmin);
+                logs(:,end) = log(sii+eps);
                
                 % Compute the phase gradient
                 idx = 1:2;
-                if do_causal
+                if do_causal || lookahead == 0
                     fgrad = fgradmul((3*logs(:,3)-4*logs(:,2)+logs(:,1))/2);
                     idx = 2:3;
                 else
@@ -305,9 +305,9 @@ while flag && p.flag
                     newphase = comp_rtpghiupdate(logs(:,idx),tgrad(:,idx),fgrad,angle(cframesGSRTISI(:,lookback + lookahead)),tol(1),M);  
                     %newphase = comp_constructphasereal(cslicein(:,idx),tgrad,fgrad,a,M,tol(1),2,tmpmask,angle(cframesGSRTISI(:,[0,1] + (lookback + lookahead))));
                     ctmp = abssGSRTISI(:,lookahead+1).*exp(1i*newphase);
-                    ftmp = gdnum.*fftshift(comp_ifftreal(ctmp,M))*M;
+                    %ftmp = gdnum.*fftshift(comp_ifftreal(ctmp,M))*M;
                     
-                    framesGSRTISI(:,lookback + 1 + lookahead) = ftmp;
+                    %framesGSRTISI(:,lookback + 1 + lookahead) = ftmp;
                     cframesGSRTISI(:,lookback + 1 + lookahead) = ctmp;
                     
                     [framesGSRTISI(:,1:lookback + 1 + lookahead),...
@@ -321,9 +321,9 @@ while flag && p.flag
                     newphase = comp_rtpghiupdate(logs(:,idx),tgrad(:,idx),fgrad,angle(cframesGSRTISI(:,lookback + lookahead - 1)),tol(1),M);  
                     %newphase = comp_constructphasereal(cslicein(:,idx),tgrad,fgrad,a,M,tol(1),2,tmpmask,angle(cframesGSRTISI(:,[-1,0] + (lookback + lookahead))));
                     ctmp = abssGSRTISI(:,lookahead).*exp(1i*newphase);
-                    ftmp = gdnum.*fftshift(comp_ifftreal(ctmp,M))*M;
+                    %ftmp = gdnum.*fftshift(comp_ifftreal(ctmp,M))*M;
                     
-                    framesGSRTISI(:,lookback + lookahead) = ftmp;
+                    %framesGSRTISI(:,lookback + lookahead) = ftmp;
                     cframesGSRTISI(:,lookback + lookahead) = ctmp;
                 
                     [framesGSRTISI(:,1:lookback + lookahead),...
