@@ -132,13 +132,14 @@ PHASERET_NAME(rtpghi_execute)(PHASERET_NAME(rtpghi_state)* p,
 
         // store log(s)
         PHASERET_NAME(shiftcolsleft)(slogCol, M2, 3, NULL);
+        PHASERET_NAME(shiftcolsleft)(tgradCol, M2, 3, NULL);
         PHASERET_NAME(shiftcolsleft)(sCol, M2, 2, s + w * M2);
+
         PHASERET_NAME(rtpghilog)(sCol + M2, M2, slogCol + 2 * M2);
 
         // Compute and store tgrad for n
-        PHASERET_NAME(shiftcolsleft)(tgradCol, M2, 2, NULL);
         PHASERET_NAME(rtpghitgrad)(slogCol + 2 * M2, p->a, p->M, p->gamma,
-                                   tgradCol + M2);
+                                   tgradCol + 2 * M2);
 
         // Compute fgrad for n or n-1
         PHASERET_NAME(rtpghifgrad)(slogCol, p->a, p->M, p->gamma, p->do_causal,
@@ -264,18 +265,18 @@ PHASERET_NAME(rtpghiupdate_execute)(PHASERET_NAME(rtpghiupdate_plan)* p,
             // Next frame
             ltfat_int wprev = w - M2;
 
-            if ( !donemask[wprev + 1] )
+            if ( wprev != M2-1 && !donemask[wprev + 1] )
             {
                 phase[wprev + 1] = phase[wprev] + (fgrad[wprev] + fgrad[wprev + 1]) / 2.0;
-                if (wprev < M2 - 1) LTFAT_NAME(heap_insert)(h, w + 1);
+                LTFAT_NAME(heap_insert)(h, w + 1);
                 donemask[wprev + 1] = 1;
                 quickbreak--;
             }
 
-            if ( !donemask[wprev - 1] )
+            if ( wprev != 0 && !donemask[wprev - 1] )
             {
                 phase[wprev - 1] = phase[wprev] - (fgrad[wprev] + fgrad[wprev - 1]) / 2.0;
-                if (wprev > 0) LTFAT_NAME(heap_insert)(h, w - 1);
+                LTFAT_NAME(heap_insert)(h, w - 1);
                 donemask[wprev - 1] = 1;
                 quickbreak--;
             }

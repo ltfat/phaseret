@@ -12,6 +12,7 @@ struct PHASERET_NAME(gsrtisilaupdate_plan)
     ltfat_int M;
     ltfat_int a;
     ltfat_int gNo;
+    int do_skipinitialization;
 };
 
 struct PHASERET_NAME(gsrtisila_state)
@@ -33,7 +34,7 @@ struct PHASERET_NAME(gsrtisila_state)
 PHASERET_API int
 PHASERET_NAME(gsrtisilaupdate_init)(const LTFAT_REAL* g, const LTFAT_REAL* gd,
                                     ltfat_int gl, ltfat_int a, ltfat_int M,
-                                    ltfat_int gNo,
+                                    ltfat_int gNo, int do_skipinitialization,
                                     PHASERET_NAME(gsrtisilaupdate_plan)** pout)
 {
     int status = LTFATERR_SUCCESS;
@@ -43,6 +44,7 @@ PHASERET_NAME(gsrtisilaupdate_init)(const LTFAT_REAL* g, const LTFAT_REAL* gd,
     CHECKMEM( p = (PHASERET_NAME(gsrtisilaupdate_plan)*)
                   ltfat_calloc(1, sizeof * p));
     p->M = M; p->a = a; p->g = g; p->gl = gl; p->gNo = gNo;
+    p->do_skipinitialization = do_skipinitialization;
 
     CHECKSTATUS(
         PHASERET_NAME(rtisilaupdate_init)(NULL, NULL, NULL, gd, gl, a, M, &p->p2),
@@ -87,7 +89,12 @@ PHASERET_NAME(gsrtisilaupdate_execute)(PHASERET_NAME(gsrtisilaupdate_plan)* p,
         memcpy(frames2, frames, gl * N  * sizeof * frames);
 
     if (cframes != cframes2)
-        memcpy(cframes2, cframes, M2 * N * sizeof * frames);
+        memcpy(cframes2, cframes, M2 * N * sizeof * cframes);
+
+    if (!p->do_skipinitialization)
+        PHASERET_NAME(rtisilaphaseupdatesyn)(p->p2,
+                                             cframes2 + (lookback + lookahead)*M2,
+                                             frames2 + (lookback + lookahead)*gl);
 
     for (ltfat_int it = 0; it < maxit; it++)
     {
@@ -105,12 +112,30 @@ PHASERET_NAME(gsrtisilaupdate_execute)(PHASERET_NAME(gsrtisilaupdate_plan)* p,
         }
     }
 
-    /* for (ltfat_int ii = lookback; ii < N; ii++) */
-    /*     LTFAT_NAME_COMPLEX(fftrealcircshift)(cframes2 + ii * M2, M, -(gl / 2) , */
-    /*                                          cframes2 + ii * M2); */
+    if (c) memcpy(c, cframes2 + lookback * M2, M2 * sizeof * c);
+}
 
-    if (c)
-        memcpy(c, cframes2 + lookback * M2, M2 * sizeof * c);
+PHASERET_API int
+PHASERET_NAME(gsrtisila_init_win)(LTFAT_FIRWIN win, ltfat_int gl, ltfat_int W,
+                                  ltfat_int a, ltfat_int M, ltfat_int lookahead, ltfat_int maxit,
+                                  PHASERET_NAME(gsrtisila_state)** pout)
+{
+    LTFAT_REAL* g = NULL;
+    int status = LTFATERR_SUCCESS;
+    int initstatus;
+    CHECKMEM(g = LTFAT_NAME_REAL(malloc)(gl));
+
+    // Analysis window
+    CHECKSTATUS(LTFAT_NAME(firwin)(win, gl, g), "firwin failed");
+
+    initstatus = PHASERET_NAME(gsrtisila_init)(g, gl, W, a, M, lookahead, maxit,
+                 pout);
+
+    ltfat_free(g);
+    return initstatus;
+error:
+    if (g) ltfat_free(g);
+    return status;
 }
 
 PHASERET_API int
@@ -184,16 +209,16 @@ PHASERET_NAME(gsrtisila_init)(const LTFAT_REAL* g, ltfat_int gl, ltfat_int W,
                   LTFAT_NAME_REAL(calloc)(gl * (lookback + 1 + maxLookahead) * W));
     CHECKMEM( p->s = LTFAT_NAME_REAL(calloc)( M2 * (1 + maxLookahead) * W));
     CHECKMEM( p->cframes =
-                  LTFAT_NAME_COMPLEX(calloc)( M2 * (1 + maxLookahead) * W));
+                  LTFAT_NAME_COMPLEX(calloc)( M2 * (lookback + 1 + maxLookahead) * W));
 
     CHECKSTATUS(
-        PHASERET_NAME(gsrtisilaupdate_init)(gana, gd, gl, a, M, lookahead + 1,
+        PHASERET_NAME(gsrtisilaupdate_init)(gana, gd, gl, a, M, lookahead + 1, 1,
                                             &p->uplan),
         "rtisiupdate ini failed");
 
     p->garbageBinSize = 2;
-    CHECKMEM( p->garbageBin = (void**)ltfat_malloc(p->garbageBinSize * sizeof(
-                                  void*)));
+    CHECKMEM( p->garbageBin =
+                  (void**)ltfat_malloc(p->garbageBinSize * sizeof(void*)));
     p->garbageBin[0] = (void*) gana;
     p->garbageBin[1] = (void*) gd;
 
@@ -211,6 +236,41 @@ error:
     PHASERET_NAME(gsrtisila_done)(&p);
 
     *pout = NULL;
+    return status;
+}
+
+PHASERET_API int
+PHASERET_NAME(gsrtisila_execute)(PHASERET_NAME(gsrtisila_state)* p,
+                                 const LTFAT_REAL s[], LTFAT_COMPLEX c[])
+{
+    ltfat_int M, gl, M2, noFrames, N;
+    int status = LTFATERR_SUCCESS;
+    CHECKNULL(p); CHECKNULL(s); CHECKNULL(c);
+
+    M = p->uplan->M;
+    gl = p->uplan->gl;
+    M2 = M / 2 + 1;
+    noFrames = p->lookback + 1 + p->lookahead;
+    N = p->lookback + 1 + p->maxLookahead;
+
+    for (ltfat_int w = 0; w < p->W; w++)
+    {
+        const LTFAT_REAL* schan = s + w * M2;
+        LTFAT_COMPLEX* cchan = c + w * M2;
+        LTFAT_REAL* frameschan = p->frames + w * N * gl;
+        LTFAT_COMPLEX* cframeschan = p->cframes + w * N * M2;
+        LTFAT_REAL* sframeschan = p->s + w * (1 + p->maxLookahead) * M2;
+
+        PHASERET_NAME(shiftcolsleft)(frameschan, gl, noFrames, NULL);
+        PHASERET_NAME_COMPLEX(shiftcolsleft)(cframeschan, M2, noFrames, cchan);
+        PHASERET_NAME(shiftcolsleft)(sframeschan, M2, p->lookahead + 1, schan);
+
+        PHASERET_NAME(gsrtisilaupdate_execute)(p->uplan, frameschan, cframeschan,
+                                               noFrames, sframeschan, p->lookahead, p->maxit,
+                                               frameschan, cframeschan, cchan);
+    }
+
+error:
     return status;
 }
 
@@ -242,4 +302,65 @@ PHASERET_NAME(gsrtisila_done)(PHASERET_NAME(gsrtisila_state)** p)
     pp = NULL;
 error:
     return status;
+}
+
+
+PHASERET_API int
+PHASERET_NAME(gsrtisila_reset)(PHASERET_NAME(gsrtisila_state)* p)
+{
+    ltfat_int N, W, gl, M2;
+    int status = LTFATERR_SUCCESS;
+    CHECKNULL(p);
+
+    N = p->lookback + 1 + p->maxLookahead;
+    W = p->W;
+    M2 = p->uplan->M / 2 + 1;
+    gl = p->uplan->gl;
+
+    memset(p->s, 0, M2 * (1 + p->maxLookahead) * W * sizeof * p->s);
+    memset(p->frames, 0, gl * N * W * sizeof * p->frames);
+    memset(p->cframes, 0, M2 * N * W * sizeof * p->cframes);
+error:
+    return status;
+}
+
+PHASERET_API int
+PHASERET_NAME(gsrtisila_set_skipinitialization)(PHASERET_NAME(gsrtisila_state)* p,
+                                                int do_skipinitialization)
+{
+    int status = LTFATERR_SUCCESS;
+    CHECKNULL(p);
+
+    p->uplan->do_skipinitialization = do_skipinitialization;
+error:
+    return status;
+}
+
+
+PHASERET_API int
+PHASERET_NAME(gsrtisila_set_lookahead)(PHASERET_NAME(gsrtisila_state)* p,
+                                       ltfat_int lookahead)
+{
+    int status = LTFATERR_SUCCESS;
+    CHECKNULL(p);
+    CHECK(LTFATERR_BADARG, lookahead >= 0 && lookahead <= p->maxLookahead,
+          "lookahead can only be in range [0-%d] (passed %d).", p->maxLookahead, lookahead);
+
+    p->lookahead = lookahead;
+error:
+    return status;
+}
+
+PHASERET_API int
+PHASERET_NAME(gsrtisila_set_itno)(PHASERET_NAME(gsrtisila_state)* p,
+                                  ltfat_int it)
+{
+    int status = LTFATERR_SUCCESS;
+    CHECKNULL(p);
+    CHECK(LTFATERR_BADARG, it > 0, "it must be greater than 0.");
+
+    p->maxit = it;
+error:
+    return status;
+
 }

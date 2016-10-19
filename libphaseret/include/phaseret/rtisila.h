@@ -41,6 +41,10 @@ void
 PHASERET_NAME(rtisilaphaseupdate)(PHASERET_NAME(rtisilaupdate_plan)* p,
                                   const LTFAT_REAL* sframe, LTFAT_REAL* frameupd, LTFAT_COMPLEX* c);
 
+void
+PHASERET_NAME(rtisilaphaseupdatesyn)(PHASERET_NAME(rtisilaupdate_plan) * p,
+                                     const LTFAT_COMPLEX* c, LTFAT_REAL* frameupd);
+
 /** Create a RTISILA Update Plan.
  * \param[in]     g          Analysis window
  * \param[in]     specg1     Analysis window used in the first iteration
@@ -235,6 +239,10 @@ PHASERET_NAME(rtisila_init_win)(LTFAT_FIRWIN win, ltfat_int gl, ltfat_int W, ltf
 PHASERET_API int
 PHASERET_NAME(rtisila_set_lookahead)(PHASERET_NAME(rtisila_state)* p, ltfat_int lookahead);
 
+
+PHASERET_API int
+PHASERET_NAME(rtisila_set_itno)(PHASERET_NAME(rtisila_state)* p, ltfat_int it);
+
 /** Execute RTISILA plan for a single time frame
  *
  *  The function is intedned to be called for consecutive stream of frames
@@ -248,7 +256,7 @@ PHASERET_NAME(rtisila_set_lookahead)(PHASERET_NAME(rtisila_state)* p, ltfat_int 
  * \param[in]       s   Target magnitude, size M2 x W
  * \param[out]      c   Reconstructed coefficients, size M2 x W
  *
- * #### Versions #
+* #### Versions #
  * <tt>
  * phaseret_rtisila_execute_d(phaseret_rtisila_state_d* p, const double s[],
  *                            ltfat_complex_d c[]);

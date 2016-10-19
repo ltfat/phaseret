@@ -21,6 +21,9 @@ int
 PHASERET_NAME(shiftcolsleft)(LTFAT_REAL cols[], ltfat_int height, ltfat_int N, const LTFAT_REAL newcol[]);
 
 int
+PHASERET_NAME_COMPLEX(shiftcolsleft)(LTFAT_COMPLEX cols[], ltfat_int height, ltfat_int N, const LTFAT_COMPLEX newcol[]);
+
+int
 PHASERET_NAME(force_magnitude)(LTFAT_COMPLEX cin[], const LTFAT_REAL s[], ltfat_int L, LTFAT_COMPLEX cout[]);
 
 void
