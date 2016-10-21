@@ -36,11 +36,10 @@ if demo_blockproc_header(mfilename,nargin)
     return;
 end
 
-% Default: a = 256
-[a,varargin] = parsevararginfora(varargin);
-% Number of frequency channels
-M = 2048;
-gl = 2048;
+[a,varargin] = parsevararginfor('a',varargin,256);
+[M,varargin] = parsevararginfor('M',varargin,2048);
+[gl,varargin] = parsevararginfor('gl',varargin,2048);
+
 % Window support is M
 h = 0.01;
 g = gabwin({'gauss','width',gl,'atheight',0.01,'inf'},a,gl,10*gl);
@@ -352,21 +351,21 @@ end
 blockdone(p);
 
 
-function [a,v] = parsevararginfora(v)
+function [a,v] = parsevararginfor(what,v,defaultval)
 % Parse out a from varargin
-apos = find(strcmp('a',v),1);
+apos = find(strcmp(what,v),1);
 if ~isempty(apos)
     if apos==numel(v)
-        error('%s: Forgotten value for key ''a''',upper(mfilename));
+        error('%s: Forgotten value for key ''%s''',what,upper(mfilename));
     end
     % Just let ltfatarghelper sort out the correct key-val format
-    definput.keyvals.a = [];
-    [~,~,a] = ltfatarghelper({'a'},definput,v(apos:apos+1));
-    complainif_notposint(a,'a',mfilename);
+    definput.keyvals.(what) = [];
+    [~,~,a] = ltfatarghelper({what},definput,v(apos:apos+1));
+    complainif_notposint(a,what,mfilename);
     % And remove it from varargin such that it does not break the rest
     v(apos:apos+1) = [];
 else
-    a = 256;
+    a = defaultval;
 end
 
 
