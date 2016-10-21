@@ -124,9 +124,9 @@ gd = gabdual(g,a,M,L);
 [gnums,gdnum] = comp_gsrtisilawins(gnum,gd,a,M,kv.lookahead);
 
 % Buffer initialization
-cframes = zeros(M ,lookback + kv.lookahead+1);
+frames = zeros(M ,lookback + kv.lookahead+1);
 sframes = zeros(M2,kv.lookahead+1);
-coefbuf = zeros(M2 ,lookback + kv.lookahead+1);
+cframes = zeros(M2 ,lookback + kv.lookahead+1);
 
 if flags.do_rtpghi
     [tgrad, fgrad, logs] = comp_pghiphasegrad( abss, gamma, a, M, 1, flags2.do_causal);
@@ -143,39 +143,31 @@ for n=1:N
     nextnewframeidx = mod(n - 1 + kv.lookahead,N) + 1;
     idx = mod(n - 1 - 1 + kv.lookahead:n - 1 + kv.lookahead,N) + 1;
 
-    sframes(:,1:end-1)   = sframes(:,2:end);
+    [frames,cframes,sframes] = shiftcolsleft(frames,cframes,sframes);
     sframes(:,end) = abss(:,nextnewframeidx);
 
-    % Shift cols in the buffer
-    cframes(:,1:end-1)   = cframes(:,2:end);
-    cframes(:,end) = 0;
-
-    % Coefbuf
-    coefbuf(:,1:end-1)   = coefbuf(:,2:end);
-    coefbuf(:,end) = 0;
-
     if flags.do_spsi
-        oldphase = angle(coefbuf(:,end-1));
-        coefbuf(:,end) = comp_spsi(sframes(:,end),a,M,oldphase);
+        oldphase = angle(cframes(:,end-1));
+        cframes(:,end) = comp_spsi(sframes(:,end),a,M,oldphase);
         %cframes(:,end) = gdnum.*fftshift(comp_ifftreal(coefbuf(:,end),M))*M;
     elseif flags.do_unwrap
-        nom = sframes(:,end).*coefbuf(:,end-1).^2.*sframes(:,end-2);
-        denom = sframes(:,end-1).^2.*coefbuf(:,end-2);
-        coefbuf(:,end) = nom./ denom;
-        coefbuf(abs(denom)<1e-8,end) = 0;
+        nom = sframes(:,end).*cframes(:,end-1).^2.*sframes(:,end-2);
+        denom = sframes(:,end-1).^2.*cframes(:,end-2);
+        cframes(:,end) = nom./ denom;
+        cframes(abs(denom)<1e-8,end) = 0;
         %cframes(:,end) = fftshift(comp_ifftreal(coefbuf(:,end),M))*M;
     elseif flags.do_input
-        cframes(:,end) = gdnum.*fftshift(comp_ifftreal(s(:,nextnewframeidx),M))*M;
+        frames(:,end) = gdnum.*fftshift(comp_ifftreal(s(:,nextnewframeidx),M))*M;
     elseif flags.do_rtpghi
-        oldphase = angle(coefbuf(:,end-1));
+        oldphase = angle(cframes(:,end-1));
         newphase = comp_rtpghiupdate(logs(:,idx),tgrad(:,idx),fgrad(:,idx(2)),oldphase,tol,M);
-        coefbuf(:,end) = sframes(:,end).*exp(1i*newphase);
+        cframes(:,end) = sframes(:,end).*exp(1i*newphase);
         %cframes(:,end) = gdnum.*fftshift(comp_ifftreal(coefbuf(:,end),M))*M;
     end
 
     % Update the lookahead frames and the submit frame
-    [cframes, coefbuf, c(:,n)] = ...
-    comp_gsrtisilaupdate(cframes,coefbuf,gnums,gdnum,a,M,sframes,kv.lookahead,kv.maxit,flags.do_energy);
+    [frames, cframes, c(:,n)] = ...
+    comp_gsrtisilaupdate(frames,cframes,gnums,gdnum,a,M,sframes,kv.lookahead,kv.maxit,flags.do_energy);
 end
 
 iter = kv.maxit*kv.lookahead;
@@ -204,21 +196,15 @@ end
 % Cur or extend and reformat f
 f = comp_sigreshape_post(f,Ls,0,[0; W]);
 
-function partrec = overlayframes(cframes,a,M)
+function [frames,cframes,sframes] = shiftcolsleft(frames,cframes,sframes)
 
-N = size(cframes,2);
-bufLen = N*a - (a-1) + M-1;
-partrec = zeros(bufLen,1);
+sframes(:,1:end-1)   = sframes(:,2:end);
+sframes(:,end) = 0;
 
-startidx = ceil(M/2)-1;
-idxrange = startidx + [0:floor(M/2),-ceil(M/2)+1:-1];
-for n=0:N-1
-    idx = n*a + idxrange + 1;
-    partrec(idx) = partrec(idx) + cframes(:,n+1);
-end
+% Shift cols in the buffer
+frames(:,1:end-1)   = frames(:,2:end);
+frames(:,end) = 0;
 
-
-
-
-
-
+% Coefbuf
+cframes(:,1:end-1)   = cframes(:,2:end);
+cframes(:,end) = 0;
