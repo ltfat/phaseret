@@ -2,33 +2,8 @@
 #include "phaseret/rtpghi.h"
 #include "phaseret/utils.h"
 #include "float.h"
+#include "rtpghi_private.h"
 
-struct PHASERET_NAME(rtpghi_state)
-{
-    PHASERET_NAME(rtpghiupdate_plan)* p;
-    ltfat_int M;
-    ltfat_int a;
-    ltfat_int W;
-    int do_causal;
-    LTFAT_REAL* slog;
-    LTFAT_REAL* s;
-    LTFAT_REAL* tgrad; //!< Time gradient buffer
-    LTFAT_REAL* fgrad; //!< Frequency gradient buffer
-    LTFAT_REAL* phase; //!< Buffer for keeping previously computed frame
-    double gamma;
-};
-
-struct PHASERET_NAME(rtpghiupdate_plan)
-{
-    LTFAT_NAME(heap)* h;
-    int* donemask;
-    double logtol;
-    double tol;
-    ltfat_int M;
-    LTFAT_REAL* randphase; //!< Precomputed array of random phase
-    ltfat_int randphaseLen;
-    ltfat_int randphaseId;
-};
 
 PHASERET_API int
 PHASERET_NAME(rtpghi_set_causal)(PHASERET_NAME(rtpghi_state)* p, int do_causal)
@@ -54,8 +29,9 @@ error:
 }
 
 PHASERET_API int
-PHASERET_NAME(rtpghi_init)(double gamma, ltfat_int W, ltfat_int a, ltfat_int M,
-                           double tol, int do_causal, PHASERET_NAME(rtpghi_state)** pout)
+PHASERET_NAME(rtpghi_init)(ltfat_int W, ltfat_int a, ltfat_int M,
+                           double gamma, double tol, int do_causal,
+                           PHASERET_NAME(rtpghi_state)** pout)
 {
     int status = LTFATERR_SUCCESS;
 
@@ -94,7 +70,8 @@ error:
 }
 
 PHASERET_API int
-PHASERET_NAME(rtpghi_reset)(PHASERET_NAME(rtpghi_state)* p)
+PHASERET_NAME(rtpghi_reset)(PHASERET_NAME(rtpghi_state)* p,
+                            const LTFAT_REAL** sinit)
 {
     int status = LTFATERR_SUCCESS;
     ltfat_int M2, W;
@@ -107,6 +84,15 @@ PHASERET_NAME(rtpghi_reset)(PHASERET_NAME(rtpghi_state)* p)
     memset(p->s, 0,     2 * M2 * W * sizeof * p->s);
     memset(p->fgrad, 0, M2 * W * sizeof * p->tgrad);
     memset(p->phase, 0, M2 * W * sizeof * p->phase);
+
+    if (sinit)
+        for (ltfat_int w = 0; w < W; w++)
+            if (sinit[w])
+            {
+                memcpy(p->s + M2 + w * 2 * M2, sinit[w], 2 * M2 * sizeof * p->s );
+                PHASERET_NAME(rtpghilog)(sinit[w], 2 * M2, p->slog + M2 + w * 3 * M2);
+            }
+
 error:
     return status;
 }
@@ -265,7 +251,7 @@ PHASERET_NAME(rtpghiupdate_execute)(PHASERET_NAME(rtpghiupdate_plan)* p,
             // Next frame
             ltfat_int wprev = w - M2;
 
-            if ( wprev != M2-1 && !donemask[wprev + 1] )
+            if ( wprev != M2 - 1 && !donemask[wprev + 1] )
             {
                 phase[wprev + 1] = phase[wprev] + (fgrad[wprev] + fgrad[wprev + 1]) / 2.0;
                 LTFAT_NAME(heap_insert)(h, w + 1);
@@ -327,9 +313,10 @@ error:
 
 
 PHASERET_API int
-PHASERET_NAME(rtpghioffline)(const LTFAT_REAL* s, double gamma, ltfat_int L,
-                             ltfat_int W, ltfat_int a, ltfat_int M, double tol,
-                             int do_causal, LTFAT_COMPLEX* c)
+PHASERET_NAME(rtpghioffline)(const LTFAT_REAL* s, ltfat_int L,
+                             ltfat_int W, ltfat_int a, ltfat_int M,
+                             double gamma, double tol, int do_causal,
+                             LTFAT_COMPLEX* c)
 {
     ltfat_int N = L / a;
     ltfat_int M2 = M / 2 + 1;
@@ -337,18 +324,20 @@ PHASERET_NAME(rtpghioffline)(const LTFAT_REAL* s, double gamma, ltfat_int L,
     int status = LTFATERR_SUCCESS;
     CHECKNULL(s); CHECKNULL(c);
 
-    CHECKSTATUS( PHASERET_NAME(rtpghi_init)(gamma, 1, a, M, tol, do_causal, &p),
+    CHECKSTATUS( PHASERET_NAME(rtpghi_init)(1, a, M, gamma, tol, do_causal, &p),
                  "rtpghi init failed");
 
     if (do_causal)
     {
         for (ltfat_int w = 0; w < W; w++)
         {
-            PHASERET_NAME(rtpghi_reset)(p);
+
+            const LTFAT_REAL* schan = s + w * N * M2;
+            PHASERET_NAME(rtpghi_reset)(p, &schan);
 
             for (ltfat_int n = 0; n < N; ++n)
             {
-                const LTFAT_REAL* sncol = s + n * M2 + w * N * M2;
+                const LTFAT_REAL* sncol = schan + n * M2;
                 LTFAT_COMPLEX* cncol =    c + n * M2 + w * N * M2;
                 PHASERET_NAME(rtpghi_execute)(p, sncol, cncol);
             }
@@ -358,12 +347,12 @@ PHASERET_NAME(rtpghioffline)(const LTFAT_REAL* s, double gamma, ltfat_int L,
     {
         for (ltfat_int w = 0; w < W; w++)
         {
-            PHASERET_NAME(rtpghi_reset)(p);
-            PHASERET_NAME(rtpghi_execute)(p, s + w * N * M2, c + w * N * M2);
+            const LTFAT_REAL* schan = s + w * N * M2;
+            PHASERET_NAME(rtpghi_reset)(p, &schan);
 
             for (ltfat_int n = 0, nahead = 1; nahead < N; ++n, ++nahead)
             {
-                const LTFAT_REAL* sncol = s + nahead * M2 + w * N * M2;
+                const LTFAT_REAL* sncol = schan + nahead * M2;
                 LTFAT_COMPLEX* cncol =    c + n * M2 + w * N * M2;
                 PHASERET_NAME(rtpghi_execute)(p, sncol, cncol);
             }

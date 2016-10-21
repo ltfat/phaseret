@@ -65,9 +65,9 @@ typedef struct PHASERET_NAME(rtpghiupdate_plan) PHASERET_NAME(rtpghiupdate_plan)
  * \see phaseret_firwin2gamma
  */
 PHASERET_API int
-PHASERET_NAME(rtpghi_init)(double gamma, ltfat_int W, ltfat_int a, ltfat_int M, double tol,
-                           int do_causal, PHASERET_NAME(rtpghi_state)** p);
-
+PHASERET_NAME(rtpghi_init)(ltfat_int W, ltfat_int a, ltfat_int M,
+                           double gamma, double tol, int do_causal,
+                           PHASERET_NAME(rtpghi_state)** p);
 
 /** Reset RTPGHI state.
  *
@@ -85,7 +85,7 @@ PHASERET_NAME(rtpghi_init)(double gamma, ltfat_int W, ltfat_int a, ltfat_int M, 
  *
  */
 PHASERET_API int
-PHASERET_NAME(rtpghi_reset)(PHASERET_NAME(rtpghi_state)* p);
+PHASERET_NAME(rtpghi_reset)(PHASERET_NAME(rtpghi_state)* p, const LTFAT_REAL** sinit );
 
 /** Change the version of the algorithm
  *
@@ -191,8 +191,10 @@ PHASERET_NAME(rtpghi_done)(PHASERET_NAME(rtpghi_state)** p);
  * \see phaseret_firwin2gamma ltfat_dgtreal_phaseunlock
  */
 PHASERET_API int
-PHASERET_NAME(rtpghioffline)(const LTFAT_REAL s[], double gamma, ltfat_int L, ltfat_int W, ltfat_int a, ltfat_int M,
-                             double tol, int do_causal, LTFAT_COMPLEX c[]);
+PHASERET_NAME(rtpghioffline)(const LTFAT_REAL s[],
+                             ltfat_int L, ltfat_int W, ltfat_int a, ltfat_int M,
+                             double gamma, double tol, int do_causal,
+                             LTFAT_COMPLEX c[]);
 
 /** @}*/
 
@@ -241,15 +243,15 @@ PHASERET_NAME(rtpghimagphase)(const LTFAT_REAL s[], const LTFAT_REAL phase[], lt
 
 PHASERET_API int
 PHASERET_NAME(rtpghiupdate_init)(ltfat_int M, ltfat_int W, double tol,
-                                       PHASERET_NAME(rtpghiupdate_plan)** pout);
+                                 PHASERET_NAME(rtpghiupdate_plan)** pout);
 
 PHASERET_API int
 PHASERET_NAME(rtpghiupdate_execute)(PHASERET_NAME(rtpghiupdate_plan)* p,
-                                          const LTFAT_REAL slog[],
-                                          const LTFAT_REAL tgrad[],
-                                          const LTFAT_REAL fgrad[],
-                                          const LTFAT_REAL startphase[],
-                                          LTFAT_REAL phase[]);
+                                    const LTFAT_REAL slog[],
+                                    const LTFAT_REAL tgrad[],
+                                    const LTFAT_REAL fgrad[],
+                                    const LTFAT_REAL startphase[],
+                                    LTFAT_REAL phase[]);
 
 PHASERET_API int
 PHASERET_NAME(rtpghiupdate_done)(PHASERET_NAME(rtpghiupdate_plan)** p);
@@ -260,5 +262,4 @@ PHASERET_NAME(rtpghiupdate_done)(PHASERET_NAME(rtpghiupdate_plan)** p);
 #ifdef __cplusplus
 }
 #endif
-
 

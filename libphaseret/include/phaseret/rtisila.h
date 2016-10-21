@@ -148,11 +148,11 @@ PHASERET_NAME(rtisilaupdatecoef)(const LTFAT_REAL* frames,
  *
  * #### Versions #
  * <tt>
- * phaseret_rtisila_init_d(const double g[], ltfat_int gl, ltfat_int W, 
+ * phaseret_rtisila_init_d(const double g[], ltfat_int gl, ltfat_int W,
  *                         ltfat_int a, ltfat_int M, ltfat_int lookahead,
  *                         ltfat_int maxit, phaseret_rtisila_state_d** p);
  *
- * phaseret_rtisila_init_s(const float g[], ltfat_int gl, ltfat_int W, 
+ * phaseret_rtisila_init_s(const float g[], ltfat_int gl, ltfat_int W,
  *                         ltfat_int a, ltfat_int M, ltfat_int lookahead,
  *                         ltfat_int maxit, phaseret_rtisila_state_s** p);
  * </tt>
@@ -187,11 +187,11 @@ PHASERET_NAME(rtisila_init)(const LTFAT_REAL g[], ltfat_int gl, ltfat_int W,
  *
  * #### Versions #
  * <tt>
- * phaseret_rtisila_init_win_d(LTFAT_FIRWIN win, ltfat_int gl, ltfat_int W, 
+ * phaseret_rtisila_init_win_d(LTFAT_FIRWIN win, ltfat_int gl, ltfat_int W,
  *                             ltfat_int a, ltfat_int M, ltfat_int lookahead,
  *                             ltfat_int maxit, phaseret_rtisila_state_d** p);
  *
- * phaseret_rtisila_init_win_s(LTFAT_FIRWIN win, ltfat_int gl, ltfat_int W, 
+ * phaseret_rtisila_init_win_s(LTFAT_FIRWIN win, ltfat_int gl, ltfat_int W,
  *                             ltfat_int a, ltfat_int M, ltfat_int lookahead,
  *                             ltfat_int maxit, phaseret_rtisila_state_s** p);
  * </tt>
@@ -289,7 +289,8 @@ PHASERET_NAME(rtisila_execute)(PHASERET_NAME(rtisila_state)* p,
  * LTFATERR_NULLPOINTER     | \a p or \a *p was NULL.
  */
 PHASERET_API int
-PHASERET_NAME(rtisila_reset)(PHASERET_NAME(rtisila_state)* p);
+PHASERET_NAME(rtisila_reset)(PHASERET_NAME(rtisila_state)* p,
+                             const LTFAT_REAL** sinit);
 
 /** Destroy a RTISILA Plan.
  * \param[in] p  RTISILA Plan
@@ -333,12 +334,12 @@ PHASERET_NAME(rtisila_done)(PHASERET_NAME(rtisila_state)** p);
  * <tt>
  * phaseret_rtisilaoffline_d(const double s[], const double g[], ltfat_int L,
  *                           ltfat_int gl, ltfat_int W, ltfat_int a, ltfat_int M,
- *                           ltfat_int lookahead, ltfat_int maxit, 
+ *                           ltfat_int lookahead, ltfat_int maxit,
  *                           ltfat_complex_d c[]);
  *
  * phaseret_rtisilaoffline_s(const float s[], const float g[], ltfat_int L,
  *                           ltfat_int gl, ltfat_int W, ltfat_int a, ltfat_int M,
- *                           ltfat_int lookahead, ltfat_int maxit, 
+ *                           ltfat_int lookahead, ltfat_int maxit,
  *                           ltfat_complex_s c[]);
  * </tt>
  */
@@ -351,4 +352,3 @@ PHASERET_NAME(rtisilaoffline)(const LTFAT_REAL s[], const LTFAT_REAL g[],
 #ifdef __cplusplus
 }
 #endif
-

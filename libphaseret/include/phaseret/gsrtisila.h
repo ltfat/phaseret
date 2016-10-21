@@ -53,7 +53,8 @@ PHASERET_NAME(gsrtisila_done)(PHASERET_NAME(gsrtisila_state)** p);
 
 
 PHASERET_API int
-PHASERET_NAME(gsrtisila_reset)(PHASERET_NAME(gsrtisila_state)* p);
+PHASERET_NAME(gsrtisila_reset)(PHASERET_NAME(gsrtisila_state)* p,
+                               const LTFAT_REAL** stinit);
 
 PHASERET_API int
 PHASERET_NAME(gsrtisila_set_lookahead)(PHASERET_NAME(gsrtisila_state)* p,
@@ -65,8 +66,12 @@ PHASERET_NAME(gsrtisila_set_itno)(PHASERET_NAME(gsrtisila_state)* p,
 
 PHASERET_API int
 PHASERET_NAME(gsrtisila_set_skipinitialization)(PHASERET_NAME(gsrtisila_state)* p,
-                                                int do_skipinitialization);
+        int do_skipinitialization);
 
+PHASERET_API int
+PHASERET_NAME(gsrtisilaoffline)(const LTFAT_REAL s[], const LTFAT_REAL g[],
+                                ltfat_int L, ltfat_int gl, ltfat_int W, ltfat_int a, ltfat_int M,
+                                ltfat_int lookahead, ltfat_int maxit, LTFAT_COMPLEX c[]);
 
 
 #ifdef __cplusplus

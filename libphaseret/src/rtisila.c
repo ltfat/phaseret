@@ -38,7 +38,8 @@ PHASERET_NAME(rtisila_set_lookahead)(
     int status = LTFATERR_SUCCESS;
     CHECKNULL(p);
     CHECK(LTFATERR_BADARG, lookahead >= 0 && lookahead <= p->maxLookahead,
-          "lookahead can only be in range [0-%d] (passed %d).", p->maxLookahead, lookahead);
+          "lookahead can only be in range [0-%d] (passed %d).", p->maxLookahead,
+          lookahead);
 
     p->lookahead = lookahead;
 error:
@@ -70,7 +71,7 @@ PHASERET_NAME(overlaynthframe)(const LTFAT_REAL* frames, ltfat_int gl,
     // Overlap frames n-1 ... 0, or until there is no overlap
     for (ltfat_int ii = n - 1; ii >= 0; ii--)
     {
-        ltfat_int jj = (n - ii) * a;
+        ltfat_int jj = (n - ii) * a ;
         ltfat_int nSamp = gl - jj;
 
         if (nSamp <= 0)
@@ -319,7 +320,8 @@ PHASERET_NAME(rtisilaupdatecoef)(const LTFAT_REAL* frames,
 }
 
 PHASERET_API int
-PHASERET_NAME(rtisila_reset)(PHASERET_NAME(rtisila_state) * p)
+PHASERET_NAME(rtisila_reset)(PHASERET_NAME(rtisila_state) * p,
+                             const LTFAT_REAL** sinit)
 {
     ltfat_int N, W, gl, M2;
     int status = LTFATERR_SUCCESS;
@@ -332,6 +334,13 @@ PHASERET_NAME(rtisila_reset)(PHASERET_NAME(rtisila_state) * p)
 
     memset(p->s, 0, M2 * (1 + p->maxLookahead) * W * sizeof * p->s);
     memset(p->frames, 0, gl * N * W * sizeof * p->frames);
+
+    if (sinit)
+        for (ltfat_int w = 0; w < W; w++)
+            if (sinit[w])
+                memcpy(p->s + M2 + w * (1 + p->maxLookahead)*M2, sinit[w],
+                       M2 * p->lookahead * sizeof * p->s );
+
 error:
     return status;
 }
@@ -496,8 +505,8 @@ error:
 }
 
 PHASERET_API int
-PHASERET_NAME(rtisila_execute)(
-    PHASERET_NAME(rtisila_state) * p, const LTFAT_REAL* s, LTFAT_COMPLEX* c)
+PHASERET_NAME(rtisila_execute)( PHASERET_NAME(rtisila_state) * p,
+                                const LTFAT_REAL* s, LTFAT_COMPLEX* c)
 {
     ltfat_int M, gl, M2, noFrames, N;
     int status = LTFATERR_SUCCESS;
@@ -552,33 +561,31 @@ PHASERET_NAME(rtisilaoffline)(const LTFAT_REAL s[], const LTFAT_REAL g[],
 
     for (ltfat_int w = 0; w < W; w++)
     {
-        PHASERET_NAME(rtisila_reset)(p);
-
-        memcpy(p->s + M2 + w * N * M2, s + w * N * M2, lookahead * M2 * sizeof * p->s);
+        const LTFAT_REAL* schan = s + w * N * M2;
+        PHASERET_NAME(rtisila_reset)(p, &schan);
 
         for (ltfat_int n = 0, nahead = lookahead; nahead < N; ++n, ++nahead)
         {
-            const LTFAT_REAL* sncol = s + nahead * M2 + w * N * M2;
+            const LTFAT_REAL* sncol = schan + nahead * M2;
             LTFAT_COMPLEX* cncol = c + n * M2 + w * N * M2;
             PHASERET_NAME(rtisila_execute)(p, sncol, cncol);
         }
 
         for (ltfat_int n = N - lookahead, nahead = 0; n < N; ++n, ++nahead)
         {
-            const LTFAT_REAL* sncol = s + nahead * M2 + w * N * M2;
+            const LTFAT_REAL* sncol = schan + nahead * M2;
             LTFAT_COMPLEX* cncol = c + n * M2 + w * N * M2;
             PHASERET_NAME(rtisila_execute)(p, sncol, cncol);
         }
     }
 error:
-    if (p)
-        PHASERET_NAME(rtisila_done)(&p);
+    if (p) PHASERET_NAME(rtisila_done)(&p);
     return status;
 }
 
 PHASERET_API int
 PHASERET_NAME(rtisila_set_itno)(PHASERET_NAME(rtisila_state)* p,
-                                  ltfat_int it)
+                                ltfat_int it)
 {
     int status = LTFATERR_SUCCESS;
     CHECKNULL(p);
