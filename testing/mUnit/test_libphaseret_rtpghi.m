@@ -15,13 +15,19 @@ s = abs(corig);
 cout = zeros(2*M2,N);
 coutPtr = libpointer('doublePtr',cout);
 gamma = gl^2*0.25645;
-calllib('libphaseret','phaseret_rtpghioffline_d',s,gamma,L,1,a,M,1e-4,0,coutPtr);
+calllib('libphaseret','phaseret_rtpghioffline_d',s,L,1,a,M,gamma,1e-6,0,coutPtr);
 
 cout2 = interleaved2complex(coutPtr.Value);
-%cout2 = rtpghi(s,gamma,a,M,'timeinv','tol',1e-4);
+
 
 frec = idgtreal(cout2,{'dual',{'hann',gl}},a,M,'timeinv');
+s2 = dgtreal(frec,{'hann',gl},a,M,'timeinv');
+magnitudeerrdb(s,s2)
 
+
+cout2 = rtpghi(s,gamma,a,M,'timeinv','tol',1e-6);
+
+frec = idgtreal(cout2,{'dual',{'hann',gl}},a,M,'timeinv');
 s2 = dgtreal(frec,{'hann',gl},a,M,'timeinv');
 magnitudeerrdb(s,s2)
 

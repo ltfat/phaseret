@@ -36,6 +36,7 @@ phaseret_firwin2gamma(LTFAT_FIRWIN win, ltfat_int gl);
  *
  */
 typedef struct PHASERET_NAME(rtpghi_state) PHASERET_NAME(rtpghi_state);
+typedef struct PHASERET_NAME(rtpghiupdate_plan) PHASERET_NAME(rtpghiupdate_plan);
 
 /** \addtogroup rtpghi
  *  @{
@@ -64,9 +65,9 @@ typedef struct PHASERET_NAME(rtpghi_state) PHASERET_NAME(rtpghi_state);
  * \see phaseret_firwin2gamma
  */
 PHASERET_API int
-PHASERET_NAME(rtpghi_init)(double gamma, ltfat_int W, ltfat_int a, ltfat_int M, double tol,
-                           int do_causal, PHASERET_NAME(rtpghi_state)** p);
-
+PHASERET_NAME(rtpghi_init)(ltfat_int W, ltfat_int a, ltfat_int M,
+                           double gamma, double tol, int do_causal,
+                           PHASERET_NAME(rtpghi_state)** p);
 
 /** Reset RTPGHI state.
  *
@@ -84,7 +85,7 @@ PHASERET_NAME(rtpghi_init)(double gamma, ltfat_int W, ltfat_int a, ltfat_int M, 
  *
  */
 PHASERET_API int
-PHASERET_NAME(rtpghi_reset)(PHASERET_NAME(rtpghi_state)* p);
+PHASERET_NAME(rtpghi_reset)(PHASERET_NAME(rtpghi_state)* p, const LTFAT_REAL** sinit );
 
 /** Change the version of the algorithm
  *
@@ -106,6 +107,24 @@ PHASERET_NAME(rtpghi_reset)(PHASERET_NAME(rtpghi_state)* p);
  */
 PHASERET_API int
 PHASERET_NAME(rtpghi_set_causal)(PHASERET_NAME(rtpghi_state)* p, int do_causal);
+
+/** Change tolerance
+ *
+ * \note This is not thread safe
+ *
+ * \param[in] p     RTPGHI plan
+ * \param[in] tol   Relative tolerance
+ *
+ * #### Versions #
+ * <tt>
+ * phaseret_rtpghi_set_tol_d(phaseret_rtpghi_state_d* p, double tol);
+ *
+ * phaseret_rtpghi_set_tol_s(phaseret_rtpghi_state_s* p, double tol);
+ * </tt>
+ * \returns Status code
+ */
+PHASERET_API int
+PHASERET_NAME(rtpghi_set_tol)(PHASERET_NAME(rtpghi_state)* p, double tol);
 
 /** Execute RTPGHI plan for a single frame
  *
@@ -172,8 +191,10 @@ PHASERET_NAME(rtpghi_done)(PHASERET_NAME(rtpghi_state)** p);
  * \see phaseret_firwin2gamma ltfat_dgtreal_phaseunlock
  */
 PHASERET_API int
-PHASERET_NAME(rtpghioffline)(const LTFAT_REAL s[], double gamma, ltfat_int L, ltfat_int W, ltfat_int a, ltfat_int M,
-                             double tol, int do_causal, LTFAT_COMPLEX c[]);
+PHASERET_NAME(rtpghioffline)(const LTFAT_REAL s[],
+                             ltfat_int L, ltfat_int W, ltfat_int a, ltfat_int M,
+                             double gamma, double tol, int do_causal,
+                             LTFAT_COMPLEX c[]);
 
 /** @}*/
 
@@ -220,8 +241,25 @@ PHASERET_NAME(rtpghilog)(const LTFAT_REAL in[], ltfat_int L, LTFAT_REAL out[]);
 void
 PHASERET_NAME(rtpghimagphase)(const LTFAT_REAL s[], const LTFAT_REAL phase[], ltfat_int L, LTFAT_COMPLEX c[]);
 
+PHASERET_API int
+PHASERET_NAME(rtpghiupdate_init)(ltfat_int M, ltfat_int W, double tol,
+                                 PHASERET_NAME(rtpghiupdate_plan)** pout);
+
+PHASERET_API int
+PHASERET_NAME(rtpghiupdate_execute)(PHASERET_NAME(rtpghiupdate_plan)* p,
+                                    const LTFAT_REAL slog[],
+                                    const LTFAT_REAL tgrad[],
+                                    const LTFAT_REAL fgrad[],
+                                    const LTFAT_REAL startphase[],
+                                    LTFAT_REAL phase[]);
+
+PHASERET_API int
+PHASERET_NAME(rtpghiupdate_done)(PHASERET_NAME(rtpghiupdate_plan)** p);
+
+
+
+
 #ifdef __cplusplus
 }
 #endif
-
 

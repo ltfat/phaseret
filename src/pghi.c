@@ -18,8 +18,9 @@ struct PHASERET_NAME(pghi_plan)
 };
 
 PHASERET_API int
-PHASERET_NAME(pghi)(const LTFAT_REAL s[], double gamma, ltfat_int L,
-                    ltfat_int W, ltfat_int a, ltfat_int M, LTFAT_COMPLEX c[])
+PHASERET_NAME(pghi)(const LTFAT_REAL s[], ltfat_int L,
+                    ltfat_int W, ltfat_int a, ltfat_int M,
+                    double gamma, LTFAT_COMPLEX c[])
 {
     PHASERET_NAME(pghi_plan)* p = NULL;
     int status = LTFATERR_SUCCESS;
@@ -35,8 +36,8 @@ error:
 
 PHASERET_API int
 PHASERET_NAME(pghi_withmask)(const LTFAT_COMPLEX cinit[], const int mask[],
-                             double gamma, ltfat_int L, ltfat_int W,
-                             ltfat_int a, ltfat_int M, LTFAT_COMPLEX c[])
+                             ltfat_int L, ltfat_int W, ltfat_int a, ltfat_int M,
+                             double gamma, LTFAT_COMPLEX c[])
 {
     PHASERET_NAME(pghi_plan)* p = NULL;
     int status = LTFATERR_SUCCESS;
@@ -60,9 +61,9 @@ error:
 /* } */
 
 PHASERET_API int
-PHASERET_NAME(pghi_init)(double gamma, ltfat_int L, ltfat_int W,
+PHASERET_NAME(pghi_init)(ltfat_int L, ltfat_int W,
                          ltfat_int a, ltfat_int M, double tol1, double tol2,
-                         PHASERET_NAME(pghi_plan)** pout)
+                         double gamma, PHASERET_NAME(pghi_plan)** pout)
 {
     PHASERET_NAME(pghi_plan)* p = NULL;
     ltfat_int M2, N;
@@ -257,8 +258,7 @@ PHASERET_NAME(pghi_get_mask)(PHASERET_NAME(pghi_plan)* p)
 
 void
 PHASERET_NAME(pghimagphase)(const LTFAT_REAL s[], const LTFAT_REAL phase[],
-                            ltfat_int L,
-                            LTFAT_COMPLEX c[])
+                            ltfat_int L, LTFAT_COMPLEX c[])
 {
     for (ltfat_int l = 0; l < L; l++)
         c[l] = s[l] * exp(I * phase[l]);
@@ -299,9 +299,7 @@ PHASERET_NAME(pghitgrad)(const LTFAT_REAL* logs, double gamma, ltfat_int a,
 
 void
 PHASERET_NAME(pghifgrad)(const LTFAT_REAL* logs, double gamma, ltfat_int a,
-                         ltfat_int M,
-                         ltfat_int N,
-                         LTFAT_REAL* fgrad)
+                         ltfat_int M, ltfat_int N, LTFAT_REAL* fgrad)
 {
     ltfat_int M2 = M / 2 + 1;
 

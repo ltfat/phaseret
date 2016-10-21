@@ -40,15 +40,16 @@ LIBDIR = $(PREFIX)/lib
 INCDIR = $(PREFIX)/include
 
 # Base CFLAGS
-CFLAGS+=-Wall -Wextra -pedantic -std=c99 -Iinclude -Ithirdparty $(OPTCFLAGS)
-CXXFLAGS+=-Wall -Wextra -pedantic -fno-exceptions -fno-rtti -std=c++11 -Iinclude -Ithirdparty $(OPTCFLAGS)
+CFLAGS+=-Wall -Wextra -pedantic -std=c99 -Iinclude -I../libltfat/include $(OPTCFLAGS)
+CXXFLAGS+=-Wall -Wextra -pedantic -fno-exceptions -fno-rtti -std=c++11 -Iinclude -I../libltfat/include $(OPTCFLAGS)
 
 # The following adds parameters to CFLAGS
+COMPTARGET?=release
 include comptarget.mk
 
 # LIB
 SOURCES = $(addprefix src/, dgtrealwrapper.c gla.c legla.c pghi.c rtisila.c \
-		                    rtpghi.c spsi.c utils.c )
+		                    rtpghi.c spsi.c utils.c gsrtisila.c gsrtisilapghi.c )
 SOURCES_TYPECONSTANT = $(wildcard src/*_typeconstant.c )
 DOBJECTS = $(addprefix $(objprefix)/double/,$(notdir $(SOURCES:.c=.o)))
 SOBJECTS = $(addprefix $(objprefix)/single/,$(notdir $(SOURCES:.c=.o)))
@@ -162,7 +163,6 @@ cleanlib:
 	$(RMDIR) $(objprefix)
 
 clean: cleanlib
-	$(MAKE) -C mex clean
 
 static: $(DSTARGET) $(DTARGET) $(STARGET) 
 
@@ -204,14 +204,13 @@ $(buildprefix)/phaseret.h: $(buildprefix)
 
 install: lib
 	install -d $(DESTDIR)$(LIBDIR)
-	install $(TARGET) $(DESTDIR)$(LIBDIR)
-	install $(SO_TARGET) $(DESTDIR)$(LIBDIR)
+	install $(DTARGET) $(STARGET) $(DSTARGET) $(SO_DTARGET) $(SO_STARGET) $(SO_DSTARGET) $(DESTDIR)$(LIBDIR)
 	mkdir -p $(DESTDIR)$(INCDIR)
 	cp -r include/* $(DESTDIR)$(INCDIR)
 
 uninstall:
-	rm -f $(DESTDIR)$(LIBDIR)/$(STATIC)
-	rm -f $(DESTDIR)$(LIBDIR)/$(SHARED)
+	rm -f $(LIBDIR)/$(DSTATIC) $(LIBDIR)/$(SSTATIC) $(LIBDIR)/$(DSSTATIC)
+	rm -f $(LIBDIR)/$(DSHARED) $(LIBDIR)/$(SSHARED) $(LIBDIR)/$(DSSHARED)
 	rm -f $(DESTDIR)$(INCDIR)/phaseret.h
 	rm -rf $(DESTDIR)$(INCDIR)/phaseret
 

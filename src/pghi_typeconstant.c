@@ -3,11 +3,8 @@
 PHASERET_API double
 phaseret_firwin2gamma(LTFAT_FIRWIN win, ltfat_int gl)
 {
-    if ( gl <= 0)
-    {
-        return NAN;
-    }
     double gamma;
+    if ( gl <= 0) return NAN;
 
     switch (win)
     {
@@ -54,6 +51,8 @@ phaseret_firwin2gamma(LTFAT_FIRWIN win, ltfat_int gl)
         gamma = 0.11636; break;
     case LTFAT_NUTTALL03:
         gamma = 0.13369; break;
+    case LTFAT_TRUNCGAUSS01:
+        gamma = 0.17054704423023; break;
     default:
         return NAN;
     };

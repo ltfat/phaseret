@@ -15,7 +15,8 @@ endif(MSVC)
 
 
 SET(sources
-    dgtrealwrapper.c gla.c legla.c pghi.c rtisila.c rtpghi.c spsi.c utils.c)
+    dgtrealwrapper.c gla.c legla.c pghi.c rtisila.c rtpghi.c spsi.c utils.c
+    gsrtisila.c gsrtisilapghi.c)
 
 SET(sources_typeconstant
     dgtrealwrapper_typeconstant.c legla_typeconstant.c pghi_typeconstant.c)
