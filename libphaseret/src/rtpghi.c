@@ -41,10 +41,9 @@ PHASERET_NAME(rtpghi_init)(ltfat_int W, ltfat_int a, ltfat_int M,
     CHECK(LTFATERR_BADARG, !isnan(gamma) && gamma > 0,
           "gamma cannot be nan and must be positive. (Passed %f).", gamma);
     CHECK(LTFATERR_NOTPOSARG, W > 0, "W must be positive");
-    CHECK(LTFATERR_NOTPOSARG, a > 0, "a must be positive");
+    CHECK(LTFATERR_NOTPOSARG, a > 0, "a must be positive (passed %d)", a);
     CHECK(LTFATERR_NOTPOSARG, M > 0, "M must be positive");
     CHECK(LTFATERR_NOTINRANGE, tol > 0 && tol < 1, "tol must be in range ]0,1[");
-
 
     CHECKMEM( p = (PHASERET_NAME(rtpghi_state)*) ltfat_calloc(1, sizeof * p));
 
@@ -89,7 +88,7 @@ PHASERET_NAME(rtpghi_reset)(PHASERET_NAME(rtpghi_state)* p,
         for (ltfat_int w = 0; w < W; w++)
             if (sinit[w])
             {
-                memcpy(p->s + M2 + w * 2 * M2, sinit[w], 2 * M2 * sizeof * p->s );
+                memcpy(p->s + 2 * w * M2, sinit[w], 2 * M2 * sizeof * p->s );
                 PHASERET_NAME(rtpghilog)(sinit[w], 2 * M2, p->slog + M2 + w * 3 * M2);
             }
 
@@ -213,10 +212,12 @@ PHASERET_NAME(rtpghiupdate_execute)(PHASERET_NAME(rtpghiupdate_plan)* p,
     LTFAT_NAME(heap)* h = p->h;
     ltfat_int M2 = p->M / 2 + 1;
     ltfat_int quickbreak = M2;
+    const LTFAT_REAL oneover2 = (LTFAT_REAL) ( 1.0 / 2.0 );
     // We only need to compute M2 values, so perform quick exit
     // if we have them, but the heap is not yet empty.
     // (deleting hrom heap involves many operations)
     int* donemask = p->donemask;
+    const LTFAT_REAL* slog2 = slog + M2;
 
     memset(donemask, 0, M2 * sizeof * donemask);
 
@@ -233,7 +234,7 @@ PHASERET_NAME(rtpghiupdate_execute)(PHASERET_NAME(rtpghiupdate_plan)* p,
     for (ltfat_int m = 0; m < M2; m++)
     {
 
-        if ( slog[M2 + m] <= logabstol )
+        if ( slog2[m] <= logabstol )
         {
             donemask[m] = -1;
             quickbreak--;
@@ -244,7 +245,7 @@ PHASERET_NAME(rtpghiupdate_execute)(PHASERET_NAME(rtpghiupdate_plan)* p,
     }
 
     ltfat_int w = -1;
-    while ( (quickbreak > 0) && (w = LTFAT_NAME(heap_delete)(h)) >= 0 )
+    while ( (quickbreak > 0) && ( w = LTFAT_NAME(heap_delete)(h) ) >= 0 )
     {
         if ( w >= M2 )
         {
@@ -253,17 +254,19 @@ PHASERET_NAME(rtpghiupdate_execute)(PHASERET_NAME(rtpghiupdate_plan)* p,
 
             if ( wprev != M2 - 1 && !donemask[wprev + 1] )
             {
-                phase[wprev + 1] = phase[wprev] + (fgrad[wprev] + fgrad[wprev + 1]) / 2.0;
-                LTFAT_NAME(heap_insert)(h, w + 1);
+                phase[wprev + 1] = phase[wprev] + (fgrad[wprev] + fgrad[wprev + 1]) * oneover2;
                 donemask[wprev + 1] = 1;
+
+                LTFAT_NAME(heap_insert)(h, w + 1);
                 quickbreak--;
             }
 
             if ( wprev != 0 && !donemask[wprev - 1] )
             {
-                phase[wprev - 1] = phase[wprev] - (fgrad[wprev] + fgrad[wprev - 1]) / 2.0;
-                LTFAT_NAME(heap_insert)(h, w - 1);
+                phase[wprev - 1] = phase[wprev] - (fgrad[wprev] + fgrad[wprev - 1]) * oneover2;
                 donemask[wprev - 1] = 1;
+
+                LTFAT_NAME(heap_insert)(h, w - 1);
                 quickbreak--;
             }
         }
@@ -273,9 +276,10 @@ PHASERET_NAME(rtpghiupdate_execute)(PHASERET_NAME(rtpghiupdate_plan)* p,
             if ( !donemask[w] )
             {
                 ltfat_int wnext = w + M2;
-                phase[w] = startphase[w] + (tgrad[w] + tgrad[wnext]) / 2.0;
-                LTFAT_NAME(heap_insert)(h, wnext);
+                phase[w] = startphase[w] + (tgrad[w] + tgrad[wnext]) * oneover2;
                 donemask[w] = 1;
+
+                LTFAT_NAME(heap_insert)(h, wnext);
                 quickbreak--;
             }
         }
