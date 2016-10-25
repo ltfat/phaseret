@@ -417,15 +417,13 @@ void
 PHASERET_NAME(rtpghilog)(const LTFAT_REAL* in, ltfat_int L, LTFAT_REAL* out)
 {
     for (ltfat_int l = 0; l < L; l++)
-        out[l] = log(in[l] + DBL_MIN);
-
+        out[l] = log(in[l] + eps);
 }
 
 void
 PHASERET_NAME(rtpghimagphase)(const LTFAT_REAL* s, const LTFAT_REAL* phase,
-                              ltfat_int L,
-                              LTFAT_COMPLEX* c)
+                              ltfat_int L, LTFAT_COMPLEX* c)
 {
     for (ltfat_int l = 0; l < L; l++)
-        c[l] = s[l] * exp(I * phase[l]);
+        c[l] = s[l] * (cos(phase[l]) + I * sin(phase[l]));
 }
