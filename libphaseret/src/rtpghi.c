@@ -416,6 +416,12 @@ PHASERET_NAME(rtpghitgrad)(const LTFAT_REAL* logs, ltfat_int a, ltfat_int M,
 void
 PHASERET_NAME(rtpghilog)(const LTFAT_REAL* in, ltfat_int L, LTFAT_REAL* out)
 {
+#ifdef LTFAT_DOUBLE
+    LTFAT_REAL eps = DBL_MIN;
+#elif defined(LTFAT_SINGLE)
+    LTFAT_REAL eps = FLT_MIN;
+#endif
+
     for (ltfat_int l = 0; l < L; l++)
         out[l] = log(in[l] + eps);
 }

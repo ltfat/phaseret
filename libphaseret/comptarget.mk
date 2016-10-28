@@ -9,8 +9,13 @@ ifeq ($(COMPTARGET),release)
 	CXXFLAGS +=-O2 -DNDEBUG
 endif
 
+ifeq ($(COMPTARGET),profiling)
+	CFLAGS +=-O2 -DNDEBUG -g
+	CXXFLAGS +=-O2 -DNDEBUG -g
+endif
+
 ifeq ($(COMPTARGET),fulloptim)
-	CFLAGS +=-O3 -DNDEBUG
-	CXXFLAGS +=-O3 -DNDEBUG
+	CFLAGS +=-O3 -DNDEBUG -ffast-math
+	CXXFLAGS +=-O3 -DNDEBUG -ffast-math
 endif
 
