@@ -34,12 +34,11 @@ function [c,relres,iter,f]=decolbfgs(s,g,a,M,varargin)
 % AUTHOR: Zdenek Prusa
 %
 
-definput.flags.phase={'freqinv','timeinv'};
+definput.flags.phase={'timeinv','freqinv'};
 definput.keyvals.p=2/3;
 definput.keyvals.tol=1e-6;
 definput.keyvals.maxit=100;
 definput.keyvals.Ls=[];
-definput.keyvals.p=2;
 definput.keyvals.printstep=10;
 definput.flags.print={'quiet','print'};
 definput.flags.startphase={'input','zero','rand'};
@@ -54,6 +53,9 @@ sframe = framenative2coef(F,s);
 
 c = framecoef2native(F,frana(F,f));
 
+if isempty(Ls)
+    Ls = size(s,2)*a;
+end
 
 f = postpad(f,Ls);
 
