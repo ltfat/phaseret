@@ -37,7 +37,7 @@ void
 mexFunction(int nlhs, mxArray* plhs[],
             int nrhs, const mxArray* prhs[])
 {
-    UNUSED(nrhs);
+    UNUSED(nrhs); UNUSED(nlhs);
     double* slog = mxGetData(prhs[0]);
     double* tgrad = mxGetData(prhs[1]);
     double* fgrad = mxGetData(prhs[2]);

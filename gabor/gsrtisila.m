@@ -44,6 +44,25 @@ function [c,f,relres,iter]=gsrtisila(s,g,a,M,varargin)
 %                            value is 5. The total number
 %                            of per-frame iteratins is `(lookahead+1)*maxit`.
 %
+%   Phase initialization:
+%   ---------------------
+%
+%   Optionally, the following phase initialization strategies for the
+%   newest lookahead frame can be employed:
+%
+%      'zeros'          Initialize with zeros. This is the default.
+%
+%      'unwrap'         Use phase vocoder style phase unwrapping.
+%
+%      'spsi'           Use the SPSI algorithm.
+%
+%      'rtpghi',gamma   Use the RTPGHI algorithm. The algorithm requires
+%                       one additional look-ahead frame.
+%
+%      'rtpghi',{gamma,'causal'}  Use the causal version of RTPGHI.
+%
+%      'rtpghi',{gamma,tol,...}   Set tolerance of RTPGHI to `tol`. 
+%
 %
 %   See also:  idgtreal, dgtreal
 %
@@ -70,11 +89,10 @@ L = N*a;
 definput.keyvals.Ls=[];
 definput.keyvals.maxit=5;
 definput.keyvals.lookahead = [];
-definput.flags.phase={'freqinv','timeinv'};
+definput.flags.phase={'timeinv','freqinv'};
 definput.flags.lastbufinit={'zeros','unwrap','input','spsi','rtpghi'};
 definput.keyvals.rtpghi = {};
 definput.keyvals.unwrappar=0.3;
-definput.flags.frameorder={'reverse','energy'};
 [flags,kv,Ls]=ltfatarghelper({'Ls','maxit'},definput,varargin);
 
 complainif_notposint(kv.maxit,'maxit',mfilename);
@@ -130,12 +148,19 @@ cframes = zeros(M2 ,lookback + kv.lookahead+1);
 
 if flags.do_rtpghi
     [tgrad, fgrad, logs] = comp_pghiphasegrad( abss, gamma, a, M, 1, flags2.do_causal);
-    tmpmask = zeros(M2,2); tmpmask(:,1) = 1;
 end
 
 c = zeros(M2,N);
 % Preread modulus
 sframes(:,2:end) = abss(:,1:kv.lookahead);
+
+if flags.do_input
+    cframes(:,2:end) = s(:,1:kv.lookahead);
+end
+
+if flags.do_unwrap
+   omega = 2*pi*a*(0:M2-1)'/M;  
+end
 
 % n -th frame is the submit frame
 for n=1:N
@@ -149,38 +174,25 @@ for n=1:N
     if flags.do_spsi
         oldphase = angle(cframes(:,end-1));
         cframes(:,end) = comp_spsi(sframes(:,end),a,M,oldphase);
-        %cframes(:,end) = gdnum.*fftshift(comp_ifftreal(coefbuf(:,end),M))*M;
     elseif flags.do_unwrap
-        nom = sframes(:,end).*cframes(:,end-1).^2.*sframes(:,end-2);
-        denom = sframes(:,end-1).^2.*cframes(:,end-2);
-        cframes(:,end) = nom./ denom;
-        cframes(abs(denom)<1e-8,end) = 0;
-        %cframes(:,end) = fftshift(comp_ifftreal(coefbuf(:,end),M))*M;
+        phase2 = angle(cframes(:,end-2));
+        phase1 = angle(cframes(:,end-1));
+        phase0 = phase1 + omega + vocoderprincarg(phase1 - phase2 - omega);
+        cframes(:,end) = kv.unwrappar*sframes(:,end).*exp(1i*phase0);
     elseif flags.do_input
-        frames(:,end) = gdnum.*fftshift(comp_ifftreal(s(:,nextnewframeidx),M))*M;
+        cframes(:,end) = s(:,nextnewframeidx);
     elseif flags.do_rtpghi
         oldphase = angle(cframes(:,end-1));
         newphase = comp_rtpghiupdate(logs(:,idx),tgrad(:,idx),fgrad(:,idx(2)),oldphase,tol,M);
         cframes(:,end) = sframes(:,end).*exp(1i*newphase);
-        %cframes(:,end) = gdnum.*fftshift(comp_ifftreal(coefbuf(:,end),M))*M;
     end
 
     % Update the lookahead frames and the submit frame
     [frames, cframes, c(:,n)] = ...
-    comp_gsrtisilaupdate(frames,cframes,gnums,gdnum,a,M,sframes,kv.lookahead,kv.maxit,flags.do_energy);
+    comp_gsrtisilaupdate(frames,cframes,gnums,gdnum,a,M,sframes,kv.lookahead,kv.maxit);
 end
 
 iter = kv.maxit*kv.lookahead;
-
-% Alternative way of reconstruction from recframes
-%
-% f = zeros(L,1);
-% idxrange = [0:floor(M/2),-ceil(M/2)+1:-1];
-% for n=0:N-1
-%     idx = mod(n*a + idxrange,L) + 1;
-%     f(idx) = f(idx) + recframes(:,n+1);
-% end
-% c = dgtreal(f,g,a,M,flags.phase);
 
 if ~flags.do_timeinv
     c = phaseunlockreal(c,a,M);
@@ -195,6 +207,15 @@ end
 
 % Cur or extend and reformat f
 f = comp_sigreshape_post(f,Ls,0,[0; W]);
+
+function phase_out = vocoderprincarg(phase)
+phase_out = phase - 2*pi*round(phase/(2*pi));
+
+if any(abs(exp(1i*phase)-exp(1i*phase_out))>1e-10)
+    error('Unwrapping failed');
+end
+
+
 
 function [frames,cframes,sframes] = shiftcolsleft(frames,cframes,sframes)
 

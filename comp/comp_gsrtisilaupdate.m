@@ -1,7 +1,8 @@
-function [cframes2,coefbuf,c] = comp_gsrtisilaupdate(cframes,coefbuf,gnums,gdnum,a,M,sframes,lookahead,maxit,do_energyorder)
+function [cframes2,coefbuf,c] = comp_gsrtisilaupdate(cframes,coefbuf,gnums,gdnum,a,M,sframes,lookahead,maxit)
 % cframes: lookback + 1 + lookahead == size(cframes,2)
 % cframes2: 1 + lookahead == size(cframes2,2)
 % sframes: 1 + lookahead == size(sframes,2)
+do_energyorder = 0;
 
 N = size(cframes,2);
 M2 = floor(M/2) + 1;

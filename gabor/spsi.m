@@ -11,13 +11,8 @@ function chat  = spsi(s,a,M,varargin)
 %         chat   : $M2 \times N$ array of coefficients with reconstructed phase.
 %
 %   `c=spsi(s,a,M)` returns array of coefficients *c* with reconstructed 
-%   frequency invariant phase (the default convention in |dgtreal|) such 
-%   that the they can be directly used in |idgtreal|.
+%   phase that the they can be directly used in |idgtreal| such as::
 %
-%   `c=spsi(s,a,M,'timeinv')` returns coefficients with time invariant
-%   phase. To reconstruct the signal function |idgtreal| must be called
-%   with 'timeinv' i.e::
-%   
 %       fhat = idgtreal(...,'timeinv').
 %
 %   This code was downloaded from
@@ -26,11 +21,6 @@ function chat  = spsi(s,a,M,varargin)
 %   It has been modified to work on the Gabor coefficients directly and 
 %   +/- pi alternation is no longer necessary.
 %
-%   Examples:
-%   ---------
-%
-%   Reconstructing phase for greasy
-%   
 %   References: be15 ltfatnote040
 %
 
@@ -49,7 +39,7 @@ if size(s,3)>1
    error('%s: c cannot be 3dimensional.',upper(mfilename)); 
 end
 
-definput.flags.phase={'freqinv','timeinv'};
+definput.flags.phase={'timeinv','freqinv'};
 definput.keyvals.mask = [];
 definput.keyvals.phase = [];
 [flags,kv,mask,phase]=ltfatarghelper({'mask','phase'},definput,varargin);

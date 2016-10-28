@@ -1,8 +1,8 @@
 function [c,f,relres,iter]=rtisila(s,g,a,M,varargin)
 %RTISILA Real-Time Iterative Spectrogram Inversion with Look Ahead
-%   Usage: f = rtisila(s,g,a,M)
-%          f = rtisila(s,g,a,M,Ls)
-%          [f,relres,iter,c] = rtisila(...)
+%   Usage: c = rtisila(s,g,a,M)
+%          c = rtisila(s,g,a,M,Ls)
+%          [c,f,relres,iter] = rtisila(...)
 %
 %   Input parameters:
 %         s       : Modulus of coefficients.
@@ -69,7 +69,7 @@ L = N*a;
 definput.keyvals.Ls=[];
 definput.keyvals.maxit=5;
 definput.keyvals.lookahead = [];
-definput.flags.phase={'freqinv','timeinv'};
+definput.flags.phase={'timeinv','freqinv'};
 [flags,kv,Ls]=ltfatarghelper({'Ls','maxit'},definput,varargin);
 
 complainif_notposint(kv.maxit,'maxit',mfilename);
@@ -92,7 +92,6 @@ if numel(gnum) > M
 end
 
 abss = abs(s);
-
 
 lookback = max([ceil(M/a) - 1, kv.lookahead]);
 
@@ -132,16 +131,6 @@ for n=1:N
 end
 
 iter = kv.maxit*kv.lookahead;
-
-% Alternative way of reconstruction from recframes
-% 
-% f = zeros(L,1);
-% idxrange = [0:floor(M/2),-ceil(M/2)+1:-1];
-% for n=0:N-1
-%     idx = mod(n*a + idxrange,L) + 1;
-%     f(idx) = f(idx) + recframes(:,n+1);
-% end
-% c = dgtreal(f,g,a,M,flags.phase);
 
 if ~flags.do_timeinv
     c = phaseunlockreal(c,a,M);

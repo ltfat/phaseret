@@ -55,4 +55,4 @@ end
 N = size(s,2);
 L = N*a;
 g = {'gauss',gamma/L};
-[c,newphase,usedmask,tgrad,fgrad]=constructphasereal(s,g,a,M,varargin{:});
+[c,newphase,usedmask,tgrad,fgrad]=constructphasereal(s,g,a,M,'timeinv',varargin{:});

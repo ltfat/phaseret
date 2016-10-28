@@ -1,8 +1,8 @@
-function [c,relres,iter,f]=legla(s,g,a,M,varargin)
+function [c,f,relres,iter]=legla(s,g,a,M,varargin)
 %LEGLA Le Roux's Griffin-Lim Algorithm for real signals
 %   Usage: c = legla(s,g,a,M)
 %          c = legla(s,g,a,M,Ls)
-%          [c,relres,iter,f] = legla(...)
+%          [c,f,relres,iter] = legla(...)
 %
 %   Input parameters:
 %         s       : Array of initial coefficients.
@@ -12,9 +12,9 @@ function [c,relres,iter,f]=legla(s,g,a,M,varargin)
 %         Ls      : length of signal.
 %   Output parameters:
 %         c       : Coefficients with the reconstructed phase
+%         f       : Signal.
 %         relres  : Vector of residuals.
 %         iter    : Number of iterations done.
-%         f       : Signal.
 %
 %   `legla(s,g,a,M)` attempts to find coefficients *c* from their abs. 
 %   value::
@@ -23,7 +23,7 @@ function [c,relres,iter,f]=legla(s,g,a,M,varargin)
 %
 %   using Le Rouxs modifications of the Griffin-Lim algorithm.
 %
-%   `[c,relres,iter,f]=legla(...)` additionally returns an array
+%   `[c,f,relres,iter]=legla(...)` additionally returns an array
 %   of residuals `relres`, the number of iterations done `iter` and the
 %   reconstructed signal *f*. The relationship between *f* and *c* is::
 %
@@ -133,7 +133,7 @@ definput.flags.updatescheme={'stepwise','onthefly'};
 definput.flags.method={'legla','flegla'};
 definput.keyvals.alpha=0.99;
 definput.flags.print={'quiet','print'};
-definput.flags.phase={'freqinv','timeinv'};
+definput.flags.phase={'timeinv','freqinv'};
 definput.keyvals.relthr = 1e-3;
 definput.keyvals.kernsize = [];
 definput.keyvals.printstep=10;

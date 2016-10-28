@@ -1,8 +1,8 @@
-function [c,relres,iter,f]=lertisila(s,g,a,M,varargin)
+function [c,f,relres,iter]=lertisila(s,g,a,M,varargin)
 %LERTISILA RTISI for real signals using Le Roux's truncated updates
 %   Usage: c = lertisila(s,g,a,M)
 %          c = lertisila(s,g,a,M,Ls)
-%          [c,relres,iter,f] = lertisila(...)
+%          [c,f,relres,iter] = lertisila(...)
 %
 %   Input parameters:
 %         s       : Array of initial coefficients.
@@ -11,10 +11,10 @@ function [c,relres,iter,f]=lertisila(s,g,a,M,varargin)
 %         M       : Number of channels
 %         Ls      : length of signal.
 %   Output parameters:
+%         c       : Coefficients with the reconstructed phase.
 %         f       : Reconstructed signal.
 %         relres  : Final residual error.
 %         iter    : Number of per-frame iterations done.
-%         c       : Coefficients with the reconstructed phase.
 %
 %   `lertisila(s,g,a,M)` attempts to find Gabor coefficients *c* such
 %   that::
@@ -24,7 +24,7 @@ function [c,relres,iter,f]=lertisila(s,g,a,M,varargin)
 %   using the Real-Time Iterative Spectrogram Inversion with Look Ahead
 %   and Le Roux's truncated phase updates.
 %   
-%   `[c,relres,iter,f]=lertisila(...)` additionally returns an array
+%   `[c,f,relres,iter]=lertisila(...)` additionally returns an array
 %   of residuals `relres`, the number of per-frame iterations done `iter` 
 %   and the coefficients *c* with the reconstructed phase. The relationship
 %   between *f* and *c* is::
@@ -122,7 +122,7 @@ definput.flags.frameorder={'plain','energy'};
 definput.flags.asymwin={'asymwin','regwin'};
 definput.keyvals.lookahead = [];
 definput.keyvals.freqneighs = [];
-definput.flags.phase={'freqinv','timeinv'};
+definput.flags.phase={'timeinv','freqinv'};
 definput.flags.algvariant={'trunc','modtrunc'};
 definput.flags.updatescheme={'framewise','onthefly'};
 [flags,kv,Ls]=ltfatarghelper({'Ls','maxit'},definput,varargin);
@@ -340,15 +340,19 @@ for n=1:N
     c(:,n) = cbuf(:,lookback + 1);
 end
 
-relres = norm(abs(projfncBaseReal(c))-abss,'fro')/norm_s;
-iter = kv.maxit*kv.lookahead;
-
 f = idgtreal(c,gd,a,M,Ls);
 f = comp_sigreshape_post(f,Ls,0,[0; W]);
 
 if flags.do_timeinv
     c = phaselockreal(c,a,M);
 end
+
+iter = kv.maxit*kv.lookahead;
+
+if nargout > 2
+    relres = norm(abs(projfncBaseReal(c))-abss,'fro')/norm_s;
+end
+
 
 % M/a periodic in n
 function kernm = phasekernfi(kern,n,a,M)
@@ -358,30 +362,3 @@ kernh = size(kern,1);
 l = -2*pi*n*(0:kernh-1)'*a/M;
 
 kernm = bsxfun(@times,kern,exp(1i*l));
-
-% M/a periodic in m
-function kernm = phasekernti(kern,m,a,M)
-
-[kernh, kernw] = size(kern);
-l = 2*pi*m*fftindex(kernw)'*a/M;
-
-kernm = bsxfun(@times,kern,exp(1i*l));
-
-
-function f=involute2(f)
-f = involute(f,1);
-f = conj(involute(f,2));
-
-function f=middlepad2(f,L,varargin)
-f = middlepad(f,L(1),1,varargin{:});
-f = middlepad(f,L(2),2,varargin{:});
-
-
-
-
-
-
-
-
-
-

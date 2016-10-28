@@ -12,7 +12,6 @@ Further, some functions require additional dependencies:
 * [decolbfgs](http://ltfat.github.io/phaseret/mat/decolbfgs.html) requires
 [minFunc](https://www.cs.ubc.ca/~schmidtm/Software/minFunc.html)
 
-
 ## Instalation and usage
 
 In order to use the toolbox it is necessary to run
@@ -32,7 +31,7 @@ from within Matlab/Octave command line. Note that
 the [FFTW library](http://fftw.org/) has to be installed
 by e.g. `apt-get install libfftw3-dev` on Debian-based systems.
 On Windows, this has to be done manually by downloading the archive from [here](http://fftw.org/install/windows.html) and placing
-libfftw3-3.dll to the [path_to_phaseret]/mex subdirectory).
+libfftw3-3.dll and libfftw3f-3.dll to the [path_to_phaseret]/mex subdirectory).
 
 To start the toolbox automatically add the following lines
 ```
@@ -48,7 +47,7 @@ Note that pre-compiled packages for Windows can be downloaded from
 [the GitHub release page](https://github.com/ltfat/phaseret/releases).
 
 ## Documentation
-Online documentation is available [here](http://ltfat.github.io/phaseret/mat).
+Online documentation is available [here](http://ltfat.github.io/phaseret/doc).
 
 # References
 

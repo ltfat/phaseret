@@ -1,8 +1,8 @@
-function [c,relres,iter,f]=gla(s,g,a,M,varargin)
+function [c,f,relres,iter]=gla(s,g,a,M,varargin)
 %GLA Griffin-Lim Algorithm for real signals
 %   Usage: c = gla(s,g,a,M)
 %          c = gla(s,g,a,M,Ls)
-%          [c,relres,iter,f] = gla(...)
+%          [c,f,relres,iter] = gla(...)
 %
 %   Input parameters:
 %         s       : Initial coefficients.
@@ -11,10 +11,10 @@ function [c,relres,iter,f]=gla(s,g,a,M,varargin)
 %         M       : Number of channels
 %         Ls      : Length of signal.
 %   Output parameters:
+%         c       : Coefficients with the reconstructed phase
 %         f       : Signal.
 %         relres  : Vector of residuals.
 %         iter    : Number of iterations done.
-%         c       : Coefficients with the reconstructed phase
 %
 %   `gla(s,g,a,M)` attempts to find coefficients *c* from
 %   their abs. value::
@@ -23,7 +23,7 @@ function [c,relres,iter,f]=gla(s,g,a,M,varargin)
 %
 %   using the Griffin-Lim algorithm.
 %
-%   `[c,relres,iter,f]=gla(...)` additionally returns an array
+%   `[c,f,relres,iter]=gla(...)` additionally returns an array
 %   of residuals `relres`, the number of iterations done `iter` and the
 %   coefficients *c* with the reconstructed phase. The relationship between
 %   *f* and *c* is::
@@ -95,7 +95,7 @@ definput.flags.startphase={'input','zero','rand'};
 definput.flags.method={'gla','fgla'};
 definput.keyvals.alpha=0.99;
 definput.flags.print={'quiet','print'};
-definput.flags.phase={'freqinv','timeinv'};
+definput.flags.phase={'timeinv','freqinv'};
 definput.keyvals.kernsize = [];
 definput.keyvals.printstep=10;
 definput.keyvals.coefmod = [];
