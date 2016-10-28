@@ -1,4 +1,4 @@
-function test_failed=test_legla
+function test_failed=testphaseret_legla
 test_failed = 0;
 
 f = greasy;
@@ -17,20 +17,33 @@ for pcId = 1:2
     c = tra(f);
     s = abs(c);
     
-    tic;
-    chat=legla(s,g,a,M,phaseconv);
-    toc;
+    [chat,~,relres]=legla(s,g,a,M,phaseconv);
+    
+    if strcmp(phaseconv,'timeinv')
+        % test if timeinv is default
+        [chat2,~,relres2,iter2]=legla(s,g,a,M);
+        
+        E = norm(chat-chat2,'fro');
+        
+        fail = '';            
+        if E>eps
+            test_failed = test_failed + 1;
+            fail = 'FAILED';
+        end
+        
+        fprintf('GLA timeinv default W=%d %s\n',1,fail);
+    end
     
     E = magnitudeerrdb(s,proj(chat));
     fail = '';            
-    if E>-20
+    if E>-20 || abs(E-20*log10(relres(end)))>1
         test_failed = test_failed + 1;
         fail = 'FAILED';
     end
 
     fprintf('LEGLA              %s W=%d E=%.2f %s\n',phaseconv,1,E,fail);
     
-    [chat,relres,iter,f]=legla(s,g,a,M,phaseconv,'modtrunc');
+    [chat,~,relres,iter]=legla(s,g,a,M,phaseconv,'modtrunc');
     
     E = magnitudeerrdb(s,proj(chat));
     fail = '';            
@@ -41,7 +54,7 @@ for pcId = 1:2
 
     fprintf('LEGLA modtrunc     %s W=%d E=%.2f %s\n',phaseconv,1,E,fail);
     
-    [chat,relres,iter,f]=legla(s,g,a,M,phaseconv,'onthefly');
+    [chat,~,relres,iter]=legla(s,g,a,M,phaseconv,'onthefly');
     
     E = magnitudeerrdb(s,proj(chat));
     fail = '';            
@@ -52,7 +65,7 @@ for pcId = 1:2
 
     fprintf('LEGLA onthefly     %s W=%d E=%.2f %s\n',phaseconv,1,E,fail);
     
-    [chat,relres,iter,f]=legla(s,g,a,M,phaseconv,'onthefly','modtrunc');
+    [chat,~,relres,iter]=legla(s,g,a,M,phaseconv,'onthefly','modtrunc');
     
     E = magnitudeerrdb(s,proj(chat));
     fail = '';            
@@ -63,7 +76,7 @@ for pcId = 1:2
 
     fprintf('LEGLA onthefly mt  %s W=%d E=%.2f %s\n',phaseconv,1,E,fail);
     
-    [chat,relres,iter,f]=legla(s,g,a,M,phaseconv,'flegla');
+    [chat,~,relres,iter]=legla(s,g,a,M,phaseconv,'flegla');
     
     E = magnitudeerrdb(s,proj(chat));
     fail = '';            
@@ -74,7 +87,7 @@ for pcId = 1:2
 
     fprintf('FLEGLA             %s W=%d E=%.2f %s\n',phaseconv,1,E,fail);   
     
-    [chat,relres,iter,f]=legla(s,g,a,M,phaseconv,'flegla','modtrunc');
+    [chat,~,relres,iter]=legla(s,g,a,M,phaseconv,'flegla','modtrunc');
     
     E = magnitudeerrdb(s,proj(chat));
     fail = '';            
@@ -85,7 +98,7 @@ for pcId = 1:2
 
     fprintf('FLEGLA modtrunc    %s W=%d E=%.2f %s\n',phaseconv,1,E,fail);  
     
-    [chat,relres,iter,f]=legla(s,g,a,M,phaseconv,'flegla','onthefly');
+    [chat,~,relres,iter]=legla(s,g,a,M,phaseconv,'flegla','onthefly');
     
     E = magnitudeerrdb(s,proj(chat));
     fail = '';            
@@ -96,7 +109,7 @@ for pcId = 1:2
 
     fprintf('FLEGLA onthefly    %s W=%d E=%.2f %s\n',phaseconv,1,E,fail); 
     
-    [chat,relres,iter,f]=legla(s,g,a,M,phaseconv,'flegla','onthefly','modtrunc');
+    [chat,~,relres,iter]=legla(s,g,a,M,phaseconv,'flegla','onthefly','modtrunc');
     
     E = magnitudeerrdb(s,proj(chat));
     fail = '';            

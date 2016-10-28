@@ -4,9 +4,9 @@ function test_failed=testphaseret_gsrtisila
 test_failed = 0;
 
 f = cocktailparty;
-a = 64;
-M = 1024;
-gl = 512;
+a = 256;
+M = 2048;
+gl = 2048;
 h = 0.01;
 g = gabwin({'gauss','width',gl,'atheight',h,'inf'},a,M,10*gl);
 g = long2fir(g,gl);
@@ -55,7 +55,7 @@ for pcId = 1:2
 
     fprintf('GSRTISILA lookahead=2 %s W=%d E=%.2f %s\n',phaseconv,1,E,fail);
     
-    [chat]=gsrtisila(s,g,a,M,phaseconv,'rtpghi',gamma,'maxit',2,'lookahead',3);
+    [chat]=gsrtisila(s,g,a,M,phaseconv,'rtpghi',{gamma},'maxit',2,'lookahead',2);
 
     E = magnitudeerrdb(s,proj(chat));
     fail = '';

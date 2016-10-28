@@ -1,4 +1,4 @@
-function test_failed=test_spsi
+function test_failed=testphaseret_spsi
 test_failed = 0;
 
 f = greasy;

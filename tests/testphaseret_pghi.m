@@ -1,4 +1,4 @@
-function test_failed=test_pghi
+function test_failed=testphaseret_pghi
 %TEST_CONSTRUCTPHASE  
 %
 test_failed = 0;

@@ -1,4 +1,4 @@
-function test_failed=test_rtpghi
+function test_failed=testphaseret_rtpghi
 %TEST_CONSTRUCTPHASE  
 %
 test_failed = 0;

@@ -1,4 +1,4 @@
-function test_failed=test_decolbfgs
+function test_failed=testphaseret_decolbfgs
 %TEST_CONSTRUCTPHASE  
 %
 test_failed = 0;

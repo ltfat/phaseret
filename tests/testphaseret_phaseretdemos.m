@@ -1,4 +1,4 @@
-function test_failed=test_phaseretdemos
+function test_failed=testphaseret_phaseretdemos
 %TEST_DEMOS  Test if all the demos runs without errors.
   
   test_failed=0;
