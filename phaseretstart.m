@@ -5,17 +5,15 @@ function phaseretstart(verbose)
 %   `phaseretstart` starts the PHASERET toolbox. This must be run
 %   before using any of the functions in the toolbox.
 %
-%   The function adds [basepath] and [basepath]/../mex directories to path,
-%   where basepath is the directory where phaseretstart resides in.
-%   The function also checks whether LTFAT is installed and whether MEX 
-%   files were compiled.
+%   The function checks whether the required version of LTFAT is installed
+%   and whether MEX files were compiled.
 %
 
 if nargin < 1
     verbose = 1;
 end
 
-requiredLTFAT = '2.1.2';
+requiredLTFAT = '2.1.3';
 pgausspath = which('comp_pgauss');
 thispath = fileparts(which(mfilename));
 basepath = thispath;
@@ -24,13 +22,13 @@ phaseretver = deblank(fileread(fullfile(basepath,'phaseret_version')));
 
 % Check if ltfat is started
 if isempty(pgausspath)
-    error('%s: LTFAT not found. Please install LTFAT 2.1.2 or newer.',...
-    upper(mfilename))
+    error('%s: LTFAT not found. Please install LTFAT %s or newer.',...
+    upper(mfilename),requiredLTFAT);
 else
     verstr = deblank(fileread([ltfatbasepath,'ltfat_version']));
     if verstr2num(verstr) < verstr2num(requiredLTFAT)
-        error('%s: LTFAT 2.1.2 or newer is required. Detected %s',...
-        upper(mfilename),verstr);
+        error('%s: LTFAT %s or newer is required. Detected %s',...
+        upper(mfilename),requiredLTFAT,verstr);
     end
 end
 

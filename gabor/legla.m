@@ -1,7 +1,7 @@
 function [c,f,relres,iter]=legla(s,g,a,M,varargin)
 %LEGLA Le Roux's Griffin-Lim Algorithm for real signals
 %   Usage: c = legla(s,g,a,M)
-%          c = legla(s,g,a,M,Ls)
+%          c = legla(s,g,a,M,maxit)
 %          [c,f,relres,iter] = legla(...)
 %
 %   Input parameters:
@@ -138,7 +138,8 @@ definput.keyvals.relthr = 1e-3;
 definput.keyvals.kernsize = [];
 definput.keyvals.printstep=10;
 definput.keyvals.coefmod = [];
-[flags,kv,Ls]=ltfatarghelper({'Ls','maxit'},definput,varargin);
+[flags,kv]=ltfatarghelper({'maxit'},definput,varargin);
+Ls = kv.Ls;
 
 if ~isempty(kv.coefmod) && isa(kv.coefmod,'function_handle')
     error('%s: coefmod must be anonymous function.',upper(mfilename))
@@ -151,6 +152,9 @@ end
 if flags.do_input
     % Start with the phase given by the input.
     c=s;
+    if flags.do_timeinv
+       c = phaseunlockreal(c,a,M);
+    end
 end;
 
 if flags.do_zero

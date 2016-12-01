@@ -1,9 +1,8 @@
 function [c,newphase,usedmask,tgrad,fgrad]=pghi(s,gamma,a,M,varargin)
 %PGHI Phase Gradient Heap Integration
 %   Usage:  c=pghi(s,gamma,a,M);
-%           c=pghi(s,gamma,a,M,tol);
-%           c=pghi(c,gamma,a,M,tol,mask);
-%           c=pghi(c,gamma,a,M,tol,mask,usephase);
+%           c=pghi(c,gamma,a,M,mask);
+%           c=pghi(c,gamma,a,M,mask,usephase);
 %           [c,newphase,usedmask,tgrad,fgrad] = pghi(...);
 %
 %   Input parameters:
@@ -25,7 +24,7 @@ function [c,newphase,usedmask,tgrad,fgrad]=pghi(s,gamma,a,M,varargin)
 %   absolute values *s* using the Phase Gradient Heap Integration algorithm.
 %   *s* must have been obtained as::
 %
-%       c = dgtreal(f,g,a,M);
+%       c = dgtreal(f,g,a,M,'timeinv');
 %       s = abs(c);
 %
 %   and the algorithm attempts to recover *c*. Parameter *gamma* is window 
@@ -55,4 +54,12 @@ end
 N = size(s,2);
 L = N*a;
 g = {'gauss',gamma/L};
-[c,newphase,usedmask,tgrad,fgrad]=constructphasereal(s,g,a,M,'timeinv',varargin{:});
+
+definput.keyvals.tol=[1e-1,1e-10];
+definput.keyvals.mask=[];
+definput.keyvals.usephase=[];
+definput.flags.phase={'timeinv','freqinv'};
+[flags,kv]=ltfatarghelper({'mask','usephase'},definput,varargin);
+
+[c,newphase,usedmask,tgrad,fgrad]=...
+    constructphasereal(s,g,a,M,'tol',kv.tol,'mask',kv.mask,'usephase',kv.usephase,flags.phase);

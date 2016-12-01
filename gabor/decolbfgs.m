@@ -1,8 +1,9 @@
-function [c,relres,iter,f]=decolbfgs(s,g,a,M,varargin)
+function [c,f,relres,iter]=decolbfgs(s,g,a,M,varargin)
 %DECOLBFGS Decorsiere's phase reconstruction algorithm
 %   Usage: c = decolbfgs(s,g,a,M)
-%          c = decolbfgs(s,g,a,M,Ls)
-%          [c,relres,iter,f] = decolbfgs(...)
+%          c = decolbfgs(s,g,a,M,maxit)
+%          c = decolbfgs(s,g,a,M,maxit,tol)
+%          [c,f,relres,iter] = decolbfgs(...)
 %
 %   Input parameters:
 %         s       : Initial coefficients.
@@ -42,7 +43,8 @@ definput.keyvals.Ls=[];
 definput.keyvals.printstep=10;
 definput.flags.print={'quiet','print'};
 definput.flags.startphase={'input','zero','rand'};
-[flags,kv,Ls]=ltfatarghelper({'Ls','maxit'},definput,varargin);
+[flags,kv]=ltfatarghelper({'maxit','tol'},definput,varargin);
+Ls = kv.Ls;
 
 F = frame('dgtreal',g,a,M,flags.phase);
 

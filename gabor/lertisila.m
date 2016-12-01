@@ -1,7 +1,7 @@
 function [c,f,relres,iter]=lertisila(s,g,a,M,varargin)
 %LERTISILA RTISI for real signals using Le Roux's truncated updates
 %   Usage: c = lertisila(s,g,a,M)
-%          c = lertisila(s,g,a,M,Ls)
+%          c = lertisila(s,g,a,M,maxit)
 %          [c,f,relres,iter] = lertisila(...)
 %
 %   Input parameters:
@@ -9,7 +9,8 @@ function [c,f,relres,iter]=lertisila(s,g,a,M,varargin)
 %         g       : Analysis Gabor window
 %         a       : Hop factor
 %         M       : Number of channels
-%         Ls      : length of signal.
+%         Ls      : Length of signal
+%         maxit   : Numer of iterations
 %   Output parameters:
 %         c       : Coefficients with the reconstructed phase.
 %         f       : Reconstructed signal.
@@ -125,7 +126,8 @@ definput.keyvals.freqneighs = [];
 definput.flags.phase={'timeinv','freqinv'};
 definput.flags.algvariant={'trunc','modtrunc'};
 definput.flags.updatescheme={'framewise','onthefly'};
-[flags,kv,Ls]=ltfatarghelper({'Ls','maxit'},definput,varargin);
+[flags,kv]=ltfatarghelper({'maxit'},definput,varargin);
+Ls = kv.Ls;
 
 if ~isnumeric(kv.maxit) || any(kv.maxit<=0) || any(rem(kv.maxit,1))
     error('%s: maxit must be a positive integer (or array).',upper(mfilename));
@@ -343,14 +345,14 @@ end
 f = idgtreal(c,gd,a,M,Ls);
 f = comp_sigreshape_post(f,Ls,0,[0; W]);
 
-if flags.do_timeinv
-    c = phaselockreal(c,a,M);
-end
-
 iter = kv.maxit*kv.lookahead;
 
 if nargout > 2
     relres = norm(abs(projfncBaseReal(c))-abss,'fro')/norm_s;
+end
+
+if flags.do_timeinv
+    c = phaselockreal(c,a,M);
 end
 
 

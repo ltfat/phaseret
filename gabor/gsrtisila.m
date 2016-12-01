@@ -1,7 +1,8 @@
 function [c,f,relres,iter]=gsrtisila(s,g,a,M,varargin)
 %GSRTISILA Gnann and Spiertz’s Real-Time Iterative Spectrogram Inversion
 %   Usage: c = gsrtisila(s,g,a,M)
-%          c = gsrtisila(s,g,a,M,Ls)
+%          c = gsrtisila(c,g,a,M,mask)
+%          c = gsrtisila(s,g,a,M,mask,usephase)
 %          [c,f,relres,iter] = gsrtisila(...)
 %
 %   Input parameters:
@@ -93,7 +94,8 @@ definput.flags.phase={'timeinv','freqinv'};
 definput.flags.lastbufinit={'zeros','unwrap','input','spsi','rtpghi'};
 definput.keyvals.rtpghi = {};
 definput.keyvals.unwrappar=0.3;
-[flags,kv,Ls]=ltfatarghelper({'Ls','maxit'},definput,varargin);
+[flags,kv]=ltfatarghelper({'maxit'},definput,varargin);
+Ls = kv.Ls;
 
 complainif_notposint(kv.maxit,'maxit',mfilename);
 
@@ -110,11 +112,11 @@ if flags.do_rtpghi
     if isempty(kv.rtpghi)
         error('%s: RTPGHI parameters cell is empty.',upper(mfilename));
     end
-    
+
     if ~iscell(kv.rtpghi) && isscalar(kv.rtpghi)
         kv.rtpghi = { kv.rtpghi };
     end
-    
+
     definput2.keyvals.gamma = [];
     definput2.keyvals.tol=1e-6;
     definput2.flags.variant={'normal','causal'};
@@ -159,7 +161,7 @@ if flags.do_input
 end
 
 if flags.do_unwrap
-   omega = 2*pi*a*(0:M2-1)'/M;  
+   omega = 2*pi*a*(0:M2-1)'/M;
 end
 
 % n -th frame is the submit frame
@@ -198,15 +200,12 @@ if ~flags.do_timeinv
     c = phaseunlockreal(c,a,M);
 end
 
-f = idgtreal(c,gd,a,M,flags.phase);
+f = idgtreal(c,gd,a,M,Ls,flags.phase);
 
 if nargout > 2
     norm_s = norm(abss,'fro');
     relres = norm(dgtreal(f,g,a,M,flags.phase)-abss,'fro')/norm_s;
 end
-
-% Cur or extend and reformat f
-f = comp_sigreshape_post(f,Ls,0,[0; W]);
 
 function phase_out = vocoderprincarg(phase)
 phase_out = phase - 2*pi*round(phase/(2*pi));
@@ -214,8 +213,6 @@ phase_out = phase - 2*pi*round(phase/(2*pi));
 if any(abs(exp(1i*phase)-exp(1i*phase_out))>1e-10)
     error('Unwrapping failed');
 end
-
-
 
 function [frames,cframes,sframes] = shiftcolsleft(frames,cframes,sframes)
 

@@ -1,7 +1,8 @@
 function [c,f,relres,iter]=gla(s,g,a,M,varargin)
 %GLA Griffin-Lim Algorithm for real signals
 %   Usage: c = gla(s,g,a,M)
-%          c = gla(s,g,a,M,Ls)
+%          c = gla(s,g,a,M,maxit)
+%          c = gla(s,g,a,M,maxit,tol)
 %          [c,f,relres,iter] = gla(...)
 %
 %   Input parameters:
@@ -12,7 +13,7 @@ function [c,f,relres,iter]=gla(s,g,a,M,varargin)
 %         Ls      : Length of signal.
 %   Output parameters:
 %         c       : Coefficients with the reconstructed phase
-%         f       : Signal.
+%         f       : Reconstructed signal.
 %         relres  : Vector of residuals.
 %         iter    : Number of iterations done.
 %
@@ -100,7 +101,8 @@ definput.keyvals.kernsize = [];
 definput.keyvals.printstep=10;
 definput.keyvals.coefmod = [];
 definput.keyvals.timemod = [];
-[flags,kv,Ls]=ltfatarghelper({'Ls','tol','maxit'},definput,varargin);
+[flags,kv]=ltfatarghelper({'maxit','tol'},definput,varargin);
+Ls = kv.Ls;
 
 if ~isempty(kv.coefmod) && isa(kv.coefmod,'function_handle')
     error('%s: coefmod must be anonymous function.',upper(mfilename))

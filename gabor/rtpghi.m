@@ -1,7 +1,8 @@
 function [c,newphase,tgrad,fgrad]=rtpghi(s,gamma,a,M,varargin)
 %RTPGHI Real-Time Phase Gradient Integration
 %   Usage:  c=rtpghi(s,gamma,a,M);
-%           c=rtpghi(s,gamma,a,M,tol);
+%           c=rtpghi(c,gamma,a,M,mask);
+%           c=rtpghi(s,gamma,a,M,mask,usephase);
 %           [c,newphase,tgrad,fgrad] = rtpghi(...);
 %
 %   Input parameters:
@@ -52,7 +53,8 @@ complainif_notposint(M,'M',thismfilename);
 definput.keyvals.tol=1e-6;
 definput.flags.phase={'timeinv','freqinv'};
 definput.flags.variant={'normal','causal'};
-[flags,kv,tol]=ltfatarghelper({'tol'},definput,varargin);
+[flags,kv]=ltfatarghelper({'mask','usephase'},definput,varargin);
+tol = kv.tol;
 [M2,N,W] = size(s);
 
 if W>1

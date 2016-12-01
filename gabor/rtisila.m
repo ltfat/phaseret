@@ -1,7 +1,7 @@
 function [c,f,relres,iter]=rtisila(s,g,a,M,varargin)
 %RTISILA Real-Time Iterative Spectrogram Inversion with Look Ahead
 %   Usage: c = rtisila(s,g,a,M)
-%          c = rtisila(s,g,a,M,Ls)
+%          c = rtisila(s,g,a,M,maxit)
 %          [c,f,relres,iter] = rtisila(...)
 %
 %   Input parameters:
@@ -70,7 +70,8 @@ definput.keyvals.Ls=[];
 definput.keyvals.maxit=5;
 definput.keyvals.lookahead = [];
 definput.flags.phase={'timeinv','freqinv'};
-[flags,kv,Ls]=ltfatarghelper({'Ls','maxit'},definput,varargin);
+[flags,kv,Ls]=ltfatarghelper({'maxit'},definput,varargin);
+Ls = kv.Ls;
 
 complainif_notposint(kv.maxit,'maxit',mfilename);
 
@@ -113,19 +114,19 @@ sframes(:,2:end) = abss(:,1:kv.lookahead);
 for n=1:N
     % Index of the submit and the look-ahead frames in the spectrogram
     nextnewframeidx = mod(n - 1 + kv.lookahead,N) + 1;
-    
+
     % Shift cols in the buffer
     cframes(:,1:end-1)   = cframes(:,2:end);
     % New empty column
     cframes(:,end) = 0;
-    
+
     sframes(:,1:end-1)   = sframes(:,2:end);
     sframes(:,end) = abss(:,nextnewframeidx);
-   
+
     % Update the lookahead frames and the submit frame 
     [cframes, c(:,n)] = ...
         comp_rtisilaupdate(cframes,gnum,specg1,specg2,gdnum,a,M,sframes,kv.lookahead,kv.maxit);
-    
+
     % Get the submit frame
     % recframes(:,n) = cframes(:,lookback+1);
 end
