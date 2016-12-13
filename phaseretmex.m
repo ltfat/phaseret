@@ -12,6 +12,7 @@ do_compilelib = 1;
 do_compilemex = 1;
 makecmd = 'make';
 fftwlibs = '';
+is_mingw = 0;
 
 if ~exist('comp_rtisilaupdate','file')
   disp(' ');
@@ -24,6 +25,7 @@ end;
 
 if ispc && ~isoctave()
     makecmd = 'mingw32-make';
+    is_mingw = 1;
 end
 
 if nargin>0
@@ -39,14 +41,19 @@ try
     if do_compilelib
         cd([thisdir,filesep,'libltfat']);
         disp('********* Compiling libltfat **********');
-        [status,res] = system([makecmd,' static NOBLASLAPACK=1']);
+        params = ' static NOBLASLAPACK=1';
+        if is_mingw, params = [params, 'MINGW=1']; end
+        [status,res] = system([makecmd,params]);
         if status ~=0
             error(res);
         end
         
         cd([thisdir,filesep,'libphaseret']);
         disp('********* Compiling libphaseret **********');
-        [status,res] = system([makecmd,' static NOBLASLAPACK=1']);
+        params = ' static NOBLASLAPACK=1';
+        if is_mingw, params = [params, 'MINGW=1']; end
+
+       [status,res] = system([makecmd,params]);
         if status ~=0
             error(res);
         end
@@ -75,7 +82,7 @@ try
     if do_clean
         cd([thisdir,filesep,'mex']);
         disp('********* Cleaning MEX files **********');
-        if ispc && ~isoctave()
+        if is_mingw
             [status,res] = system([makecmd,' -f Makefile_mingw clean']);
         else
             [status,res] = system([makecmd,' clean']);
