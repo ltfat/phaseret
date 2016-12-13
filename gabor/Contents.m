@@ -39,7 +39,7 @@
 %    rtpghi       - Real-Time Phase Gradient Integration
 %
 %  Auxilary functions
-%    pghi_findgamma     - Get window width at specified height
+%    pghi_findgamma     - Computes gamma parameter for |pghi| and |rtpghi|
 %    magnitudeerr       - Computes spectral convergence
 %    magnitudeerrdb     - |magnitudeerr| in dB
 %

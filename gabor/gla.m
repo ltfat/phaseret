@@ -1,5 +1,5 @@
 function [c,f,relres,iter]=gla(s,g,a,M,varargin)
-%GLA Griffin-Lim Algorithm for real signals
+%GLA Griffin-Lim Algorithm
 %   Usage: c = gla(s,g,a,M)
 %          c = gla(s,g,a,M,maxit)
 %          c = gla(s,g,a,M,maxit,tol)
@@ -20,7 +20,8 @@ function [c,f,relres,iter]=gla(s,g,a,M,varargin)
 %   `gla(s,g,a,M)` attempts to find coefficients *c* from
 %   their abs. value::
 %
-%     s = abs(dgtreal(f,g,a,M))
+%     c = dgtreal(f,g,a,M);
+%     s = abs(c);  
 %
 %   using the Griffin-Lim algorithm.
 %
@@ -33,9 +34,8 @@ function [c,f,relres,iter]=gla(s,g,a,M,varargin)
 %
 %   where *gd* is the canonical dual window obtained by |gabdual|.
 %
-%   `gla` takes the following additional parameters:
-%
-%   Initial phase guess:
+%   Initial phase guess
+%   -------------------
 %
 %     'input'      Choose the starting phase as the phase of the input
 %                  *s*. This is the default
@@ -44,7 +44,8 @@ function [c,f,relres,iter]=gla(s,g,a,M,varargin)
 %
 %     'rand'       Choose a random starting phase.
 %
-%   Enforcing prior information:
+%   Enforcing prior information
+%   ---------------------------
 %
 %     'coefmod',coefmod   Anonymous function in a form coefmod = @(c) ...;
 %                         altering coefficients in each iteration after
@@ -58,7 +59,8 @@ function [c,f,relres,iter]=gla(s,g,a,M,varargin)
 %                         signal is known.
 %                         Note that `numel(f)= size(s,2)*a`.
 %
-%   Algorithm acceleration:
+%   Algorithm acceleration
+%   ----------------------
 %
 %     'gla'      The original Giffin-Lim iteration scheme.
 %                This is the default.
@@ -68,16 +70,17 @@ function [c,f,relres,iter]=gla(s,g,a,M,varargin)
 %     'alpha',a    Parameter of the Fast Griffin-Lim algorithm. It is
 %                  ignored if not used together with 'flegla' flag.
 %
-%   Other:
+%   Other
+%   -----
+%
+%     'Ls',Ls      Crop the reconstructed signal *f* to length *Ls*.
 %
 %     'tol',t      Stop if relative residual error is less than the
 %                  specified tolerance.
 %
 %     'maxit',n    Do at most n iterations.
 %
-%     'print'      Display the progress.
-%
-%     'quiet'      Don't print anything, this is the default.
+%     'print'      Display the progress. This is disabled by default.
 %
 %     'printstep',p  If 'print' is specified, then print every p'th
 %                    iteration. Default value is p=10;

@@ -7,16 +7,15 @@ function [c,newphase,usedmask,tgrad,fgrad]=pghi(s,gamma,a,M,varargin)
 %
 %   Input parameters:
 %         s        : Initial coefficients.
-%         gamma    : Window width factor.
+%         gamma    : Window "width" factor.
 %         a        : Hop factor.
 %         M        : Number of channels.
-%         tol      : Relative tolerance.
 %         mask     : Mask for selecting known phase.
 %         usephase : Explicit known phase.
 %   Output parameters:
 %         c        : Coefficients with the constructed phase.
 %         newphase : Just the (unwrapped) phase.
-%         usedmask : Mask for selecting coefficients with the new phase.
+%         usedmask : Mask used for selecting coefficients with the new phase.
 %         tgrad    : Relative time phase derivative.
 %         fgrad    : Relative frequency phase derivative.
 % 
@@ -28,19 +27,19 @@ function [c,newphase,usedmask,tgrad,fgrad]=pghi(s,gamma,a,M,varargin)
 %       s = abs(c);
 %
 %   and the algorithm attempts to recover *c*. Parameter *gamma* is window 
-%   *g* specific and it can be computed using:
+%   *g* specific and it can be computed using |pghi_findgamma|.
 %
-%   .. gamma = Cg*gl^2
+%   `pghi(c,gamma,a,M,mask)` does the same as above except it reuses phase
+%   of coefficients *c* for which the corresponding element from *mask*
+%   is nonzero.
 %
-%   .. math:: \gamma = C_g \mathit{gl}^2
-%
-%   where *gl* is the window length and *Cg* is a window specific constant. 
-%   Both *Cg* and *gamma* can be obtained by calling |findwindowconstant|.
+%   `pghi(c,gamma,a,M,mask,usephase)` does the same as above but the known
+%   phase *usephase* is passed explicitly.
 %
 %   This is just a wrapper around |constructphasereal| from LTFAT. Please
 %   see its help for more details.
 %
-%   See also: dgtreal, idgtreal, rtpghi, findwindowconstant
+%   See also: dgtreal, idgtreal, rtpghi, pghi_findgamma
 %
 %   References: ltfatnote040 ltfatnote043
 %

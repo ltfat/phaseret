@@ -51,6 +51,8 @@ complainif_notposint(a,'a',thismfilename);
 complainif_notposint(M,'M',thismfilename);
 
 definput.keyvals.tol=1e-6;
+definput.keyvals.mask=[];
+definput.keyvals.usephase=[];
 definput.flags.phase={'timeinv','freqinv'};
 definput.flags.variant={'normal','causal'};
 [flags,kv]=ltfatarghelper({'mask','usephase'},definput,varargin);

@@ -9,7 +9,7 @@ function [c,f,relres,iter]=rtisila(s,g,a,M,varargin)
 %         g       : Analysis Gabor window
 %         a       : Hop factor
 %         M       : Number of channels
-%         Ls      : length of signal.
+%         maxit   : Number of iterations.
 %   Output parameters:
 %         c       : Coefficients with the reconstructed phase.
 %         f       : Reconstructed signal.

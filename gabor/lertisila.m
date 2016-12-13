@@ -95,7 +95,7 @@ function [c,f,relres,iter]=lertisila(s,g,a,M,varargin)
 %     'energy'     Process the lookahead frames in the order of their
 %                  energy.
 %   
-%   References: zhbewy07 gnsp10 leroux10
+%   References: leroux10b
 %
 
 %   AUTHORS: Zdenek Prusa   

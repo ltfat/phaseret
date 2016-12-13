@@ -1,5 +1,5 @@
 function [c,f,relres,iter]=legla(s,g,a,M,varargin)
-%LEGLA Le Roux's Griffin-Lim Algorithm for real signals
+%LEGLA Le Roux's Griffin-Lim Algorithm
 %   Usage: c = legla(s,g,a,M)
 %          c = legla(s,g,a,M,maxit)
 %          [c,f,relres,iter] = legla(...)
@@ -103,16 +103,10 @@ function [c,f,relres,iter]=legla(s,g,a,M,varargin)
 %
 %     'maxit',n    Do at most n iterations.
 %
-%     'print'      Display the progress.
-%
-%     'quiet'      Don't print anything, this is the default.
+%     'print'      Display the progress. This is disabled by default.
 %
 %     'printstep',p  If 'print' is specified, then print every p'th
 %                    iteration. Default value is p=10;
-%
-%   !!!!!!!!!!!!!!!!!!!!!!!!!!! WARNING !!!!!!!!!!!!!!!!!!!!!!!!!!!
-%   This function requires LTFAT 2.1.2 and above.
-%   !!!!!!!!!!!!!!!!!!!!!!!!!!! WARNING !!!!!!!!!!!!!!!!!!!!!!!!!!!
 %
 %   References: leroux08 leroux10 pebaso13
 %

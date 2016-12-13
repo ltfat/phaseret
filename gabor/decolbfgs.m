@@ -12,21 +12,50 @@ function [c,f,relres,iter]=decolbfgs(s,g,a,M,varargin)
 %         M       : Number of channels
 %         Ls      : Length of signal.
 %   Output parameters:
-%         f       : Signal.
+%         f       : Reconstructed signal.
 %         relres  : Vector of residuals.
 %         iter    : Number of iterations done.
 %         c       : Coefficients with the reconstructed phase
 %
-%   `decolbfgs(s,g,a,M)` attempts to find coefficients *c*
-%   their abs. value is::
-%
-%     s = abs(c)
+%   `decolbfgs(s,g,a,M)` attempts to find coefficients *c* from
+%   their abs. value obtained as::
+%     
+%     c = dgtreal(f,g,a,M,'timeinv');
+%     s = abs(c);
 %
 %   using Decorsiere's unconstrained optimization approach which in turn
 %   exploits lBFGS (limited-memory Broyden–Fletcher–Goldfarb–Shanno)
 %   algorithm. 
 %
-%   Note |minFunc| is required in order to run this function. It can be 
+%   Initial phase estimate
+%   ----------------------
+%
+%   'input'       Use phase of the input *s*. This is the default.
+%
+%   'zero'        Use zero phase.
+%
+%   'rand'        Use randomly generated phase.  
+%
+%   Additional parameters
+%   ---------------------
+%
+%   'p',p         p-parameter for the compressed version of the objective
+%                 function. The default value is 2/3.
+%
+%   'tol',tol     Tolerance for the lBFGS implementation. 
+%                 The default value is 1e-6.
+%
+%   'maxit',maxit Maximum number of iterations of lBFGS.
+%                 The default value is 100.
+%   
+%   'Ls',Ls       The reconstructed signal *f* will be cropped to length *Ls*.
+%
+%   'print'       Print info for each iteration. This is disabled by
+%                 default.
+%   
+%   Note that this is just a wrapper around |frsynabs| from LTFAT.
+%
+%   Also note |minFunc| is required in order to run this function. It can be 
 %   obtained from here https://www.cs.ubc.ca/~schmidtm/Software/minFunc.html
 %
 %   References: desomada15
