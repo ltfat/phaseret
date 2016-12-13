@@ -32,7 +32,7 @@ PHASERET_NAME(realimag2absangle)(const LTFAT_COMPLEX cin[], ltfat_int L, LTFAT_C
 void
 PHASERET_NAME(absangle2realimag)(const LTFAT_COMPLEX cin[], ltfat_int L, LTFAT_COMPLEX c[]);
 
-void
+PHASERET_API void
 PHASERET_NAME(absangle2realimag_split2inter)(const LTFAT_REAL s[],
         const LTFAT_REAL phase[], ltfat_int L, LTFAT_COMPLEX c[]);
 

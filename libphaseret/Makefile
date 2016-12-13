@@ -86,6 +86,8 @@ ifdef NOBLASLAPACK
 	CFLAGS += -DNOBLASLAPACK
 endif
 
+EXTRALFLAGS += $(OPTLFLAGS)
+
 # Define targets
 DTARGET=$(buildprefix)/$(DSTATIC)
 STARGET=$(buildprefix)/$(SSTATIC)

@@ -340,7 +340,7 @@ error:
 }
 
 
-int
+PHASERET_API int
 PHASERET_NAME(leglaupdate_col_init)( ltfat_int M, phaseret_size ksize, int flags,
                                      PHASERET_NAME(leglaupdate_plan_col)** pout)
 {
@@ -384,7 +384,7 @@ error:
     return status;
 }
 
-int
+PHASERET_API int
 PHASERET_NAME(leglaupdate_col_done)( PHASERET_NAME(leglaupdate_plan_col)** p)
 {
     int status = LTFATERR_SUCCESS;
@@ -395,7 +395,7 @@ error:
     return status;
 }
 
-int
+PHASERET_API int
 PHASERET_NAME(leglaupdate_init)(const LTFAT_COMPLEX kern[], phaseret_size ksize,
                                 ltfat_int L, ltfat_int W, ltfat_int a, ltfat_int M, ltfat_int flags,
                                 PHASERET_NAME(leglaupdate_plan)** pout)
@@ -459,7 +459,7 @@ error:
     return status;
 }
 
-void
+PHASERET_API void
 PHASERET_NAME(leglaupdate_done)(PHASERET_NAME(leglaupdate_plan)** plan)
 {
 
@@ -503,7 +503,7 @@ PHASERET_NAME(kernphasefi)(const LTFAT_COMPLEX kern[], phaseret_size ksize,
     }
 }
 
-void
+PHASERET_API void
 PHASERET_NAME(leglaupdate_execute)(PHASERET_NAME(leglaupdate_plan)* plan,
                                    const LTFAT_REAL s[],
                                    LTFAT_COMPLEX c[], LTFAT_COMPLEX cout[])
@@ -556,7 +556,7 @@ PHASERET_NAME(leglaupdate_execute)(PHASERET_NAME(leglaupdate_plan)* plan,
     }
 }
 
-void
+PHASERET_API void
 PHASERET_NAME(leglaupdate_col_execute)(
     PHASERET_NAME( leglaupdate_plan_col)* plan,
     const LTFAT_REAL sCol[],
@@ -631,7 +631,7 @@ PHASERET_NAME(leglaupdate_col_execute)(
     }
 }
 
-void
+PHASERET_API void
 PHASERET_NAME(extendborders)(PHASERET_NAME(leglaupdate_plan_col)* plan,
                              const LTFAT_COMPLEX c[], ltfat_int N, LTFAT_COMPLEX buf[])
 {
