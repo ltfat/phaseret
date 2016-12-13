@@ -9,14 +9,15 @@ CC = $(CROSS)gcc
 AR = $(CROSS)ar
 RANLIB =ranlib
 MINGW=1
+TARGETUP = -lphaseretd -lltfatd
 else
 CC ?= gcc
 AR ?= ar
 RANLIB?=ranlib
+TARGETUP = ../libphaseret/build/libphaseretd.a ../libltfat/build/libltfatd.a
 endif
 
-
-include ../ostools.mk
+include ../libphaseret/ostools.mk
 
 ifndef MATLABROOT
   $(warning MATLABROOT variable is undefined. Using default MATLABROOT="C:\Program Files\MATLAB\R2011b" )
@@ -41,7 +42,6 @@ endif
 MEXSOURCES = $(wildcard *.c)
 MEXTARGETS = $(patsubst %.c,%.$(EXT),$(MEXSOURCES))
 
-TARGETUP = ../libphaseret/build/libphaseretd.a ../libltfat/build/libphaseretd.a
 
 CFLAGS=-shared -s -Wall -std=c99 -I../libphaseret/include -I../libltfat/include
 
