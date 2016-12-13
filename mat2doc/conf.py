@@ -1,5 +1,5 @@
 # Mandatory settings
-outputdir='./mat2doc_publish'
+outputdir='~/publish/mat2doc_publish'
 plotengine='matlab'
 versionfile="phaseret_version"
 
