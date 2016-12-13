@@ -43,7 +43,7 @@ MEXSOURCES = $(wildcard *.c)
 MEXTARGETS = $(patsubst %.c,%.$(EXT),$(MEXSOURCES))
 
 
-CFLAGS=-shared -s -Wall -std=c99 -I../libphaseret/include -I../libltfat/include
+CFLAGS=-shared -s -Wall -std=c99 -I../libphaseret/include -I../libltfat/include -I../libltfat/thirdparty
 
 ifeq ($(CONFIG), debug)
 	CFLAGS += -O0 -g
