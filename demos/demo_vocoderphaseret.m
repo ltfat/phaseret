@@ -48,7 +48,7 @@ f = postpad(f,L);
 % Adjust to compatible size
 N = size(c,2);
 newN = ceil(N*newa/Lsmallestnewa)*Lsmallestnewa/newa;
-c = postpad(c,newN,'dim',2);
+c = postpad(c,newN,0,2);
 
 % Phase reconstruction
 gl = numel(gnum);
@@ -59,7 +59,7 @@ fscale = idgtreal(chatint,{'dual',g},newa,M,'timeinv');
 fscale = fscale(1:floor(numel(f)*newa/a));
 
 % Resample to the original duration (more or less)
-fshift = resample(fscale,a,newa);
+fshift = dctresample(fscale,newN*newa);
 
 
 disp('To play the original run: soundsc(f,fs)');

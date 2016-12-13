@@ -375,6 +375,6 @@ if ischar(params)
     params = {params};
 end
 
-cellfun(@(parEl) p.setVisibleParam(parEl,onoff),params);
+cellfun(@(parEl) p.setVisibleParam(parEl,onoff),params,'UniformOutput',0);
 
 
