@@ -40,8 +40,8 @@ LIBDIR = $(PREFIX)/lib
 INCDIR = $(PREFIX)/include
 
 # Base CFLAGS
-CFLAGS+=-Wall -Wextra -pedantic -std=c99 -Iinclude -I../libltfat/include $(OPTCFLAGS)
-CXXFLAGS+=-Wall -Wextra -pedantic -fno-exceptions -fno-rtti -std=c++11 -Iinclude -I../libltfat/include $(OPTCFLAGS)
+CFLAGS+=-Wall -Wextra -pedantic -std=c99 -Iinclude -I../libltfat/include -Ithirdparty $(OPTCFLAGS)
+CXXFLAGS+=-Wall -Wextra -pedantic -fno-exceptions -fno-rtti -std=c++11 -Iinclude -I../libltfat/include -Ithirdparty $(OPTCFLAGS)
 
 # The following adds parameters to CFLAGS
 COMPTARGET?=release
