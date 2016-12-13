@@ -1,8 +1,8 @@
 function [gamma, Cg] = pghi_findgamma( g, varargin)
-%PGHI_FINDWINDOWCONSTANT Find window constant for PGHI and RTPGHI
-%   Usage: Cg = findwindowconstant(gnum)
-%          Cg = findwindowconstant(gnum,gl)
-%          [Cg, gamma] = findwindowconstant(...)
+%PGHI_FINDGAMMA Find window constant for PGHI and RTPGHI
+%   Usage: gamma = pghi_findgamma(g)
+%          gamma = pghi_findgamma(gnum,gl)
+%          [Cg, gamma] = pghi_findgamma(...)
 %
 %   Input parameters:
 %         gnum     : Window.
@@ -11,7 +11,7 @@ function [gamma, Cg] = pghi_findgamma( g, varargin)
 %         Cg       : Window constant
 %         gama     : Parameter for PGHI and RTPGHI
 %
-%   `Cg = findwindowconstant(gnum)` does a heuristic search for the 
+%   `pghi_findgamma(gnum)` does a heuristic search for the 
 %   parameter *Cg*, for which the Gaussian window given as:
 %   
 %   .. g = exp(-pi*l^2/(Cg*gl^2))
@@ -21,10 +21,10 @@ function [gamma, Cg] = pghi_findgamma( g, varargin)
 %   is closest to peak-normalized window *gnum*, where *gl* is length 
 %   of its support.
 %
-%   `Cg = findwindowconstant(gnum,gl)` works as before but uses explicitly
+%   `pghi_findgamma(gnum,gl)` works as before but uses explicitly
 %   given *gl*. This is usefull when e.g. *gnum* is zero padded.
 %
-%   `[Cg,gamma] = findwindowconstant(...)` additionaly returns parameter
+%   `[gamma,Cg] = pghi_findgamma(...)` additionaly returns parameter
 %   *gamma* which is equal to:
 %   
 %   .. gamma = Cg*gl^2
@@ -45,17 +45,63 @@ function [gamma, Cg] = pghi_findgamma( g, varargin)
 
 definput.keyvals.atheightrange = [];
 definput.keyvals.gl = [];
-[~,~,gl,atheightrange]=ltfatarghelper({'gl','atheightrange'},definput,varargin);
+definput.keyvals.a = [];
+definput.keyvals.M = [];
+definput.keyvals.L = [];
+definput.flags.method = {'precomputed','search'};
+[flags,kv]=ltfatarghelper({'a','M','L'},definput,varargin);
+gl = kv.gl;
 
-if ~isvector(g) 
-    error('%s: Window must be numeric. See FIRWIN and GABWIN.',upper(mfilename))
+wins = getfield(arg_firwin,'flags','wintype');
+
+if ischar(g) || (iscell(g) && ischar(g{1})) && ~flags.do_search
+    winname = g;
+    if iscell(g), winname = g{1}; end;
+    switch winname
+        case wins
+            if iscell(g) && numel(g)>1 && isnumeric(g{2})
+                gl = g{2}; % Override gl
+            elseif ~isempty(kv.M) 
+                gl = kv.M;
+            else
+                error('%s: Window length is unspecified.',upper(mfilename));
+            end
+ 
+            try
+                [gamma,Cg] = precomputed_gamma(winname,gl);
+                return; % Return immediatelly
+            catch
+            end
+        case 'gauss'
+            Cg = nan;
+            if iscell(g) && numel(g)>1 && isnumeric(g{2})
+                if isempty(kv.L)
+                    error('%s: Gaussian window requires L to be specified',...
+                    upper(mfilename));
+                end
+                gamma = g{2}*kv.L;
+            else
+                if any(cellfun(@isempty,{kv.a,kv.M}))
+                    error('%s: a and M must be defined for this window.',upper(mfilename));
+                end
+                gamma = kv.a*kv.M;
+            end
+            return;
+    end
 end
 
-if isempty(gl) || ~isvector(g) || ~isnumeric(g)
+if ~isnumeric(g)
+    if any(cellfun(@isempty,{kv.a,kv.M}))
+        error('%s: a and M must be defined for this window.',upper(mfilename));
+    end
+    g = gabwin(g,kv.a,kv.M,kv.L);
+end
+
+if isempty(gl)
     gl = numel(g);
 end
 
-atheight = findbestgauss( g, atheightrange);
+atheight = findbestgauss( g, kv.atheightrange);
 w = winwidthatheight(g, atheight);
 
 Cg = -pi/4*(w/(gl-1))^2/log(atheight);
@@ -180,5 +226,50 @@ for ii=1:numel(atheight)
         width(ii) = 2*(ind-1);
     end
 end
+
+
+function [gamma,Cg] = precomputed_gamma(g,gl)
+
+switch g
+    case {'hann','hanning','nuttall10'}
+        Cg = 0.25645;
+    case {'sqrthann','cosine','sine'}
+        Cg = 0.41532;
+    case {'hamming'}
+        Cg = 0.29794;
+    case {'nuttall01'}
+        Cg = 0.29610;
+    case {'tria','triangular','bartlett'}
+        Cg = 0.27561;
+    case {'sqrttria'}
+        Cg = 0.48068;
+    case {'blackman'}
+        Cg = 0.17954;
+    case {'blackman2'}
+        Cg = 0.18465;
+    case {'nuttall','nuttall12'}
+        Cg = 0.12807;
+    case {'ogg','itersine'}
+        Cg = 0.35744;
+    case {'nuttall20'}
+        Cg = 0.14315;
+    case {'nuttall11'}
+        Cg = 0.17001;
+    case {'nuttall02'}
+        Cg = 0.18284;
+    case {'nuttall30'}
+        Cg = 0.09895;
+    case {'nuttall21'}
+        Cg = 0.11636;
+    case {'nuttall03'}
+        Cg = 0.13369;
+    case {'truncgauss'}
+        Cg = 0.17054704423023;
+    otherwise
+        error('Unsupported FIR window type');
+end
+
+gamma = Cg*gl^2;
+
 
 
