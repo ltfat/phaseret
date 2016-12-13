@@ -40,21 +40,6 @@ for pcId = 1:2
     end
 
     fprintf('DECOLBFGS p=2/3 %s W=%d E=%.2f %s\n',phaseconv,1,E,fail);
-    
- 
-%     [M2,N] = size(s);
-%     mask = ones(size(s));
-%     mask(:,floor(N/2):end) = 0;
-%     [chat]=spsi(s,a,M,mask,angle(c),phaseconv);
-%     
-%     E = magnitudeerrdb(s,proj(chat));
-%     fail = '';            
-%     if E>-10
-%         test_failed = test_failed + 1;
-%         fail = 'FAILED';
-%     end
-% 
-%     fprintf('SPSI MASK %s W=%d E=%.2f %s\n',phaseconv,1,E,fail); 
 end
 
 

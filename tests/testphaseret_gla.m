@@ -1,6 +1,5 @@
 function test_failed=testphaseret_gla
 test_failed = 0;
-fprintf('-----------Running %s--------------\n',mfilename);
 
 f = greasy;
 a = 128;

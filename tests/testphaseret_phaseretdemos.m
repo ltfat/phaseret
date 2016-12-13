@@ -3,7 +3,7 @@ function test_failed=testphaseret_phaseretdemos
   
   test_failed=0;
   matpath = fileparts(which('phaseretstart'));
-  s=dir([matpath,filesep,'demo_*.m']);
+  s=dir([matpath,filesep,'demos',filesep,'demo_*.m']);
 
   for ii=1:numel(s)
      filename = s(ii).name;
