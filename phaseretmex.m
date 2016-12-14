@@ -7,11 +7,7 @@ function phaseretmex(varargin)
 
 currdir = pwd;
 thisdir = fileparts(which(mfilename));
-do_clean = 0;
-do_compilelib = 1;
-do_compilemex = 1;
 makecmd = 'make';
-fftwlibs = '';
 is_mingw = 0;
 
 if ~exist('comp_rtisilaupdate','file')
