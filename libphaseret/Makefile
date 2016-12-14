@@ -61,18 +61,45 @@ SSTATIC = libphaseretf.a
 DSSTATIC = libphaseret.a
 
 ifdef MINGW
+	# Ok, to stop the madness, we will always work with both PHASERET and LTFAT
+	# as DLLs or static libraries. There will not be a nonsense such as PHASERET DLL
+	# with statically linked LTFAT.
+	#
+	# static:
+	# 	No function decorators are used anywhere, therefore both 
+	#	-DPHASERET_BUILD_STATIC -DLTFAT_BUILD_STATIC are defined.
+	#	These directives must be also used when linking the static library form 
+	#	DLL or EXE.
+	#
+	# shared:
+	# 	-DPHASERET_BUILD_SHARED causes the __declspec(dllexport) decorator
+	# 	to be used for PHASERET function and no LTFAT directive means that
+	# 	__declspec(dllimport) is used for LTFAT functions.
+	# 	No special definition is necessary when linking the DLL
+	#
+	# NOTE that if both static and shared libraries are to be built, 
+	# the obj files must be cleared in between make calls i.e.
+	# make shared
+	# make cleanobj
+	# make static
 	DSHARED = $(patsubst %.a,%.dll,$(DSTATIC))
 	SSHARED = $(patsubst %.a,%.dll,$(SSTATIC))
 	DSSHARED = $(patsubst %.a,%.dll,$(DSSTATIC))
 	EXTRALFLAGS = -Wl,--out-implib,$@.a -static-libgcc
-	CFLAGS += -DPHASERET_BUILD_SHARED
-	CXXFLAGS += -DPHASERET_BUILD_SHARED
+
+	ifneq ($(MAKECMDGOALS),shared)
+		CFLAGS += -DPHASERET_BUILD_STATIC -DLTFAT_BUILD_STATIC
+		CXXFLAGS += -DPHASERET_BUILD_STATIC -DLTFAT_BUILD_STATIC
+	else
+		CFLAGS += -DPHASERET_BUILD_SHARED
+		CXXFLAGS += -DPHASERET_BUILD_SHARED
+	endif
 else
 	CFLAGS += -fPIC
 	CXXFLAGS += -fPIC
 	DSHARED = $(patsubst %.a,%.so,$(DSTATIC))
 	SSHARED = $(patsubst %.a,%.so,$(SSTATIC))
-	DSSHARED = $(patsubst %.a,%.so,$(DSSTATIC))	
+	DSSHARED = $(patsubst %.a,%.so,$(DSSTATIC))
 endif
 
 ifdef USECPP
@@ -107,7 +134,7 @@ LIBS=-lm
 DDEP = $(buildprefix) $(objprefix)/double $(objprefix)/common
 SDEP = $(buildprefix) $(objprefix)/single $(objprefix)/common
 
-lib: static shared
+lib: static
 
 $(DSTARGET): $(DDEP) $(SDEP) $(COMMONDOBJECTS) $(DOBJECTS) $(SOBJECTS)
 	$(AR) rv $@ $(COMMONDOBJECTS) $(DOBJECTS) $(SOBJECTS)
@@ -154,9 +181,11 @@ $(objprefix)/double:
 $(objprefix)/single:
 	@$(MKDIR) $(objprefix)$(PS)single
 
-cleanlib:
-	$(RMDIR) $(buildprefix)
+cleanobj:
 	$(RMDIR) $(objprefix)
+
+cleanlib: cleanobj
+	$(RMDIR) $(buildprefix)
 
 clean: cleanlib
 
@@ -164,9 +193,8 @@ static: $(DSTARGET) $(DTARGET) $(STARGET)
 
 shared: $(SO_DSTARGET) $(SO_DTARGET) $(SO_STARGET) 
 
-all: lib
 
-.PHONY: all doc doxy mat2doc mat2docmat clean cleanlib cleandoc cleandoxy cleanmat2doc static shared munit
+.PHONY: doc doxy mat2doc mat2docmat clean cleanlib cleanobj cleandoc cleandoxy cleanmat2doc static shared munit
 doc: doxy mat2doc
 
 cleanmat2doc:
