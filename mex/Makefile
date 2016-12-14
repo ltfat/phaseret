@@ -7,10 +7,10 @@ export TARGETUP = ../libphaseret/build/libphaseretd.a ../libltfat/build/libltfat
 
 MYCFLAGS = -std=c99 -pedantic -Wall -Wextra -I../libphaseret/include -I../libltfat/include -fPIC -Wl,--no-undefined
 
-ifeq ($(CONFIG), debug)
-	CFLAGS += -O0 -g
+ifeq ($(COMPTARGET), debug)
+	MYCFLAGS += -O0 -g
 else
-	CFLAGS += -O2 -DNDEBUG
+	MYCFLAGS += -O2 -DNDEBUG
 endif
 
 # MATLAB MEX files, only works if there are no spaces in the path to Matlab

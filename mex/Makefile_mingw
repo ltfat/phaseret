@@ -45,7 +45,7 @@ MEXTARGETS = $(patsubst %.c,%.$(EXT),$(MEXSOURCES))
 
 CFLAGS=-shared -s -Wall -std=c99 -I../libphaseret/include -I../libltfat/include -I../libltfat/thirdparty
 
-ifeq ($(CONFIG), debug)
+ifeq ($(COMPTARGET), debug)
 	CFLAGS += -O0 -g
 else
 	CFLAGS += -O2 -DNDEBUG

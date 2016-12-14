@@ -1,4 +1,4 @@
-function phaseretmex(target)
+function phaseretmex(varargin)
 %PHASERETMEX  Compiles the MEX interfaces
 %   Usage: phaseretmex;
 %
@@ -23,82 +23,106 @@ if ~exist('comp_rtisilaupdate','file')
   return;
 end;
 
+definput.flags.target = {'auto','lib','mex'};
+definput.flags.comptarget = {'release','debug'};
+definput.flags.command = {'compile','clean'};
+definput.flags.verbosity = {'quiet','verbose'};
+flags = ltfatarghelper({},definput,varargin);
+
+do_compilelib = flags.do_lib || flags.do_auto;
+do_compilemex = flags.do_mex || flags.do_auto;
+
 if ispc && ~isoctave()
     makecmd = 'mingw32-make';
     is_mingw = 1;
 end
 
-if nargin>0
-    if strcmpi(target,'clean')
-        do_clean = 1;
-        do_compilelib = 0;
-        do_compilemex = 0;
-    end
-end
-
 try
-
-    if do_compilelib
-        cd([thisdir,filesep,'libltfat']);
-        disp('********* Compiling libltfat **********');
-        params = ' static NOBLASLAPACK=1';
-        if is_mingw, params = [params, 'MINGW=1']; end
-        [status,res] = system([makecmd,params]);
-        if status ~=0
-            error(res);
-        end
-        
-        cd([thisdir,filesep,'libphaseret']);
-        disp('********* Compiling libphaseret **********');
-        params = ' static NOBLASLAPACK=1';
-        if is_mingw, params = [params, 'MINGW=1']; end
-
-       [status,res] = system([makecmd,params]);
-        if status ~=0
-            error(res);
-        end
-    end
-
-    if do_compilemex
-        cd([thisdir,filesep,'mex']);
-
-        disp('********* Compiling MEX files **********');
-        if ~isoctave()
-            if ispc
-                [status,res] = system([makecmd,' -f Makefile_mingw matlab',...
-                ' MATLABROOT="',matlabroot,'" ARCH=',computer('arch'),...
-                ' EXT=',mexext]);
-            else
-                [status,res] = system([makecmd,' matlab']);
+    if flags.do_compile
+        if do_compilelib
+            cd([thisdir,filesep,'libltfat']);
+            disp('********* Compiling libltfat **********');
+            params = ' static NOBLASLAPACK=1';
+            if is_mingw, params = [params, ' MINGW=1']; end
+            if flags.do_debug, params = [params, ' COMPTARGET=debug']; end
+            
+            [status,res] = system([makecmd,params]);
+            if status ~=0, 
+                error(res);
+            elseif flags.do_verbose && ~isoctave()
+                disp(res);
             end
-        else
-            [status,res] = system([makecmd, ' octave']);
+
+            cd([thisdir,filesep,'libphaseret']);
+            disp('********* Compiling libphaseret **********');
+            params = ' static NOBLASLAPACK=1';
+            if is_mingw, params = [params, ' MINGW=1']; end
+            if flags.do_debug, params = [params, ' COMPTARGET=debug']; end
+
+            [status,res] = system([makecmd,params]);
+            if status ~=0
+                error(res);
+            elseif flags.do_verbose && ~isoctave()
+                disp(res);
+            end
         end
-        if status ~=0
-            error(res);
+
+        if do_compilemex
+            cd([thisdir,filesep,'mex']);
+            disp('********* Compiling MEX files **********');
+            if ~isoctave()
+                if ispc
+                    params = [' -f Makefile_mingw matlab',...
+                    ' MATLABROOT="',matlabroot,'" ARCH=',computer('arch'),...
+                    ' EXT=',mexext];
+                else
+                    params = ' matlab';
+                end
+            else
+                params = ' octave';
+            end
+            
+            if flags.do_debug, params = [params, ' COMPTARGET=debug']; end
+            [status,res] = system([makecmd, params]);
+            if status ~=0
+                error(res);
+            elseif flags.do_verbose && ~isoctave()
+                disp(res);        
+            end
+            
         end
     end
 
-    if do_clean
-        cd([thisdir,filesep,'mex']);
-        disp('********* Cleaning MEX files **********');
-        if is_mingw
-            [status,res] = system([makecmd,' -f Makefile_mingw clean']);
-        else
-            [status,res] = system([makecmd,' clean']);
-        end
-        if status ~=0
-            error(res);
+    if flags.do_clean
+        if do_compilemex
+            disp('********* Cleaning MEX files **********');
+            cd([thisdir,filesep,'mex']);
+            if is_mingw
+                [status,res] = system([makecmd,' -f Makefile_mingw clean']);
+            else
+                [status,res] = system([makecmd,' clean']);
+            end
+            if status ~=0
+                error(res);
+            elseif flags.do_verbose && ~isoctave()
+                disp(res);
+            end
         end
 
-        disp('********* Cleaning libs **********');
-        cd([thisdir,filesep,'libphaseret']);
-        [status,res] = system([makecmd,' clean']);
-        if status ~=0, error(res); end
-        
-        cd([thisdir,filesep,'libltfat']);
-        [status,res] = system([makecmd,' clean']);
-        if status ~=0, error(res); end
+        if do_compilelib
+            disp('********* Cleaning libs **********');
+            cd([thisdir,filesep,'libphaseret']);
+            [status,res] = system([makecmd,' clean']);
+            if status ~=0, error(res); end
+
+            cd([thisdir,filesep,'libltfat']);
+            [status,res] = system([makecmd,' clean']);
+            if status ~=0 
+                error(res);
+            elseif flags.do_verbose && ~isoctave()
+                disp(res);
+            end
+        end
     end
 catch
     cd(currdir);
@@ -112,3 +136,4 @@ cd(currdir);
 
 function isoct=isoctave()
 isoct = exist('OCTAVE_VERSION','builtin') ~= 0;
+
