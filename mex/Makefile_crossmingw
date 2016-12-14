@@ -6,23 +6,24 @@ export NOBLASLAPACK=1
 export EXT=mexw64
 MEXDIR = /home/susnak/Dropbox/win64libs
 
-all: libltfat libphaseret fftw mex
+all: clean libltfat libphaseret odir fftw mex
 
 libltfat:
-	make -C ../libltfat shared
-	mkdir -p $(outdir)
-	cp ../libltfat/build/$(CROSS)/libltfatd.* $(outdir)
+	make -C ../libltfat cleanobj
+	make -C ../libltfat static
 
 libphaseret:
-	make -C ../libphaseret shared OPTLFLAGS=-L../libltfat/build/$(CROSS)
+	make -C ../libphaseret cleanobj
+	make -C ../libphaseret static
+
+odir:
 	mkdir -p $(outdir)
-	cp ../libphaseret/build/$(CROSS)/libphaseretd.* $(outdir)
 
 fftw:
 	cp $(MEXDIR)/libfftw3-*.dll $(outdir)
 
 mex:
-	make -f Makefile_mingw MEXCOMPFLAGS="-I$(MEXDIR)" MEXLINKFLAGS="-L$(MEXDIR) -lmex -lmx -L$(outdir)"
+	make -f Makefile_mingw MEXCOMPFLAGS="-I$(MEXDIR)" MEXLINKFLAGS="-L$(MEXDIR) -lmex -lmx -L$(outdir) -L../libltfat/build/$(CROSS) -L../libphaseret/build/$(CROSS)"
 	cp *.$(EXT) $(outdir)
 
 clean:
