@@ -154,12 +154,6 @@ $(objprefix)/double:
 $(objprefix)/single:
 	@$(MKDIR) $(objprefix)$(PS)single
 
-matlab: $(TARGET)
-	$(MAKE) -C mex matlab
-
-octave: $(TARGET)
-	$(MAKE) -C mex octave
-
 cleanlib:
 	$(RMDIR) $(buildprefix)
 	$(RMDIR) $(objprefix)
@@ -170,9 +164,9 @@ static: $(DSTARGET) $(DTARGET) $(STARGET)
 
 shared: $(SO_DSTARGET) $(SO_DTARGET) $(SO_STARGET) 
 
-all: lib matlab octave
+all: lib
 
-.PHONY: all doc doxy mat2doc mat2docmat clean cleanlib octave matlab cleandoc cleandoxy cleanmat2doc static shared munit
+.PHONY: all doc doxy mat2doc mat2docmat clean cleanlib cleandoc cleandoxy cleanmat2doc static shared munit
 doc: doxy mat2doc
 
 cleanmat2doc:
