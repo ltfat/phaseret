@@ -68,7 +68,7 @@ definput.keyvals.Ls=[];
 definput.keyvals.maxit=5;
 definput.keyvals.lookahead = [];
 definput.flags.phase={'timeinv','freqinv'};
-[flags,kv,Ls]=ltfatarghelper({},definput,varargin);
+[flags,kv]=ltfatarghelper({},definput,varargin);
 Ls = kv.Ls;
 
 complainif_notposint(kv.maxit,'maxit',mfilename);
