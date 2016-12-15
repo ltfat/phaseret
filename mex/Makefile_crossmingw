@@ -6,7 +6,7 @@ export NOBLASLAPACK=1
 export EXT=mexw64
 MEXDIR = /home/susnak/Dropbox/win64libs
 
-all: clean libltfat libphaseret odir fftw mex
+all: clean libltfat libphaseret odir fftw mex clean
 
 libltfat:
 	make -C ../libltfat cleanobj

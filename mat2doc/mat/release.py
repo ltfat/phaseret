@@ -1,8 +1,8 @@
 print "Creating downloadable package"
 
-s=os.path.join(conf.t.dir,'doxygen')
-rmrf(s)
-os.rmdir(s)
+# s=os.path.join(conf.t.dir,'doxygen')
+# rmrf(s)
+# os.rmdir(s)
 
 
 # Recursively remove the .git files
