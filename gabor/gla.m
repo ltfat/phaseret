@@ -10,7 +10,8 @@ function [c,f,relres,iter]=gla(s,g,a,M,varargin)
 %         g       : Analysis Gabor window
 %         a       : Hop factor
 %         M       : Number of channels
-%         Ls      : Length of signal.
+%         maxit   : Maximum number of iterations.
+%         tol     : relative tolerance
 %   Output parameters:
 %         c       : Coefficients with the reconstructed phase
 %         f       : Reconstructed signal.
@@ -70,15 +71,15 @@ function [c,f,relres,iter]=gla(s,g,a,M,varargin)
 %     'alpha',a    Parameter of the Fast Griffin-Lim algorithm. It is
 %                  ignored if not used together with 'flegla' flag.
 %
-%   Other
-%   -----
+%   Additional parameters
+%   ---------------------
 %
-%     'Ls',Ls      Crop the reconstructed signal *f* to length *Ls*.
+%     'maxit',n    Do at most n iterations.
 %
 %     'tol',t      Stop if relative residual error is less than the
 %                  specified tolerance.
 %
-%     'maxit',n    Do at most n iterations.
+%     'Ls',Ls      Crop the reconstructed signal *f* to length *Ls*.
 %
 %     'print'      Display the progress. This is disabled by default.
 %

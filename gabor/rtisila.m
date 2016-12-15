@@ -1,7 +1,6 @@
 function [c,f,relres,iter]=rtisila(s,g,a,M,varargin)
 %RTISILA Real-Time Iterative Spectrogram Inversion with Look Ahead
 %   Usage: c = rtisila(s,g,a,M)
-%          c = rtisila(s,g,a,M,maxit)
 %          [c,f,relres,iter] = rtisila(...)
 %
 %   Input parameters:
@@ -9,7 +8,6 @@ function [c,f,relres,iter]=rtisila(s,g,a,M,varargin)
 %         g       : Analysis Gabor window
 %         a       : Hop factor
 %         M       : Number of channels
-%         maxit   : Number of iterations.
 %   Output parameters:
 %         c       : Coefficients with the reconstructed phase.
 %         f       : Reconstructed signal.
@@ -18,7 +16,8 @@ function [c,f,relres,iter]=rtisila(s,g,a,M,varargin)
 %
 %   `rtisila(s,g,a,M)` attempts to find Gabor coefficients *c* such
 %   that::
-%
+%   
+%     c = dgtreal(f,g,a,M,'timeinv');
 %     s = abs(c);
 %
 %   using the Real-Time Iterative Spectrogram Inversion with Look Ahead.
@@ -28,7 +27,7 @@ function [c,f,relres,iter]=rtisila(s,g,a,M,varargin)
 %   coefficients *c* with the reconstructed phase. The relationship between
 %   *f* and *c* is::
 %
-%     f = idgtreal(c,gd,a,M)
+%     f = idgtreal(c,gd,a,M,'timeinv')
 %
 %   where *gd* is the canonical dual window obtained by |gabdual|.
 %
@@ -43,7 +42,6 @@ function [c,f,relres,iter]=rtisila(s,g,a,M,varargin)
 %                            value is 5. The total number
 %                            of per-frame iteratins is `(lookahead+1)*maxit`.
 %                           
-%
 %   See also:  lertisila, idgtreal, dgtreal
 %
 %   References: zhbewy07
@@ -70,7 +68,7 @@ definput.keyvals.Ls=[];
 definput.keyvals.maxit=5;
 definput.keyvals.lookahead = [];
 definput.flags.phase={'timeinv','freqinv'};
-[flags,kv,Ls]=ltfatarghelper({'maxit'},definput,varargin);
+[flags,kv,Ls]=ltfatarghelper({},definput,varargin);
 Ls = kv.Ls;
 
 complainif_notposint(kv.maxit,'maxit',mfilename);

@@ -1,8 +1,8 @@
 function c  = spsi(s,a,M,varargin)
 %SPSI Single Pass Spectrogram Inversion (SPSI)
 %   Usage:  c=spsi(s,a,M);
-%           c=spsi(s,a,M,mask);   
-%           c=spsi(s,a,M,mask,usephase);   
+%           c=spsi(s,a,M,mask);
+%           c=spsi(s,a,M,mask,usephase);
 %
 %   Input parameters:
 %         s        : Modulus of Gabor coefficients.
@@ -33,7 +33,7 @@ function c  = spsi(s,a,M,varargin)
 %   phase *usephase* is passed explicitly.
 %
 %   The original implementation was downloaded from
-%   http://anclab.org/software/phaserecon/m-files.zip (on 16.9.2015). 
+%   http://anclab.org/software/phaserecon/m-files.zip (on 16.9.2015).
 %   It has been modified to work on the Gabor coefficients directly and,
 %   therefore, +/- pi alternation is no longer necessary.
 %
@@ -52,7 +52,7 @@ if ~isnumeric(s) || isempty(s)
 end
 
 if size(s,3)>1
-   error('%s: c cannot be 3dimensional.',upper(mfilename)); 
+    error('%s: c cannot be 3dimensional.',upper(mfilename));
 end
 
 definput.flags.phase={'timeinv','freqinv'};
@@ -77,23 +77,23 @@ if ~isempty(mask)
     if ~all(cellfun(@(el) isequal(size(el),size(s)),{mask,usephase}))
         error('%s: Dimensions of c, mask and phase must be equal.',upper(mfilename));
     end
-    
+
     % Convert to logical
     % Sanitize mask (anything other than 0 is true)
     mask = cast(mask,'double');
     mask(mask~=0) = 1;
-    
+
     if ~flags.do_timeinv
         % Change to timeinv since spsi expects timeinv
-       usephase = angle(phaselockreal(exp(1i*usephase),a,M));                
+        usephase = angle(phaselockreal(exp(1i*usephase),a,M));
     end
-    
+
     c = comp_maskedspsi(s,a,M,mask,usephase);
 else
     if ~isreal(s) || any(s(:)<0)
         error('%s: s must be real and non-negative when no mask is used.',upper(mfilename));
     end
-    
+
     c = comp_spsi(s,a,M);
 end
 

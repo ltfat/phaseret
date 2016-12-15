@@ -1,8 +1,6 @@
 function [c,newphase,tgrad,fgrad]=rtpghi(s,gamma,a,M,varargin)
 %RTPGHI Real-Time Phase Gradient Integration
 %   Usage:  c=rtpghi(s,gamma,a,M);
-%           c=rtpghi(c,gamma,a,M,mask);
-%           c=rtpghi(s,gamma,a,M,mask,usephase);
 %           [c,newphase,tgrad,fgrad] = rtpghi(...);
 %
 %   Input parameters:
@@ -10,7 +8,6 @@ function [c,newphase,tgrad,fgrad]=rtpghi(s,gamma,a,M,varargin)
 %         gamma    : Window width factor.
 %         a        : Hop factor.
 %         M        : Number of channels.
-%         tol      : Relative tolerance.
 %   Output parameters:
 %         c        : Coefficients with the constructed phase.
 %         newphase : Just the (unwrapped) phase.
@@ -21,22 +18,21 @@ function [c,newphase,tgrad,fgrad]=rtpghi(s,gamma,a,M,varargin)
 %   absolute values *s* using the Real-Time Phase Gradient Heap Integration
 %   algorithm. *s* must have been obtained as::
 %
-%       c = dgtreal(f,g,a,M);
+%       c = dgtreal(f,g,a,M,'timeinv');
 %       s = abs(c);
 %
 %   and the algorithm attempts to recover *c*. Parameter *gamma* is window 
-%   *g* specific and it can be computed using:
-%
-%   .. gamma = Cg*gl^2
-%
-%   .. math:: \gamma = C_g \mathit{gl}^2
-%
-%   where *gl* is the window length and *Cg* is a window specific constant. 
-%   Both *Cg* and *gamma* can be obtained by calling |findwindowconstant|.
+%   *g* specific and it can be computed using |pghi_findgamma|.
 %
 %   This function works entirely simiral to |pghi| except it is using
 %   the real-time version of the algorithm. Please see help of |pghi| 
 %   (resp. |constructphasereal| from LTFAT) for more details.
+%
+%   Algorithm version:
+%
+%       'normal'    1 frame delay version of the algorithm RTPGHI(1)
+%
+%       'causal'    No delay version of the algorithm RTPGHI(0)
 %
 %   See also: dgtreal, idgtreal, pghi
 %
@@ -45,17 +41,18 @@ function [c,newphase,tgrad,fgrad]=rtpghi(s,gamma,a,M,varargin)
 
 %   AUTHORS: Zdenek Prusa
 %
-
 thismfilename = upper(mfilename);
 complainif_notposint(a,'a',thismfilename);
 complainif_notposint(M,'M',thismfilename);
 
+if ~isscalar(gamma)
+    error('%s: gamma must be a scalar.',upper(mfilename));
+end
+
 definput.keyvals.tol=1e-6;
-definput.keyvals.mask=[];
-definput.keyvals.usephase=[];
 definput.flags.phase={'timeinv','freqinv'};
 definput.flags.variant={'normal','causal'};
-[flags,kv]=ltfatarghelper({'mask','usephase'},definput,varargin);
+[flags,kv]=ltfatarghelper({},definput,varargin);
 tol = kv.tol;
 [M2,N,W] = size(s);
 

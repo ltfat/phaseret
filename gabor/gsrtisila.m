@@ -1,8 +1,6 @@
 function [c,f,relres,iter]=gsrtisila(s,g,a,M,varargin)
 %GSRTISILA Gnann and Spiertz’s Real-Time Iterative Spectrogram Inversion
 %   Usage: c = gsrtisila(s,g,a,M)
-%          c = gsrtisila(c,g,a,M,mask)
-%          c = gsrtisila(s,g,a,M,mask,usephase)
 %          [c,f,relres,iter] = gsrtisila(...)
 %
 %   Input parameters:
@@ -20,7 +18,7 @@ function [c,f,relres,iter]=gsrtisila(s,g,a,M,varargin)
 %   `gsrtisila(s,g,a,M)` attempts to find Gabor coefficients *c* of some
 %   signal *f* such that::
 %
-%     c = dgtreal(f,g,a,M);
+%     c = dgtreal(f,g,a,M,'timeinv');
 %     s = abs(c);
 %
 %   using the Gnann and Spiertz’s Real-Time Iterative Spectrogram
@@ -30,7 +28,7 @@ function [c,f,relres,iter]=gsrtisila(s,g,a,M,varargin)
 %   signal *f* and the residual error `relres`.
 %   The relationship between *f* and *c* is the following::
 %
-%     f = idgtreal(c,gd,a,M)
+%     f = idgtreal(c,gd,a,M,'timeinv')
 %
 %   where *gd* is the canonical dual window obtained by |gabdual|.
 %
@@ -45,6 +43,8 @@ function [c,f,relres,iter]=gsrtisila(s,g,a,M,varargin)
 %                            value is 5. The total number
 %                            of per-frame iteratins is `(lookahead+1)*maxit`.
 %
+%     'Ls',Ls                Crop the reconstructed signal *f* to length *Ls*.
+%
 %   Phase initialization:
 %   ---------------------
 %
@@ -52,6 +52,8 @@ function [c,f,relres,iter]=gsrtisila(s,g,a,M,varargin)
 %   newest lookahead frame can be employed:
 %
 %      'zeros'          Initialize with zeros. This is the default.
+
+%      'input'          Use phase of *s*.
 %
 %      'unwrap'         Use phase vocoder style phase unwrapping.
 %
@@ -94,8 +96,15 @@ definput.flags.phase={'timeinv','freqinv'};
 definput.flags.lastbufinit={'zeros','unwrap','input','spsi','rtpghi'};
 definput.keyvals.rtpghi = {};
 definput.keyvals.unwrappar=0.3;
-[flags,kv]=ltfatarghelper({'maxit'},definput,varargin);
+definput.keyvals.mask=[];
+definput.keyvals.usephase=[];
+[flags,kv]=ltfatarghelper({'mask','usephase'},definput,varargin);
 Ls = kv.Ls;
+
+if ~isempty(kv.mask) || ~isempty(kv.usephase)
+    error('%s: TODO: ''mask'' or ''usephase'' parameters are not supported yet.',...
+          upper(mfilename));
+end
 
 complainif_notposint(kv.maxit,'maxit',mfilename);
 
@@ -125,7 +134,6 @@ if flags.do_rtpghi
         error('%s: RTPGHI gamma parameter is missing.',upper(mfilename));
     end
 end
-
 
 % Analysis window (as array)
 gnum = gabwin(g,a,M);

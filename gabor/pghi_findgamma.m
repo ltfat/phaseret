@@ -1,72 +1,75 @@
 function [gamma, Cg] = pghi_findgamma( g, varargin)
 %PGHI_FINDGAMMA Find window constant for PGHI and RTPGHI
-%   Usage: gamma = pghi_findgamma(g)
-%          gamma = pghi_findgamma(gnum,gl)
-%          [Cg, gamma] = pghi_findgamma(...)
+%   Usage: gamma = pghi_findgamma({firwinname,gl})
+%          gamma = pghi_findgamma(g,a,M)
+%          gamma = pghi_findgamma(g,a,M,L)
+%          [gamma, Cg] = pghi_findgamma(...)
 %
 %   Input parameters:
 %         gnum     : Window.
 %         gl       : Length of the support of the window.
 %   Output parameters:
+%         gamma    : Parameter for PGHI and RTPGHI
 %         Cg       : Window constant
-%         gama     : Parameter for PGHI and RTPGHI
 %
-%   `pghi_findgamma(gnum)` does a heuristic search for the 
-%   parameter *Cg*, for which the Gaussian window given as:
-%   
-%   .. g = exp(-pi*l^2/(Cg*gl^2))
-%   
-%   .. math:: g=exp(-\pi\frac{l^2}{C_g \mathit{gl}^2})
+%   `pghi_findgamma({firwinname,gl})` returns parameter *gamma*, for which the
+%   Gaussian window given as:
 %
-%   is closest to peak-normalized window *gnum*, where *gl* is length 
-%   of its support.
+%   .. g = exp(-pi*l^2/gamma)
 %
-%   `pghi_findgamma(gnum,gl)` works as before but uses explicitly
-%   given *gl*. This is usefull when e.g. *gnum* is zero padded.
+%   .. math:: g=exp(-\pi\frac{l^2}{\gamma})
+%
+%   is closest to peak-normalized window *firwinname* from |firwin|.
+%   The parameter is precomputed so the search will not be done.
 %
 %   `[gamma,Cg] = pghi_findgamma(...)` additionaly returns parameter
-%   *gamma* which is equal to:
-%   
+%   *Cg* which is window constatnt and is used to compute gamma such as:
+%
 %   .. gamma = Cg*gl^2
-%   
-%   .. math:: g=C_g \mathit{gl}^2}
+%
+%   .. math:: \gamma=C_g \mathit{gl}^2}
+%
+%   where *gl* is the length of the window support.
 %
 %   Note that the relationship between *gamma* and *tfr* from |pgauss| is:
 %
 %   .. tfr = gamma/L
-%   
+%
 %   .. math:: tfr=gamma/L
 %
 %   where *L* is the DGT length.
+%
+%   Additional parameters:
+%   ----------------------
+%
+%   'search'             Do the search even for prcomputed windows.
 %
 %   References: ltfatnote043
 
 % AUTHOR: Zdenek Prusa
 
 definput.keyvals.atheightrange = [];
-definput.keyvals.gl = [];
 definput.keyvals.a = [];
 definput.keyvals.M = [];
 definput.keyvals.L = [];
 definput.flags.method = {'precomputed','search'};
 [flags,kv]=ltfatarghelper({'a','M','L'},definput,varargin);
-gl = kv.gl;
 
 wins = getfield(arg_firwin,'flags','wintype');
 
 if ischar(g) || (iscell(g) && ischar(g{1})) && ~flags.do_search
     winname = g;
     if iscell(g), winname = g{1}; end;
-    switch winname
+        switch winname
         case wins
             if iscell(g) && numel(g)>1 && isnumeric(g{2})
-                gl = g{2}; % Override gl
-            elseif ~isempty(kv.M) 
+                gl = g{2}; 
+            elseif ~isempty(kv.M)
                 gl = kv.M;
             else
                 error('%s: Window length is unspecified.',upper(mfilename));
             end
- 
+
             try
                 [gamma,Cg] = precomputed_gamma(winname,gl);
                 return; % Return immediatelly
@@ -97,9 +100,7 @@ if ~isnumeric(g)
     g = gabwin(g,kv.a,kv.M,kv.L);
 end
 
-if isempty(gl)
-    gl = numel(g);
-end
+gl = numel(g);
 
 atheight = findbestgauss( g, kv.atheightrange);
 w = winwidthatheight(g, atheight);
@@ -123,7 +124,7 @@ function [atheight,minorm] = findbestgauss( gnum , varargin)
 %   at which both windows have the same width. *gnum* must be a numeric
 %   vector returned from from |gabwin| or |firwin|. The function does a
 %   simple heuristic search. Nothing fancy.
-%   
+%
 %   Examples:
 %   ---------
 %
@@ -148,7 +149,7 @@ function [atheight,minorm] = findbestgauss( gnum , varargin)
 %
 %       % The following can be directly used in |dgtreal| and |constructphasereal|
 %       g = {'gauss','width',width,'atheight',atheight};
-%             
+%
 
 % AUTHOR: Zdenek Prusa
 
@@ -213,8 +214,8 @@ for ii=1:numel(atheight)
     gmax = max(gnum);
     frac=  1/atheight(ii);
     fracofmax = gmax/frac;
-    
-    
+
+
     ind =find(gnum(1:floor(gl/2)+1)==fracofmax,1,'first');
     if isempty(ind)
         %There is no sample exactly half of the height
@@ -231,7 +232,7 @@ end
 function [gamma,Cg] = precomputed_gamma(g,gl)
 
 switch g
-    case {'hann','hanning','nuttall10'}
+case {'hann','hanning','nuttall10'}
         Cg = 0.25645;
     case {'sqrthann','cosine','sine'}
         Cg = 0.41532;

@@ -8,6 +8,14 @@ function phaseretstart(verbose)
 %   The function checks whether the required version of LTFAT is installed
 %   and whether MEX files were compiled.
 %
+%   A typical startup file could look like::
+%
+%     addpath('/path/to/my/work/ltfat');
+%     addpath('/path/to/my/work/phaseret');
+%     ltfatstart;
+%     phaseretstart;
+
+%AUTHOR: Zdenek Prusa
 
 if nargin < 1
     verbose = 1;

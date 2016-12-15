@@ -10,12 +10,13 @@ function [c,f,relres,iter]=decolbfgs(s,g,a,M,varargin)
 %         g       : Analysis Gabor window
 %         a       : Hop factor
 %         M       : Number of channels
-%         Ls      : Length of signal.
+%         maxit   : Maximum number of iterations.
+%         tol     : relative tolerance
 %   Output parameters:
+%         c       : Coefficients with the reconstructed phase
 %         f       : Reconstructed signal.
 %         relres  : Vector of residuals.
 %         iter    : Number of iterations done.
-%         c       : Coefficients with the reconstructed phase
 %
 %   `decolbfgs(s,g,a,M)` attempts to find coefficients *c* from
 %   their abs. value obtained as::
@@ -23,9 +24,13 @@ function [c,f,relres,iter]=decolbfgs(s,g,a,M,varargin)
 %     c = dgtreal(f,g,a,M,'timeinv');
 %     s = abs(c);
 %
-%   using Decorsiere's unconstrained optimization approach which in turn
+%   using Decorsiere's unconstrained optimization approach which, in turn,
 %   exploits lBFGS (limited-memory Broyden–Fletcher–Goldfarb–Shanno)
 %   algorithm. 
+%
+%   `[c,f,relres,iter] = decolbfgs(...)` additionally returns reconstructed
+%   signal *f*, a vector of relative residuals *relres* and a number of
+%   iterations done *iter*.
 %
 %   Initial phase estimate
 %   ----------------------
@@ -39,14 +44,14 @@ function [c,f,relres,iter]=decolbfgs(s,g,a,M,varargin)
 %   Additional parameters
 %   ---------------------
 %
-%   'p',p         p-parameter for the compressed version of the objective
-%                 function. The default value is 2/3.
-%
 %   'tol',tol     Tolerance for the lBFGS implementation. 
 %                 The default value is 1e-6.
 %
 %   'maxit',maxit Maximum number of iterations of lBFGS.
 %                 The default value is 100.
+%
+%   'p',p         p-parameter for the compressed version of the objective
+%                 function. The default value is 2/3.
 %   
 %   'Ls',Ls       The reconstructed signal *f* will be cropped to length *Ls*.
 %

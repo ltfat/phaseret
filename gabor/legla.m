@@ -9,17 +9,17 @@ function [c,f,relres,iter]=legla(s,g,a,M,varargin)
 %         g       : Analysis Gabor window
 %         a       : Hop factor
 %         M       : Number of channels
-%         Ls      : length of signal.
+%         maxit   : Maximum number of iterations.
 %   Output parameters:
 %         c       : Coefficients with the reconstructed phase
 %         f       : Signal.
 %         relres  : Vector of residuals.
 %         iter    : Number of iterations done.
 %
-%   `legla(s,g,a,M)` attempts to find coefficients *c* from their abs. 
+%   `legla(s,g,a,M)` attempts to find coefficients *c* from their abs.
 %   value::
 %
-%     s = abs(dgtreal(f,g,a,M));
+%     s = abs(dgtreal(f,g,a,M,'timeinv'));
 %
 %   using Le Rouxs modifications of the Griffin-Lim algorithm.
 %
@@ -27,7 +27,7 @@ function [c,f,relres,iter]=legla(s,g,a,M,varargin)
 %   of residuals `relres`, the number of iterations done `iter` and the
 %   reconstructed signal *f*. The relationship between *f* and *c* is::
 %
-%     f = idgtreal(c,gd,a,M)
+%     f = idgtreal(c,gd,a,M,'timeinv')
 %
 %   where *gd* is the canonical dual window obtained by |gabdual|.
 %
@@ -52,7 +52,7 @@ function [c,f,relres,iter]=legla(s,g,a,M,varargin)
 %
 %   Projection kernel
 %   -----------------
-%   
+%
 %   The algorithm employs a twisted convolution of coefficients with the
 %   truncated projection kernel. The full-size kernel is obtained as::
 %
@@ -61,9 +61,9 @@ function [c,f,relres,iter]=legla(s,g,a,M,varargin)
 %   where *gd* is canonical dual window obtained by |gabdual|. The
 %   following key-value pairs control the final kernel size:
 %
-%     'relthr',relthr    The kernel is truncated such that it contains 
-%                        coefficients with abs. values greater or equal 
-%                        to *relthr* times the biggest coefficient. 
+%     'relthr',relthr    The kernel is truncated such that it contains
+%                        coefficients with abs. values greater or equal
+%                        to *relthr* times the biggest coefficient.
 %                        The default value is 1e-3.
 %
 %     'kernsize',[height,width]  Define kernel size directly. When used,
@@ -147,7 +147,7 @@ if flags.do_input
     % Start with the phase given by the input.
     c=s;
     if flags.do_timeinv
-       c = phaseunlockreal(c,a,M);
+        c = phaseunlockreal(c,a,M);
     end
 end;
 
@@ -187,9 +187,9 @@ else
     if ~isnumeric(kv.kernsize) || numel(kv.kernsize)~=2
         error('%s: Kernel size must be a 2 element vector.',upper(mflename));
     end
-%     if any(mod(kv.kernsize,2)==0)
-%         error('%s: Kernel size must be odd.',upper(mfilename));
-%     end
+    %     if any(mod(kv.kernsize,2)==0)
+    %         error('%s: Kernel size must be odd.',upper(mfilename));
+    %     end
     if any(kv.kernsize<=0) || kv.kernsize(1)>M || kv.kernsize(2)>N
         error('%s: Invalid kernel size.',upper(mfilename));
     end
@@ -221,7 +221,7 @@ if flags.do_legla
 
         % Do the leGLA phase update
         c = comp_leglaupdate(c,kernsmall,s,a,M,flags.do_onthefly);
-        
+
         % Apply coefficient restriction
         if ~isempty(kv.coefmod)
             c = kv.coefmod(c);
@@ -236,7 +236,7 @@ if flags.do_legla
 elseif flags.do_flegla
     told=c;
     for iter=1:kv.maxit
-        
+
         if nargout>1
             cproj = projfnc(c);
             relres(iter)=norm(abs(cproj)-s,'fro')/norm_s;
@@ -244,15 +244,15 @@ elseif flags.do_flegla
 
         % Do the leGLA phase update
         tnew = comp_leglaupdate(c,kernsmall,s,a,M,flags.do_onthefly);
-        
+
         % Apply coefficient restriction
         if ~isempty(kv.coefmod)
             tnew = kv.coefmod(tnew);
         end
-        
+
         % The acceleration step
         c = tnew + kv.alpha*(tnew-told);
-        
+
         % Keep for next iteration
         told = tnew;
 
@@ -293,11 +293,11 @@ for m=1:M2
     if newlastcol > lastcol1
         lastcol1 = newlastcol;
     end
-    
-%     newlastcol = find(abs(kern(m,end:-1:floor(end/2)))>=thr,1,'last');
-%     if newlastcol > lastcol2
-%         lastcol2 = newlastcol;
-%     end
+
+    %     newlastcol = find(abs(kern(m,end:-1:floor(end/2)))>=thr,1,'last');
+    %     if newlastcol > lastcol2
+    %         lastcol2 = newlastcol;
+    %     end
 end
 
 ksize = [2*lastrow-1, 2*lastcol1 - 1];

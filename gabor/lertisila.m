@@ -1,7 +1,6 @@
 function [c,f,relres,iter]=lertisila(s,g,a,M,varargin)
 %LERTISILA RTISI for real signals using Le Roux's truncated updates
 %   Usage: c = lertisila(s,g,a,M)
-%          c = lertisila(s,g,a,M,maxit)
 %          [c,f,relres,iter] = lertisila(...)
 %
 %   Input parameters:
@@ -9,7 +8,6 @@ function [c,f,relres,iter]=lertisila(s,g,a,M,varargin)
 %         g       : Analysis Gabor window
 %         a       : Hop factor
 %         M       : Number of channels
-%         Ls      : Length of signal
 %         maxit   : Numer of iterations
 %   Output parameters:
 %         c       : Coefficients with the reconstructed phase.
@@ -20,13 +18,14 @@ function [c,f,relres,iter]=lertisila(s,g,a,M,varargin)
 %   `lertisila(s,g,a,M)` attempts to find Gabor coefficients *c* such
 %   that::
 %
-%     s = abs(c);
+%      c = dgtreal(f,g,a,M);
+%      s = abs(c);
 %
 %   using the Real-Time Iterative Spectrogram Inversion with Look Ahead
-%   and Le Roux's truncated phase updates.
-%   
+%   and Le Roux's truncated phase updates aka TF-RTISI-LA.
+%
 %   `[c,f,relres,iter]=lertisila(...)` additionally returns an array
-%   of residuals `relres`, the number of per-frame iterations done `iter` 
+%   of residuals `relres`, the number of per-frame iterations done `iter`
 %   and the coefficients *c* with the reconstructed phase. The relationship
 %   between *f* and *c* is::
 %
@@ -38,13 +37,13 @@ function [c,f,relres,iter]=lertisila(s,g,a,M,varargin)
 %
 %   Algorithm parameters:
 %
-%     'lookahead',lookahead   Number of lookahead frames. 
+%     'lookahead',lookahead   Number of lookahead frames.
 %                             The default value is `ceil(M/a)-1`.
 %
 %     'freqneighs',fneighs  Number of neighboring frequency bins used
 %                           in the truncated projection. The default
 %                           value is `lookahead`.
-%                           The total kernel size is 
+%                           The total kernel size is
 %                           `2*(fneighs) + 1, 2*(lookahead) + 1`
 %
 %     'asymwin'        Use asymetric window for the newest lookahead
@@ -67,14 +66,6 @@ function [c,f,relres,iter]=lertisila(s,g,a,M,varargin)
 %
 %     'rand'       Choose a random starting phase.
 %
-%     'unwrap'     Determines phase by unwrapping the phase from the
-%                  previous frames.
-%
-%     'unwrappar',upar  Argument of the unwrapping phase initialization.
-%                       It is ignored if the 'unwrap' parameter is not
-%                       used. 
-%                       The default value is 0.3.
-%
 %   Variant of the algorithm:
 %
 %     'trunc'      The projection kernel is used directly.
@@ -94,11 +85,11 @@ function [c,f,relres,iter]=lertisila(s,g,a,M,varargin)
 %
 %     'energy'     Process the lookahead frames in the order of their
 %                  energy.
-%   
+%
 %   References: leroux10b
 %
 
-%   AUTHORS: Zdenek Prusa   
+%   AUTHORS: Zdenek Prusa
 %
 
 complainif_notposint(a,'a',mfilename);
@@ -109,7 +100,7 @@ if ~isnumeric(s) || isempty(s)
 end
 
 if size(s,3)>1
-   error('%s: s cannot be 3dimensional.',upper(mfilename)); 
+    error('%s: s cannot be 3dimensional.',upper(mfilename));
 end
 
 [M2,N,W] = size(s);
@@ -126,7 +117,7 @@ definput.keyvals.freqneighs = [];
 definput.flags.phase={'timeinv','freqinv'};
 definput.flags.algvariant={'trunc','modtrunc'};
 definput.flags.updatescheme={'framewise','onthefly'};
-[flags,kv]=ltfatarghelper({'maxit'},definput,varargin);
+[flags,kv]=ltfatarghelper({},definput,varargin);
 Ls = kv.Ls;
 
 if ~isnumeric(kv.maxit) || any(kv.maxit<=0) || any(rem(kv.maxit,1))
@@ -148,7 +139,6 @@ if isempty(kv.freqneighs)
     kv.freqneighs = lookback;
 end
 
-
 kernsize = [2*(kv.freqneighs) + 1, 2*(lookback) + 1];
 
 % TODO: Check for reasonable size of the kernel
@@ -166,18 +156,18 @@ end
 abss = abs(s);
 norm_s = norm(abss,'fro');
 if flags.do_input
-  % Start with the phase given by the input.
-  c=s;
+    % Start with the phase given by the input.
+    c=s;
 end;
 
 if flags.do_zero || flags.do_unwrap || flags.do_zhu
-  % Start with a phase of zero.
-  c=abss;
+    % Start with a phase of zero.
+    c=abss;
 end;
 
 if flags.do_rand
-  % Start with a renadom phase
-  c=abss.*exp(2*pi*1i*rand(size(s)));
+    % Start with a renadom phase
+    c=abss.*exp(2*pi*1i*rand(size(s)));
 end;
 
 % Dual window
@@ -238,7 +228,7 @@ for k = 0:kNo-1
     kernelsSmall(:,:,k+1) = phasekernfi(kernsmall,k,a,M);
     kernelsSpec1Small(:,:,k+1) = phasekernfi(kernsmallSpec1,k,a,M);
     kernelsSpec2Small(:,:,k+1) = phasekernfi(kernsmallSpec2,k,a,M);
-    
+
     kernelsSmall(:,:,k+1)=(fftshift(kernelsSmall(:,:,k+1),2));
     kernelsSpec1Small(:,:,k+1)=(fftshift(kernelsSpec1Small(:,:,k+1),2));
     kernelsSpec2Small(:,:,k+1)=(fftshift(kernelsSpec2Small(:,:,k+1),2));
@@ -251,45 +241,45 @@ kernw2 = floor(kernw/2);
 
 % n -th frame is the submit frame
 for n=1:N
-    % Shift cols in the buffer 
+    % Shift cols in the buffer
     cbuf(:,1:kernw-1) = cbuf(:,2:kernw);
     cbuf(:,kernw:end) = 0;
-    
+
     % Index of the newest look-ahead frame
     nextnewframeidx = mod(n - 1 + kv.lookahead,N) + 1;
-    
+
     % Pick new lookahead frame
     if flags.do_unwrap
         newframeidx1 = mod(nextnewframeidx-1 -1,N) +1;
         newframeidx2 = mod(nextnewframeidx-2 -1,N) +1;
-        
+
         cbuf(:,kernw) = kv.unwrappar*abs(cfull(:,nextnewframeidx)) ...
-                                    .*cfull(:,newframeidx1).^2 ...
-                                    .*abs(cfull(:,newframeidx2))./ ...
-                                    (abs(cfull(:,newframeidx1)).^2 ...
-                                    .*cfull(:,newframeidx2) );
+        .*cfull(:,newframeidx1).^2 ...
+        .*abs(cfull(:,newframeidx2))./ ...
+        (abs(cfull(:,newframeidx1)).^2 ...
+        .*cfull(:,newframeidx2) );
     elseif ~flags.do_zhu
         % Use the initial estimate
-        cbuf(:,kernw) = cfull(:,nextnewframeidx);      
+        cbuf(:,kernw) = cfull(:,nextnewframeidx);
     elseif flags.do_zhu
         % Do nothing. The original algorithm assumes the new frame to only
         % consist of the sum of the overlapping preceeding frames.
         % This is equivalent to setting cbuf(:,kernw) to zeros.
         % It gets filled after the first iteration.
     end
-    
+
     %% Explicit first iteration
     % 1) No energy sorting
-    % 2) Special analysis window for the rightmost frame 
+    % 2) Special analysis window for the rightmost frame
     %    There are two different "special" analysis frames
     %    depending on flags.do_zhu
-    
+
     %% 1) The new looakahead frame
     if flags.do_asymwin
         if flags.do_zhu
-           kernact = kernelsSpec1Small(:,:,mod(n-1 + kv.lookahead,kNo)+1);
+            kernact = kernelsSpec1Small(:,:,mod(n-1 + kv.lookahead,kNo)+1);
         else
-           kernact = kernelsSpec2Small(:,:,mod(n-1 + kv.lookahead,kNo)+1);
+            kernact = kernelsSpec2Small(:,:,mod(n-1 + kv.lookahead,kNo)+1);
         end
     else
         kernact = kernelsSmall(:,:,mod(n-1 + kv.lookahead,kNo)+1);
@@ -297,28 +287,28 @@ for n=1:N
 
     indx = lookback+kv.lookahead+1;
     indxRange = indx + (-kernw2:kernw2);
-    
-    cbuf(:,indx) = comp_leglaupdatesinglecol(cbuf(:,indxRange),...
-                         kernact,abs(cfull(:,nextnewframeidx)),M,flags.do_onthefly);
 
-    
+    cbuf(:,indx) = comp_leglaupdatesinglecol(cbuf(:,indxRange),...
+    kernact,abs(cfull(:,nextnewframeidx)),M,flags.do_onthefly);
+
+
     %% 2) Other lookahead frames and the submit frame
     for nback = kv.lookahead-1:-1:0
-       kernact = kernelsSmall(:,:,mod(n-1 + nback,kNo)+1);
-       indx = lookback+nback+1;
-       indxRange = indx + (-kernw2:kernw2);
-       
-       cbuf(:,indx) = comp_leglaupdatesinglecol(cbuf(:,indxRange),...
-                         kernact,abs(cfull(:,mod(n-1+nback,N)+1)),M,flags.do_onthefly);
+        kernact = kernelsSmall(:,:,mod(n-1 + nback,kNo)+1);
+        indx = lookback+nback+1;
+        indxRange = indx + (-kernw2:kernw2);
+
+        cbuf(:,indx) = comp_leglaupdatesinglecol(cbuf(:,indxRange),...
+        kernact,abs(cfull(:,mod(n-1+nback,N)+1)),M,flags.do_onthefly);
     end
-    
+
     % Determine order of frames for the next iterations
     frameorder = kv.lookahead:-1:0;
     if flags.do_energy
         [~,frameorder] = sort(sum(abs(cbuf(:,kv.lookahead+1:kernw)).^2),'descend');
         frameorder = frameorder - 1;
     end
-      
+
     %% 3) All the other iterations
     for iter=2:kv.maxit
         for nback = frameorder
@@ -329,15 +319,15 @@ for n=1:N
                 % Pick the right kernel
                 kernact = kernelsSmall(:,:,mod(n-1 + nback,kNo)+1);
             end
-            
+
             indx = lookback+nback+1;
             indxRange = indx + (-kernw2:kernw2);
-            
+
             cbuf(:,indx) = comp_leglaupdatesinglecol(cbuf(:,indxRange),...
-                              kernact,abs(cfull(:,mod(n-1+nback,N)+1)),M,flags.do_onthefly);
+            kernact,abs(cfull(:,mod(n-1+nback,N)+1)),M,flags.do_onthefly);
         end
     end
-    
+
     % Submit a frame
     c(:,n) = cbuf(:,lookback + 1);
 end
