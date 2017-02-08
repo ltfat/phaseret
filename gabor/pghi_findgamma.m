@@ -1,4 +1,4 @@
-function [gamma, Cg] = pghi_findgamma( g, varargin)
+function [gamma, Cg, gl] = pghi_findgamma( g, varargin)
 %PGHI_FINDGAMMA Find window constant for PGHI and RTPGHI
 %   Usage: gamma = pghi_findgamma({firwinname,gl})
 %          gamma = pghi_findgamma(g,a,M)
@@ -23,7 +23,7 @@ function [gamma, Cg] = pghi_findgamma( g, varargin)
 %   The parameter is precomputed so the search will not be done.
 %
 %   `[gamma,Cg] = pghi_findgamma(...)` additionaly returns parameter
-%   *Cg* which is window constatnt and is used to compute gamma such as:
+%   *Cg* which is window constant and is used to compute gamma such as:
 %
 %   .. gamma = Cg*gl^2
 %
@@ -42,7 +42,7 @@ function [gamma, Cg] = pghi_findgamma( g, varargin)
 %   Additional parameters:
 %   ----------------------
 %
-%   'search'             Do the search even for prcomputed windows.
+%   'search'             Do the search even for precomputed windows.
 %
 %   References: ltfatnote043
 
@@ -100,7 +100,8 @@ if ~isnumeric(g)
     g = gabwin(g,kv.a,kv.M,kv.L);
 end
 
-gl = numel(g);
+gl = round(winwidthatheight(g, 1e-10));
+g = long2fir(g,gl);
 
 atheight = findbestgauss( g, kv.atheightrange);
 w = winwidthatheight(g, atheight);
@@ -221,8 +222,12 @@ for ii=1:numel(atheight)
         %There is no sample exactly half of the height
         ind1 = find(gnum(1:floor(gl/2)+1)>fracofmax,1,'last');
         ind2 = find(gnum(1:floor(gl/2)+1)<fracofmax,1,'first');
-        rest = 1-(fracofmax-gnum(ind2))/(gnum(ind1)-gnum(ind2));
-        width(ii) = 2*(ind1+rest-1);
+        if isempty(ind2)
+            width(ii) = gl;
+        else
+            rest = 1-(fracofmax-gnum(ind2))/(gnum(ind1)-gnum(ind2));
+            width(ii) = 2*(ind1+rest-1);
+        end
     else
         width(ii) = 2*(ind-1);
     end

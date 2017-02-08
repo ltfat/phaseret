@@ -103,6 +103,15 @@ try
                     ' MATLABROOT="',matlabroot,'" ARCH=',computer('arch'),...
                     ' EXT=',mexext];
                 else
+                    [status,res] = system('mex -help');
+                    if status ~= 0
+                        error('The mex executable in not in the PATH');
+                    end
+                    if ~strcmp(res(1:3),'MEX')
+                        [~,res]=system('which mex');
+                        error('%s is not a Matlab mex executable!!');
+                    end                    
+
                     params = ' matlab';
                 end
             else

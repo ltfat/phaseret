@@ -52,7 +52,7 @@ function [c,f,relres,iter]=gsrtisila(s,g,a,M,varargin)
 %   newest lookahead frame can be employed:
 %
 %      'zeros'          Initialize with zeros. This is the default.
-
+%
 %      'input'          Use phase of *s*.
 %
 %      'unwrap'         Use phase vocoder style phase unwrapping.

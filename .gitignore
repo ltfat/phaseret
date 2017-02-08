@@ -1,4 +1,8 @@
-testing/mUnit/libphaseretprotofile.m 
+libphaseret/testing/mUnit/libphaseretprotofile.m 
+libltfat/testing/mUnit/libltfatprotofile.m 
+libltfat/testing/pyUnit/__*
+libltfat/CMakeCache.txt
+libphaseret/CMakeCache.txt
 repr/Databases/*
 repr
 build
@@ -12,3 +16,8 @@ latex
 *.mat
 *.mex*
 *.m~
+.*
+libltfat/CMakeFiles/*
+libphaseret/CMakeFiles/*
+octave-workspace
+
