@@ -21,7 +21,7 @@ function [c,f,relres,iter]=gla(s,g,a,M,varargin)
 %   `gla(s,g,a,M)` attempts to find coefficients *c* from
 %   their abs. value::
 %
-%     c = dgtreal(f,g,a,M);
+%     c = dgtreal(f,g,a,M,'timeinv');
 %     s = abs(c);  
 %
 %   using the Griffin-Lim algorithm.
@@ -31,7 +31,7 @@ function [c,f,relres,iter]=gla(s,g,a,M,varargin)
 %   coefficients *c* with the reconstructed phase. The relationship between
 %   *f* and *c* is::
 %
-%     f = idgtreal(c,gd,a,M)
+%     f = idgtreal(c,gd,a,M,'timeinv')
 %
 %   where *gd* is the canonical dual window obtained by |gabdual|.
 %
