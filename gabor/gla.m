@@ -69,7 +69,7 @@ function [c,f,relres,iter]=gla(s,g,a,M,varargin)
 %     'fgla'     A fast Griffin-Lim iteration scheme from Perraudin et. al..
 %
 %     'alpha',a    Parameter of the Fast Griffin-Lim algorithm. It is
-%                  ignored if not used together with 'flegla' flag.
+%                  ignored if not used together with 'fgla' flag.
 %
 %   Additional parameters
 %   ---------------------
