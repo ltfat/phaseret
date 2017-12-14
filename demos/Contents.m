@@ -2,7 +2,7 @@
 %   Copyright Zdenek Prusa, 2016 
 %
 %  Demos
-%    demo_windowaliasing  - Window aliasing dependence on Gabor sampling lattice
+%    demo_pghioverlaps    - Comparison of the PGHI performance for 50%, 75%, 87.5% and 93.75% window overlaps
 %    demo_vocoderphaseret - Vocoder-based time stretching and pitch shifting
 %
 %  Block-processing demos

@@ -1,8 +1,8 @@
 #!/bin/bash
 cd ..
 make -C mex -f Makefile_crossmingw
-mat2doc . mat --tgz --unix --script=release.py
-mat2doc . mat --zip --dos --addon=phaseret_win64 --packagename=phaseret-%s-win64 --script=release.py
-mat2doc . html
+/home/susnak/dev/mat2doc/mat2doc.py . mat --tgz --unix --script=release.py
+/home/susnak/dev/mat2doc/mat2doc.py . mat --zip --dos --addon=phaseret_win64 --packagename=phaseret-%s-win64 --script=release.py
+/home/susnak/dev/mat2doc/mat2doc.py . html
 
 
