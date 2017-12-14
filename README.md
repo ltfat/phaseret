@@ -53,17 +53,18 @@ Online documentation is available [here](http://ltfat.github.io/phaseret/doc).
 
 If you use this toolbox/library in your research, please cite
 
-> Z. Prusa: The Phase Retrieval Toolbox, {AES} International Conference On 
+> Z. Prusa: The Phase Retrieval Toolbox, AES Int. Conf. On 
 > Semantic Audio, Erlangen, Germany, June, 2017 [preprint](http://ltfat.github.io/notes/ltfatnote045.pdf).
 
-> @inproceedings{ltfatnote045,
-> year={2017},
-> month={June},
-> title={{The Phase Retrieval Toolbox}},
-> author={Zden\v{e}k Pr\r{u}\v{s}a},
-> booktitle = {{AES} International Conference On Semantic Audio},
-> address = {Erlangen, Germany}
-> }
+```
+@inproceedings{ltfatnote045,
+ year={2017},
+ month={June},
+ title={{The Phase Retrieval Toolbox}},
+ author={Zden\v{e}k Pr\r{u}\v{s}a},
+ booktitle = {{AES} International Conference On Semantic Audio},
+ address = {Erlangen, Germany}}
+```
 
 and/or relevant references found in help of the individual files.
 
