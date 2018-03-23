@@ -108,11 +108,11 @@ definput.keyvals.timemod = [];
 [flags,kv]=ltfatarghelper({'maxit','tol'},definput,varargin);
 Ls = kv.Ls;
 
-if ~isempty(kv.coefmod) && isa(kv.coefmod,'function_handle')
+if ~isempty(kv.coefmod) && ~isa(kv.coefmod,'function_handle')
     error('%s: coefmod must be anonymous function.',upper(mfilename))
 end
 
-if ~isempty(kv.timemod) && isa(kv.timemod,'function_handle')
+if ~isempty(kv.timemod) && ~isa(kv.timemod,'function_handle')
     error('%s: timemod must be anonymous function.',upper(mfilename))
 end
 
