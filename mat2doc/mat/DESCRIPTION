@@ -7,6 +7,6 @@ Title: Phase Retrieval Toolbox
 Description: The phase retrieval toolbox is a collection
 of STFT phase retrieval algorithms.
 License: GPLv3+
-Depends: octave (>= 3.8.0)
+Depends: octave (>= 3.8.0), ltfat (>= 2.1.2)
 BuildRequires: fftw3 [Debian] libfftw3-3
 Url: http://ltfat.github.io/phaseret

@@ -5,7 +5,7 @@ versionfile="phaseret_version"
 
 # Optional global settings
 author=u'Zdenek Prusa'
-year="2016"
+year="2018"
 octtitle="phaseret >> Phase Retrieval Toolbox"
 addonbase='~/Dropbox'
 

@@ -1,4 +1,4 @@
-% Copyright (C) 2016 Zdenek Prusa <zdenek.prusa@gmail.com>.
+% Copyright (C) 2018 Zdenek Prusa <zdenek.prusa@gmail.com>.
 % This file is part of PHASERET version {VERSION}
 %
 % This program is free software: you can redistribute it and/or modify

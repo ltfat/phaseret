@@ -13,6 +13,10 @@ else
 	MYCFLAGS += -O2 -DNDEBUG
 endif
 
+ifdef POST2018a
+MEXFLAGS=-R2017b
+endif
+
 # MATLAB MEX files, only works if there are no spaces in the path to Matlab
 matlab: MEX ?= mex
 # matlab: MBIN = $(shell matlab -nojvm -nodisplay -nosplash -r "disp([matlabroot,filesep,'bin',filesep,computer('arch'),filesep]);exit;" | grep /bin/)
@@ -23,7 +27,7 @@ matlab: $(MEXTARGETS)
 # and also only supresses warnings from mex (about old compiler) but not from
 # the compiler itself.
 %.mexa64 : %.c
-	$(MEX) CFLAGS='$(MYCFLAGS)' $<  $(TARGETUP) -lfftw3 -lm > /dev/null
+	$(MEX) $(MEXFLAGS) CFLAGS='$(MYCFLAGS)' $<  $(TARGETUP) -lfftw3 -lm 
 
 # OCTAVE MEX files
 # := $(shell ...) runs shell immediatelly even if we do not use the octave

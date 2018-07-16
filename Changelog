@@ -1,4 +1,9 @@
-version 0.2.1
+Version 0.2.2
+-------------
+
+* Compilation of the MEX files is now 2018a ready.
+
+Version 0.2.1
 -------------
 
 * Fixed few doc bugs

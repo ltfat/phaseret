@@ -121,6 +121,13 @@ try
             if flags.do_debug
                 params = [params, ' COMPTARGET=debug'];
             end
+            
+            if ~isoctave
+                matlabversion = version('-release');
+                if str2double(matlabversion(1:4)) >= 2018
+                    params = [params,' POST2018a=1']; 
+                end
+            end
 
             [status,res] = system([makecmd, params]);
             resolveres(status,res,flags);
