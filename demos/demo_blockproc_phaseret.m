@@ -127,8 +127,7 @@ tmpmask = zeros(M2,2);
 tmpmask(:,1) = 1;
 newphase = zeros(M2,2);
 
-fgrad = zeros(M2,2);
-tgrad = zeros(M2,2);
+tgrad = zeros(M2,3);
 
 startphase = zeros(M2,1);
 fola = [];
@@ -197,19 +196,17 @@ while flag && p.flag
                 % Compute the phase gradient
                 idx = 1:2;
                 if do_causal
-                    fgrad(:,2) = fgradmul((3*logs(:,3)-4*logs(:,2)+logs(:,1))/2);
+                    fgrad = fgradmul((3*logs(:,3)-4*logs(:,2)+logs(:,1))/2);
                     idx = 2:3;
                 else
-                    fgrad(:,2) = fgradmul((logs(:,3)-logs(:,1))/2);
+                    fgrad = fgradmul((logs(:,3)-logs(:,1))/2);
                 end
-                tgrad(2:end-1,:) = tgradmul(conv2(logs(:,idx),[1;0;-1],'valid')/2);
+                tgrad(:,1:end-1) = tgrad(:,2:end);
+                tgrad(2:end-1,end) = tgradmul(conv2(logs(:,end),[1;0;-1],'valid')/2);
                 
                 % Integrate the gradient
-                tmp = comp_constructphasereal(cslicein(:,idx),tgrad,fgrad,a,M,tol(1),2,tmpmask,newphase);
-                newphase(:,1) = tmp(:,2);
-                
-                % Use the new phase
-                cnativeout(:,ii) = sii.*exp(1i*tmp(:,2));
+                newphase = comp_rtpghiupdate(logs(:,idx),tgrad(:,idx),fgrad,newphase,tol(1),M);  
+                cnativeout(:,ii) = sii.*exp(1i*newphase);
             end
         elseif algno==1
             % Do SPSI

@@ -68,7 +68,7 @@ alg1par = {
     {'maxit1','Max. per-frame iter.',1,100,12,100},...
     };
 alg1parNames = cellfun(@(aEl) aEl{1},alg1par,'UniformOutput',0);
-               
+
 alg2par = {
     {'lookahead2','Lookahead',0,lookaheadmax,2,lookaheadmax+1},...
     {'maxit2','Max. per-frame iter.',1,100,12,100},...
@@ -138,13 +138,13 @@ fola = [];
 flag = 1;
 %Loop until end of the stream (flag) and until panel is opened
 while flag && p.flag
-    
+
     % Obtain parameters from the control panel
     gain = 10^(p.getParam('GdB')/20); % dB -> val
     do_bypass = p.getParam('Bypass');
     do_causal = 0;
     algno = p.getParam('algno');
-    
+
     if algno==0
         panelsetvisible(p,alg0parNames,1);
         panelsetvisible(p,alg1parNames,0);
@@ -165,7 +165,7 @@ while flag && p.flag
         panelsetvisible(p,alg2parNames,1);
         panelsetvisible(p,alg3parNames,0);
         lookahead = p.getParam('lookahead2');
-        maxit = p.getParam('maxit2');        
+        maxit = p.getParam('maxit2');
     elseif algno==3
         panelsetvisible(p,alg0parNames,0);
         panelsetvisible(p,alg1parNames,0);
@@ -225,11 +225,6 @@ while flag && p.flag
                 tgrad(2:end-1,end) = tgradmul(conv2(logs(:,end),[1;0;-1],'valid'));
                 
                 % Integrate the gradient
-%                 tmp = comp_constructphasereal(cslicein(:,idx),tgrad,fgrad,a,M,tol(1),2,tmpmask,newphase);
-%                 newphase(:,1) = tmp(:,2);
-%                 
-%                 % Use the new phase
-%                 cnativeout(:,ii) = sii.*exp(1i*tmp(:,2));
                 newphase = comp_rtpghiupdate(logs(:,idx),tgrad(:,idx),fgrad,newphase,tol(1),M);  
                 cnativeout(:,ii) = sii.*exp(1i*newphase);
             end
@@ -302,7 +297,6 @@ while flag && p.flag
                
                 if do_causal || lookahead == 0
                     newphase = comp_rtpghiupdate(logs(:,idx),tgrad(:,idx),fgrad,angle(cframesGSRTISI(:,lookback + lookahead)),tol(1),M);  
-                    %newphase = comp_constructphasereal(cslicein(:,idx),tgrad,fgrad,a,M,tol(1),2,tmpmask,angle(cframesGSRTISI(:,[0,1] + (lookback + lookahead))));
                     ctmp = abssGSRTISI(:,lookahead+1).*exp(1i*newphase);
                     %ftmp = gdnum.*fftshift(comp_ifftreal(ctmp,M))*M;
                     
@@ -318,7 +312,6 @@ while flag && p.flag
                     
                 else
                     newphase = comp_rtpghiupdate(logs(:,idx),tgrad(:,idx),fgrad,angle(cframesGSRTISI(:,lookback + lookahead - 1)),tol(1),M);  
-                    %newphase = comp_constructphasereal(cslicein(:,idx),tgrad,fgrad,a,M,tol(1),2,tmpmask,angle(cframesGSRTISI(:,[-1,0] + (lookback + lookahead))));
                     ctmp = abssGSRTISI(:,lookahead).*exp(1i*newphase);
                     %ftmp = gdnum.*fftshift(comp_ifftreal(ctmp,M))*M;
                     
