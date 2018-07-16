@@ -39,6 +39,11 @@ end
 [a,varargin] = parsevararginfor('a',varargin,256);
 [M,varargin] = parsevararginfor('M',varargin,2048);
 [gl,varargin] = parsevararginfor('gl',varargin,2048);
+[initalgno,varargin] = parsevararginfor('initalgno',varargin,0,1);
+
+if ~(initalgno >= 0 && initalgno <=3)
+    error('%s: initalgno must be in the range [0,3]',upper(mfilename));
+end
 
 % Window support is M
 h = 0.01;
@@ -54,7 +59,7 @@ lookaheadmax = 11;
 commonpar = {
     {'GdB','Gain',-20,20,0,21},...
     {'Bypass' ,'Bypass' ,0,1,0,2},...
-    {'algno' ,'Algorithm' ,0,3,0,4},...
+    {'algno' ,'Algorithm' ,0,3,initalgno,4},...
     };
 ... % Alg 0 params:
     alg0par = {
@@ -173,6 +178,7 @@ while flag && p.flag
         panelsetvisible(p,alg3parNames,1);
         lookahead = p.getParam('lookahead3');
         maxit = p.getParam('maxit3');
+        tol = 10^(-p.getParam('Thr'));
         do_causal = ~p.getParam('rtpghila3');
     end
     
@@ -344,7 +350,10 @@ end
 blockdone(p);
 
 
-function [a,v] = parsevararginfor(what,v,defaultval)
+function [a,v] = parsevararginfor(what,v,defaultval,zeroallowed)
+if nargin < 4
+    zeroallowed = 0;
+end
 % Parse out a from varargin
 apos = find(strcmp(what,v),1);
 if ~isempty(apos)
@@ -354,7 +363,11 @@ if ~isempty(apos)
     % Just let ltfatarghelper sort out the correct key-val format
     definput.keyvals.(what) = [];
     [~,~,a] = ltfatarghelper({what},definput,v(apos:apos+1));
-    complainif_notposint(a,what,mfilename);
+    if zeroallowed
+        complainif_notnonnegint(a,what,mfilename);
+    else
+        complainif_notposint(a,what,mfilename);
+    end
     % And remove it from varargin such that it does not break the rest
     v(apos:apos+1) = [];
 else
