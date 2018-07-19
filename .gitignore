@@ -7,7 +7,6 @@ repr/Databases/*
 repr
 build
 mat2doc_*
-html
 latex
 *.o
 *.a
