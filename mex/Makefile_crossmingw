@@ -3,10 +3,12 @@ outdir = /home/susnak/Dropbox/phaseret_win64/mex
 export CROSS=x86_64-w64-mingw32.shared-
 export MINGW=1
 export NOBLASLAPACK=1
+export FFTBACKEND=KISS
 export EXT=mexw64
+export MAKECMDGOALS=static
 MEXDIR = /home/susnak/Dropbox/win64libs
 
-all: clean libltfat libphaseret odir fftw mex clean
+all: clean libltfat libphaseret odir mex clean
 
 libltfat:
 	make -C ../libltfat cleanobj
@@ -23,12 +25,12 @@ fftw:
 	cp $(MEXDIR)/libfftw3-*.dll $(outdir)
 
 mex:
-	make -f Makefile_mingw MEXCOMPFLAGS="-I$(MEXDIR)" MEXLINKFLAGS="-L$(MEXDIR) -lmex -lmx -L$(outdir) -L../libltfat/build/$(CROSS) -L../libphaseret/build/$(CROSS)"
+	make -f Makefile_mingw MEXCOMPFLAGS="-I$(MEXDIR)" MEXLINKFLAGS="-L$(MEXDIR) -lmex -lmx -L$(outdir) -L../libltfat/build/$(CROSS)"
 	cp *.$(EXT) $(outdir)
 
 clean:
 	make -C ../libltfat clean
-	make -C ../libphaseret clean
+	# make -C ../libphaseret clean
 	-rm *.o
 	-rm *.$(EXT)
 

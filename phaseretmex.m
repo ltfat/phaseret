@@ -65,9 +65,10 @@ try
         if do_compilelib
             cd([thisdir,filesep,'libltfat']);
             disp('********* Compiling libltfat **********');
-            params = ' static NOBLASLAPACK=1';
+            params = ' static MODULE=libltfat';
+            params = [params, ' FFTBACKEND=KISS NOBLASLAPACK=1 OPTLFLAGS=-DLTFAT_LARGEARRAYS'];
             if is_mingw,
-                params = [params, ' MINGW=1'];
+                params = [params, ' MINGW=1 MAKECMDGOALS=static'];
             end
             if flags.do_debug
                 params = [params, ' COMPTARGET=debug'];
@@ -80,11 +81,12 @@ try
                 disp(res);
             end
 
-            cd([thisdir,filesep,'libphaseret']);
+            %cd([thisdir,filesep,'libphaseret']);
             disp('********* Compiling libphaseret **********');
-            params = ' static NOBLASLAPACK=1';
+            params = ' static MODULE=libphaseret';
+            params = [params,' FFTBACKEND=KISS NOBLASLAPACK=1 OPTLFLAGS=-DLTFAT_LARGEARRAYS'];
             if is_mingw
-                params = [params, ' MINGW=1'];
+                params = [params, ' MINGW=1 MAKECMDGOALS=static'];
             end
             if flags.do_debug
                 params = [params, ' COMPTARGET=debug'];
@@ -110,7 +112,7 @@ try
                     if ~strcmp(res(1:3),'MEX')
                         [~,res]=system('which mex');
                         error('%s is not a Matlab mex executable!!');
-                    end                    
+                    end
 
                     params = ' matlab';
                 end
@@ -121,7 +123,7 @@ try
             if flags.do_debug
                 params = [params, ' COMPTARGET=debug'];
             end
-            
+
             if ~isoctave
                 matlabversion = version('-release');
                 if str2double(matlabversion(1:4)) >= 2018
@@ -149,10 +151,6 @@ try
 
         if do_compilelib
             disp('********* Cleaning libs **********');
-            cd([thisdir,filesep,'libphaseret']);
-            [status,res] = system([makecmd,' clean']);
-            resolveres(status,res,flags);
-
             cd([thisdir,filesep,'libltfat']);
             [status,res] = system([makecmd,' clean']);
             resolveres(status,res,flags);

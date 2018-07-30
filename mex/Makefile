@@ -3,9 +3,10 @@ MEXSOURCES = $(wildcard *.c)
 MEXTARGETS = $(patsubst %.c,%.mexa64,$(MEXSOURCES))
 OCTAVEMEXTARGETS = $(patsubst %.c,%.mex,$(MEXSOURCES))
 
-export TARGETUP = ../libphaseret/build/libphaseretd.a ../libltfat/build/libltfatd.a
+export TARGETUP = ../libltfat/build/libphaseretd.a ../libltfat/build/libltfatd.a
 
-MYCFLAGS = -std=c99 -pedantic -Wall -Wextra -I../libphaseret/include -I../libltfat/include -fPIC -Wl,--no-undefined
+MYCFLAGS =-std=c99 -pedantic -Wall -Wextra -fPIC -Wl,--no-undefined
+MYCFLAGS+=-I../libltfat/modules/libltfat/include -I../libltfat/modules/libphaseret/include
 
 ifeq ($(COMPTARGET), debug)
 	MYCFLAGS += -O0 -g
@@ -27,15 +28,15 @@ matlab: $(MEXTARGETS)
 # and also only supresses warnings from mex (about old compiler) but not from
 # the compiler itself.
 %.mexa64 : %.c
-	$(MEX) $(MEXFLAGS) CFLAGS='$(MYCFLAGS)' $<  $(TARGETUP) -lfftw3 -lm 
+	$(MEX) $(MEXFLAGS) CFLAGS='$(MYCFLAGS)' $<  $(TARGETUP) -lm 
 
 # OCTAVE MEX files
 # := $(shell ...) runs shell immediatelly even if we do not use the octave
 # target at all
 octave: MKOCTFILE ?= mkoctfile
-octave: FFTW_LIBS = $(shell $(MKOCTFILE) -p FFTW_LIBS)
+#octave: FFTW_LIBS = $(shell $(MKOCTFILE) -p FFTW_LIBS)
 octave: export CFLAGS = $(shell $(MKOCTFILE) -p CFLAGS) $(MYCFLAGS)
-octave: export LFLAGS = $(shell $(MKOCTFILE) -p LFLAGS) $(FFTW_LIBS) $(TARGETUP) -lm
+octave: export LFLAGS = $(shell $(MKOCTFILE) -p LFLAGS) $(TARGETUP) -lm
 octave: $(OCTAVEMEXTARGETS)
 
 %.mex: %.c

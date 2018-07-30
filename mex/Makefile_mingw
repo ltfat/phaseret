@@ -14,10 +14,10 @@ else
 CC ?= gcc
 AR ?= ar
 RANLIB?=ranlib
-TARGETUP = ../libphaseret/build/libphaseretd.a ../libltfat/build/libltfatd.a
+TARGETUP = ../libltfat/build/libphaseretd.a ../libltfat/build/libltfatd.a
 endif
 
-include ../libphaseret/ostools.mk
+include ../libltfat/ostools.mk
 
 ifndef MATLABROOT
   $(warning MATLABROOT variable is undefined. Using default MATLABROOT="C:\Program Files\MATLAB\R2011b" )
@@ -34,17 +34,17 @@ ifndef ARCH
   ARCH=win64
 endif
 
-ifndef FFTWLIB
-   FFTWLIB=-lfftw3-3
-endif
+# ifndef FFTWLIB
+#    FFTWLIB=-lfftw3-3
+# endif
 
 # MEX
 MEXSOURCES = $(wildcard *.c)
 MEXTARGETS = $(patsubst %.c,%.$(EXT),$(MEXSOURCES))
 
-
-CFLAGS=-shared -s -Wall -std=c99 -I../libphaseret/include -I../libltfat/include -I../libltfat/thirdparty
-CFLAGS += -DPHASERET_BUILD_STATIC -DLTFAT_BUILD_STATIC -DMATLAB_MEXCMD_RELEASE=R2017b
+CFLAGS =-shared -s -Wall -std=c99
+CFLAFS+=-I../libltfat/modules/libltfat/include -I../libltfat/modules/phaseret/include
+CFLAGS+=-DPHASERET_BUILD_STATIC -DLTFAT_BUILD_STATIC -DMATLAB_MEXCMD_RELEASE=R2017b
 
 ifeq ($(COMPTARGET), debug)
 	CFLAGS += -O0 -g
@@ -58,7 +58,7 @@ MEXLINKFLAGS?= -L"$(MATLABROOT)\bin\$(ARCH)" -lmex -lmx
 matlab: $(MEXTARGETS)
 
 %.$(EXT): %.c 
-	$(CC) $(CFLAGS) $(MEXCOMPFLAGS) $< -o $@ -Wl,--dll -L./  $(MEXLINKFLAGS) $(TARGETUP) $(FFTWLIB) -static-libgcc 
+	$(CC) $(CFLAGS) $(MEXCOMPFLAGS) $< -o $@ -Wl,--dll -L./  $(MEXLINKFLAGS) $(TARGETUP) -static-libgcc 
 
 clean: 
 	del /Q /F *.$(EXT)
