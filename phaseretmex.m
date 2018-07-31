@@ -117,6 +117,7 @@ try
                     [status,res] = system('mex -help');
                     if status ~= 0
                         error('The mex executable in not in the PATH');
+                        error('Add %s to your PATH.',[matlabroot,filesep,'bin']);
                     end
                     if ~strcmp(res(1:3),'MEX')
                         [~,res]=system('which mex');

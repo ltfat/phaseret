@@ -2,9 +2,9 @@
 #define _mex_helper_h
 
 #include <complex.h>
-#ifdef __STDC_UTF_16__
-#include <uchar.h>
-#endif
+// #ifdef __STDC_UTF_16__
+// #include <uchar.h>
+// #endif
 #include "mex.h"
 
 #ifndef UNUSED
