@@ -20,6 +20,7 @@ endif
 
 # MATLAB MEX files, only works if there are no spaces in the path to Matlab
 matlab: MEX ?= mex
+matlab: FFTW_LIBS ?= -lfftw3
 # matlab: MBIN = $(shell matlab -nojvm -nodisplay -nosplash -r "disp([matlabroot,filesep,'bin',filesep,computer('arch'),filesep]);exit;" | grep /bin/)
 # matlab: MWFFTWLIB = $(shell ls $(MBIN)*fftw3.* | head -n 1)
 matlab: $(MEXTARGETS)
@@ -28,15 +29,15 @@ matlab: $(MEXTARGETS)
 # and also only supresses warnings from mex (about old compiler) but not from
 # the compiler itself.
 %.mexa64 : %.c
-	$(MEX) $(MEXFLAGS) CFLAGS='$(MYCFLAGS)' $<  $(TARGETUP) -lm 
+	$(MEX) $(MEXFLAGS) CFLAGS='$(MYCFLAGS)' $<  $(TARGETUP) $(FFTW_LIBS) -lm 
 
 # OCTAVE MEX files
 # := $(shell ...) runs shell immediatelly even if we do not use the octave
 # target at all
 octave: MKOCTFILE ?= mkoctfile
-#octave: FFTW_LIBS = $(shell $(MKOCTFILE) -p FFTW_LIBS)
+octave: FFTW_LIBS = $(shell $(MKOCTFILE) -p FFTW_LIBS)
 octave: export CFLAGS = $(shell $(MKOCTFILE) -p CFLAGS) $(MYCFLAGS)
-octave: export LFLAGS = $(shell $(MKOCTFILE) -p LFLAGS) $(TARGETUP) -lm
+octave: export LFLAGS = $(shell $(MKOCTFILE) -p LFLAGS) $(TARGETUP) $(FFTW_LIBS) -lm
 octave: $(OCTAVEMEXTARGETS)
 
 %.mex: %.c

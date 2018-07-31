@@ -34,16 +34,14 @@ ifndef ARCH
   ARCH=win64
 endif
 
-# ifndef FFTWLIB
-#    FFTWLIB=-lfftw3-3
-# endif
+FFTW_LIBS?=-lfftw3-3
 
 # MEX
 MEXSOURCES = $(wildcard *.c)
 MEXTARGETS = $(patsubst %.c,%.$(EXT),$(MEXSOURCES))
 
 CFLAGS =-shared -s -Wall -std=c99
-CFLAFS+=-I../libltfat/modules/libltfat/include -I../libltfat/modules/phaseret/include
+CFLAGS+=-I../libltfat/modules/libltfat/include -I../libltfat/modules/libphaseret/include
 CFLAGS+=-DPHASERET_BUILD_STATIC -DLTFAT_BUILD_STATIC -DMATLAB_MEXCMD_RELEASE=R2017b
 
 ifeq ($(COMPTARGET), debug)
@@ -58,7 +56,7 @@ MEXLINKFLAGS?= -L"$(MATLABROOT)\bin\$(ARCH)" -lmex -lmx
 matlab: $(MEXTARGETS)
 
 %.$(EXT): %.c 
-	$(CC) $(CFLAGS) $(MEXCOMPFLAGS) $< -o $@ -Wl,--dll -L./  $(MEXLINKFLAGS) $(TARGETUP) -static-libgcc 
+	$(CC) $(CFLAGS) $(MEXCOMPFLAGS) $< -o $@ -Wl,--dll -L./  $(MEXLINKFLAGS) $(TARGETUP) $(FFTW_LIBS) -static-libgcc 
 
 clean: 
 	del /Q /F *.$(EXT)

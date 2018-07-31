@@ -60,13 +60,17 @@ if ispc && ~isoctave()
     is_mingw = 1;
 end
 
+if ispc,   shared_ext = 'dll'; end
+if isunix, shared_ext = 'so'; end
+if ismac,  shared_ext = 'dylib'; end
+
 try
     if flags.do_compile
         if do_compilelib
             cd([thisdir,filesep,'libltfat']);
             disp('********* Compiling libltfat **********');
-            params = ' static MODULE=libltfat';
-            params = [params, ' FFTBACKEND=KISS NOBLASLAPACK=1 OPTLFLAGS=-DLTFAT_LARGEARRAYS'];
+            params = ' build/libltfatd.a MODULE=libltfat';
+            params = [params, ' NOBLASLAPACK=1 OPTLFLAGS=-DLTFAT_LARGEARRAYS'];
             if is_mingw,
                 params = [params, ' MINGW=1 MAKECMDGOALS=static'];
             end
@@ -83,8 +87,8 @@ try
 
             %cd([thisdir,filesep,'libphaseret']);
             disp('********* Compiling libphaseret **********');
-            params = ' static MODULE=libphaseret';
-            params = [params,' FFTBACKEND=KISS NOBLASLAPACK=1 OPTLFLAGS=-DLTFAT_LARGEARRAYS'];
+            params = ' build/libphaseretd.a MODULE=libphaseret';
+            params = [params,' NOBLASLAPACK=1 OPTLFLAGS=-DLTFAT_LARGEARRAYS'];
             if is_mingw
                 params = [params, ' MINGW=1 MAKECMDGOALS=static'];
             end
@@ -97,13 +101,18 @@ try
         end
 
         if do_compilemex
+            paramstail = '';
             cd([thisdir,filesep,'mex']);
             disp('********* Compiling MEX files **********');
             if ~isoctave()
+                libfftwd = searchforlibfftw(shared_ext);
+                paramstail = [' MATLABROOT="',matlabroot,'"',...
+                              ' ARCH=',computer('arch'),...
+                              ' EXT=',mexext,...
+                              ' FFTW_LIBS=',libfftwd];
+                
                 if ispc
-                    params = [' -f Makefile_mingw matlab',...
-                    ' MATLABROOT="',matlabroot,'" ARCH=',computer('arch'),...
-                    ' EXT=',mexext];
+                    params = ' -f Makefile_mingw matlab';
                 else
                     [status,res] = system('mex -help');
                     if status ~= 0
@@ -131,7 +140,7 @@ try
                 end
             end
 
-            [status,res] = system([makecmd, params]);
+            [status,res] = system([makecmd, params, paramstail]);
             resolveres(status,res,flags);
         end
     end
@@ -165,6 +174,36 @@ end
 
 
 cd(currdir);
+
+function libfftw3=searchforlibfftw(sharedExt)
+libfftw3base = 'fftw3';
+if ispc 
+    bp=mfilename('fullpath');
+    bp=bp(1:end-length(mfilename));    
+    % Search the ltfat/mex lib
+    L = dir([bp,'mex',filesep,'*',libfftw3base,'*.',sharedExt]);
+    if isempty(L)
+        error(['%s: %s could not be found in phaseret/mex subdir.',...
+               ' Please download the FFTW dlls and install them.'],...
+              upper(mfilename),libfftw3base);
+    end
+    libfftw3 = L(1).name;
+    fprintf('   ...using %s from phaseret/mex.\n',L(1).name);
+
+elseif isunix
+     L = dir([matlabroot,filesep,'bin',filesep,computer('arch'),...
+              filesep,'*',libfftw3base,'*.',sharedExt,'*']); 
+
+     if isempty(L)
+         error('%s: Matlab FFTW libs were not found. Strange.',...
+              upper(mfilename));
+     end
+
+     libfftw3 = ['"',L(1).folder, filesep, L(1).name,'"'];
+
+     fprintf('   ...using %s from Matlab installation.\n',...
+             libfftw3);
+end
 
 
 function isoct=isoctave()

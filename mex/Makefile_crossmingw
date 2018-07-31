@@ -1,22 +1,20 @@
-
 outdir = /home/susnak/Dropbox/phaseret_win64/mex
 export CROSS=x86_64-w64-mingw32.shared-
 export MINGW=1
 export NOBLASLAPACK=1
-export FFTBACKEND=KISS
 export EXT=mexw64
 export MAKECMDGOALS=static
 MEXDIR = /home/susnak/Dropbox/win64libs
 
-all: clean libltfat libphaseret odir mex clean
+all: clean libltfat libphaseret odir fftw mex clean
 
 libltfat:
-	make -C ../libltfat cleanobj
-	make -C ../libltfat static
+	(cd ../libltfat ; make MODULE=libltfat cleanobj )
+	(cd ../libltfat ; make static MODULE=libltfat OPTLFLAGS=-DLTFAT_LARGEARRAYS )
 
 libphaseret:
-	make -C ../libphaseret cleanobj
-	make -C ../libphaseret static
+	(cd ../libltfat ; make MODULE=libphaseret cleanobj )
+	(cd ../libltfat ; make static MODULE=libphaseret OPTLFLAGS=-DLTFAT_LARGEARRAYS)
 
 odir:
 	mkdir -p $(outdir)
