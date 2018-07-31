@@ -5,7 +5,17 @@
 // #ifdef __STDC_UTF_16__
 // #include <uchar.h>
 // #endif
+
+#ifndef MATLAB_MEX_FILE
+#define MATLAB_MEX_FILE
+#endif
+
 #include "mex.h"
+
+// Compatibility for pre-2017b
+#ifndef MX_HAS_INTERLEAVED_COMPLEX
+#define MX_HAS_INTERLEAVED_COMPLEX 0
+#endif
 
 #ifndef UNUSED
 #define UNUSED(expr) do { (void)(expr); } while (0)

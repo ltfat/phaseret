@@ -10,11 +10,11 @@ all: clean libltfat libphaseret odir fftw mex clean
 
 libltfat:
 	(cd ../libltfat ; make MODULE=libltfat cleanobj )
-	(cd ../libltfat ; make static MODULE=libltfat OPTLFLAGS=-DLTFAT_LARGEARRAYS )
+	(cd ../libltfat ; make static MODULE=libltfat OPTCFLAGS=-DLTFAT_LARGEARRAYS )
 
 libphaseret:
 	(cd ../libltfat ; make MODULE=libphaseret cleanobj )
-	(cd ../libltfat ; make static MODULE=libphaseret OPTLFLAGS=-DLTFAT_LARGEARRAYS)
+	(cd ../libltfat ; make static MODULE=libphaseret OPTCFLAGS=-DLTFAT_LARGEARRAYS)
 
 odir:
 	mkdir -p $(outdir)

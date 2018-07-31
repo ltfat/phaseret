@@ -42,7 +42,8 @@ MEXTARGETS = $(patsubst %.c,%.$(EXT),$(MEXSOURCES))
 
 CFLAGS =-shared -s -Wall -std=c99
 CFLAGS+=-I../libltfat/modules/libltfat/include -I../libltfat/modules/libphaseret/include
-CFLAGS+=-DPHASERET_BUILD_STATIC -DLTFAT_BUILD_STATIC -DMATLAB_MEXCMD_RELEASE=R2017b
+CFLAGS+=-DLTFAT_BUILD_STATIC -DMATLAB_MEXCMD_RELEASE=R2017b
+CFLAGS+=-DMATLAB_MEX_FILE -DLTFAT_LARGEARRAYS
 
 ifeq ($(COMPTARGET), debug)
 	CFLAGS += -O0 -g
@@ -51,7 +52,7 @@ else
 endif
 
 MEXCOMPFLAGS?=-I"$(MATLABROOT)\extern\include" 
-MEXLINKFLAGS?= -L"$(MATLABROOT)\bin\$(ARCH)" -lmex -lmx
+MEXLINKFLAGS?=-L"$(MATLABROOT)\bin\$(ARCH)" -lmex -lmx
 
 matlab: $(MEXTARGETS)
 
