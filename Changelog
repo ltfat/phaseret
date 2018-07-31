@@ -2,6 +2,8 @@ Version 0.2.2
 -------------
 
 * Compilation of the MEX files is now 2018a ready.
+* Updated libltfat.
+* Fixed some compilation issues in Matlab on OSX.
 
 Version 0.2.1
 -------------
