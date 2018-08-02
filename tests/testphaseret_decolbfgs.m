@@ -18,8 +18,15 @@ for pcId = 1:2
     c = tra(f);
     s = abs(c);
     
-    
+    try
     [chat]=decolbfgs(s,g,a,M,phaseconv,'p',2);
+    catch
+        err = lasterror;
+        fprintf('%s               FAILED:\n',upper(mfilename));
+        warning(err.message);
+        test_failed = 1;
+        return;
+    end
     
     E = magnitudeerrdb(s,proj(chat));
     fail = '';            
