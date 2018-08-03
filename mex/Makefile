@@ -13,7 +13,7 @@ OCTAVEMEXTARGETS = $(patsubst %.c,%.mex,$(MEXSOURCES))
 
 export TARGETUP = ../libltfat/build/libphaseretd.a ../libltfat/build/libltfatd.a
 
-CFLAGS =-std=c99 -s -Wall -Wextra -fPIC -Wl,--no-undefined -shared
+CFLAGS =-std=c99 -Wall -Wextra -fPIC -shared
 
 ifeq ($(COMPTARGET), debug)
 	CFLAGS+=-O0 -g
