@@ -116,7 +116,7 @@ try
                 if ispc
                     params = ' -f Makefile_mingw matlab';
                 else
-                    [status,res] = system('mex -help');
+                    %[status,res] = system('mex -help');
                     % if status ~= 0
                     %     error('The mex executable in not in the PATH');
                     %     error('Add %s to your PATH.',[matlabroot,filesep,'bin']);
@@ -203,8 +203,11 @@ elseif isunix
               upper(mfilename));
      end
 
-     libfftw3 = [ '-l:', L(1).name];
-
+     if ~ismac()
+         libfftw3 = [ '-l:', L(1).name];
+     else
+         libfftw3 = fullfile(matlabarchpath, L(1).name);
+     end    
 
      fprintf('   ...using %s from Matlab installation.\n',...
              libfftw3);
