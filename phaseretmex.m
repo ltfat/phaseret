@@ -36,6 +36,7 @@ currdir = pwd;
 thisdir = fileparts(which(mfilename));
 makecmd = 'make';
 is_mingw = 0;
+extraparams = '';
 
 if ~exist('comp_rtisilaupdate','file')
     disp(' ');
@@ -60,6 +61,11 @@ if ispc && ~isoctave()
     is_mingw = 1;
 end
 
+if ispc && isoctave()
+    is_mingw = 1;
+    extraparams = [extraparams,' OS=NotWindows_NT CC=', mkoctfile('-p', 'CC')];
+end
+
 if ispc,   shared_ext = 'dll'; end
 if isunix, shared_ext = 'so'; end
 if ismac,  shared_ext = 'dylib'; end
@@ -77,6 +83,8 @@ try
             if flags.do_debug
                 params = [params, ' COMPTARGET=debug'];
             end
+
+            params = [params, ' ', extraparams];
 
             if flags.do_verbose,  disp([makecmd,params]); end
             [status,res] = system([makecmd,params]);
@@ -96,6 +104,8 @@ try
             if flags.do_debug
                 params = [params, ' COMPTARGET=debug'];
             end
+
+            params = [params, ' ', extraparams];
 
             if flags.do_verbose,  disp([makecmd,params]); end
             [status,res] = system([makecmd,params]);
@@ -143,6 +153,8 @@ try
                 end
             end
 
+            params = [params, ' ', extraparams];
+
             if flags.do_verbose,  disp([makecmd,params, paramstail]); end
             [status,res] = system([makecmd, params, paramstail]);
             resolveres(status,res,flags);
@@ -153,10 +165,10 @@ try
         if do_compilemex
             disp('********* Cleaning MEX files **********');
             cd([thisdir,filesep,'mex']);
-            if is_mingw
+            if is_mingw && ~isoctave()
                 [status,res] = system([makecmd,' -f Makefile_mingw clean']);
             else
-                [status,res] = system([makecmd,' clean']);
+                [status,res] = system([makecmd,' clean ', extraparams]);
             end
 
             resolveres(status,res,flags);
@@ -165,7 +177,7 @@ try
         if do_compilelib
             disp('********* Cleaning libs **********');
             cd([thisdir,filesep,'libltfat']);
-            [status,res] = system([makecmd,' clean']);
+            [status,res] = system([makecmd,' clean ', extraparams]);
             resolveres(status,res,flags);
         end
     end
