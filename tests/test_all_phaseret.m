@@ -2,7 +2,7 @@ function test_all_phaseret
 
 testprefix = 'testphaseret_';
 tests_todo = { 'gla','legla','spsi','rtpghi','pghi','decolbfgs',...
-                'rtisila','lertisila','phaseretdemos' };
+                'rtisila','gsrtisila','lertisila','phaseretdemos' };
 
 total_tests_failed=0;
 list_of_failed_tests={};
