@@ -43,10 +43,11 @@ end
 addpath(thispath);
 addpath(fullfile(thispath,'tests'));
 addpath(fullfile(thispath,'comp'));
-% MEX must be last so tat mex files shadow m files
+% MEX must be last so that mex files shadow m files
 addpath(fullfile(basepath,'mex'));
 addpath(fullfile(basepath,'gabor'));
 addpath(fullfile(basepath,'demos'));
+addpath(fullfile(basepath,'sigproc'));
 
 if verbose
     fprintf('PHASERET version %s. Copyright 2016 Zdenek Prusa.\n',phaseretver);
