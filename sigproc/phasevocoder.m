@@ -78,7 +78,6 @@ function [fout, info] = phasevocoder(f,stretch,varargin)
 %   'forward', 'backward' (default), or 'centered'.
 % 
 %   More implementations are planned for future releases.
-
 %
 %   `phasevocoder` accepts the following optional parameters:
 %
