@@ -45,8 +45,13 @@ thismfilename = upper(mfilename);
 complainif_notposint(a,'a',thismfilename);
 complainif_notposint(M,'M',thismfilename);
 
-if ~isscalar(gamma)
-    error('%s: gamma must be a scalar.',upper(mfilename));
+if ~( isscalar(gamma) || ...
+    ( iscell(gamma) && numel(gamma) == 2 ...
+    && all(cellfun(@(gEl) isequal(size(gEl),size(s)),gamma)) ...
+    && all(cellfun(@isreal,gamma))) )
+       error(['%s: gamma must be either a scalar or a 2 element cell array',...
+           ' containing phase derivatives such that {tgrad,fgrad}.'],...
+           upper(mfilename));
 end
 
 definput.keyvals.tol=1e-6;
@@ -68,7 +73,15 @@ end
 
 abss = abs(s);
 
-[tgrad, fgrad, logs] = comp_pghiphasegrad( abss, gamma, a, M, flags.do_timeinv, flags.do_causal);
+if iscell(gamma)
+    L = N*a;
+    b = L/M;
+    tgrad = gamma{1}*a;
+    fgrad = gamma{2}*b;
+    logs=log(s + eps);
+else
+    [tgrad, fgrad, logs] = comp_pghiphasegrad( abss, gamma, a, M, flags.do_timeinv, flags.do_causal);
+end
 
 newphase = zeros(M2,N);
 c = zeros(M2,N);
