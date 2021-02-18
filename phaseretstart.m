@@ -47,6 +47,7 @@ addpath(fullfile(thispath,'comp'));
 addpath(fullfile(basepath,'mex'));
 addpath(fullfile(basepath,'gabor'));
 addpath(fullfile(basepath,'demos'));
+addpath(fullfile(basepath,'sigproc'));
 
 if verbose
     fprintf('PHASERET version %s. Copyright 2016 Zdenek Prusa.\n',phaseretver);
