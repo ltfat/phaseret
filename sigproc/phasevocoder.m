@@ -154,10 +154,13 @@ end
 % prevent periodic border artifacts, the window length is accounted for.
 % Using DGTLENGTH in this way circumvents the usual requirement that L is
 % an integer multiple of a_ana and M.
-if flags.do_shift && stretch > 1 % If pitch-shifting upwards, resample first
-    f = dctresample(f,floor(Ls/stretch));
-    Ls = floor(Ls/stretch);
-end
+
+% % Presumably, resampling first for upwards pitch-shifting was supposed 
+% % to improve quality, but in some cases it is actually much worse. 
+% if flags.do_shift && stretch > 1 % If pitch-shifting upwards, resample first
+%     f = dctresample(f,floor(Ls/stretch));
+%     Ls = floor(Ls/stretch);
+% end
 L = dgtlength(max([Ls+gl,kv.M]),a_ana,a_ana);
 
 b_ana = L/kv.M; % Frequency hop size
@@ -262,7 +265,7 @@ if flags.do_rtpghi || flags.do_pv || flags.do_phaselocked
 chat = postpad(chat,newN,0,2);
 fout = postpad(comp_isepdgtreal(chat,g_syn,newL,a_syn,kv.M,1),exactnewL);
 
-if flags.do_shift && stretch <= 1 % If pitch-shifting downwards, resample at the end
+if flags.do_shift % && stretch <= 1 % If pitch-shifting downwards, resample at the end
     fout = dctresample(fout,floor(exactnewL/stretch));  
 end
 

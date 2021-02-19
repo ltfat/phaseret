@@ -23,11 +23,6 @@
 %      Waveform and DGT spectrogram of the input signal (top) and a
 %      pitch-shifted signal (bottom). 
 %
-%   Please note that if only pitch-shifting is desired, it is advantageous
-%   to do resampling before time stretching if pitch shifting upwards.
-%   While not performed here, this is achieved automatically by calling 
-%   |phasevocoder| with the 'shift' flag.  
-%
 %   See also: phasevocoder, rtpghi
 %
 %   References: ltfatnote050, lado99b
