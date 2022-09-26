@@ -1,4 +1,4 @@
-# PhaseReT
+## PhaseReT
 PhaseReT is a Matlab/GNU Octave toolbox collecting implementations of
 phase-reconstruction algorithms for complex time-frequency representations
 (like STFT).
@@ -14,7 +14,7 @@ Further, some functions require additional dependencies:
 * [decolbfgs](http://ltfat.github.io/phaseret/mat/decolbfgs.html) requires
 [minFunc](https://www.cs.ubc.ca/~schmidtm/Software/minFunc.html)
 
-## Instalation and usage (Matlab and GNU Octave)
+## Installation and usage (Matlab and GNU Octave)
 
 On Matlab in Windows, it is recommended to use the pre-compiled binary release package
 (phaseret-[version]-win64.zip) from
@@ -39,7 +39,7 @@ from within Matlab/Octave command line.
 ## Documentation
 Online documentation is available [here](http://ltfat.github.io/phaseret/doc).
 
-# References
+## References
 
 If you use this toolbox/library in your research, please cite
 
@@ -58,6 +58,6 @@ If you use this toolbox/library in your research, please cite
 
 and/or relevant references found in help of the individual files.
 
-# License
+## License
 PhaseReT is distributed under terms of
 [GPL3](http://www.gnu.org/licenses/gpl-3.0.en.html)
