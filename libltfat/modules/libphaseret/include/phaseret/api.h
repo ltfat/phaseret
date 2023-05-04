@@ -4,6 +4,7 @@
 #include "pghi.h"
 #include "spsi.h"
 #include "rtpghi.h"
+#include "rtpghifb.h"
 #include "rtisila.h"
 #include "gsrtisila.h"
 #include "gsrtisilapghi.h"
