@@ -32,8 +32,6 @@
 #define LTFAT_DOUBLE
 #include "phaseret/rtpghifb.h"
 #include "../libltfat/modules/libphaseret/src/rtpghifb_private.h"
-#include "ltfat_mex_template_helper.h"
-#include "mex.h"
 
 void
 mexFunction(int nlhs, mxArray* plhs[],
