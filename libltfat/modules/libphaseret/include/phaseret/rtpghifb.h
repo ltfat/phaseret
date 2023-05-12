@@ -242,7 +242,7 @@ void
 PHASERET_NAME(rtpghifbmagphase)(const LTFAT_REAL s[], const LTFAT_REAL phase[], ltfat_int L, LTFAT_COMPLEX c[]);
 
 PHASERET_API int
-PHASERET_NAME(rtpghifbupdate_init)(ltfat_int N, ltfat_int M, ltfat_int W, double *fc, double tol,
+PHASERET_NAME(rtpghifbupdate_init)(ltfat_int M, ltfat_int W, double *fc, double tol,
                                  PHASERET_NAME(rtpghifbupdate_plan)** pout);
 
 PHASERET_API int

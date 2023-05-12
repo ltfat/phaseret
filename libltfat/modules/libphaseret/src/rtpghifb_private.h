@@ -6,7 +6,6 @@ struct PHASERET_NAME(rtpghifb_state)
 {
     PHASERET_NAME(rtpghifbupdate_plan)* p;
     ltfat_int M;
-    ltfat_int N;
     ltfat_int a;
     ltfat_int W;
     int do_causal;
@@ -26,7 +25,6 @@ struct PHASERET_NAME(rtpghifbupdate_plan)
     double logtol;
     double tol;
     ltfat_int M;
-    ltfat_int N;
     LTFAT_REAL* randphase; //!< Precomputed array of random phase
     ltfat_int randphaseLen;
     ltfat_int randphaseId;

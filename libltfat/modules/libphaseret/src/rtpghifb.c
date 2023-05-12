@@ -52,7 +52,7 @@ PHASERET_NAME(rtpghifb_init)(ltfat_int W, double* fc, ltfat_int a, ltfat_int M, 
 
     CHECKMEM( p = (PHASERET_NAME(rtpghifb_state)*) ltfat_calloc(1, sizeof * p));
 
-    CHECKSTATUS( PHASERET_NAME(rtpghifbupdate_init)( N,M, W, fc, tol, &p->p));
+    CHECKSTATUS( PHASERET_NAME(rtpghifbupdate_init)( M, W, fc, tol, &p->p));
     CHECKMEM( p->slog =  LTFAT_NAME_REAL(calloc)(3 * M2 * W));
     CHECKMEM( p->tgrad = LTFAT_NAME_REAL(calloc)(3 * M2 * W));
     CHECKMEM( p->s =     LTFAT_NAME_REAL(calloc)(2 * M2 * W));
@@ -171,7 +171,7 @@ error:
 }
 
 PHASERET_API int
-PHASERET_NAME(rtpghifbupdate_init)(ltfat_int N, ltfat_int M, ltfat_int W, double* fc, double tol,
+PHASERET_NAME(rtpghifbupdate_init)(ltfat_int M, ltfat_int W, double* fc, double tol,
                                  PHASERET_NAME(rtpghifbupdate_plan)** pout)
 {
     int status = LTFATERR_SUCCESS;
@@ -192,7 +192,6 @@ PHASERET_NAME(rtpghifbupdate_init)(ltfat_int N, ltfat_int M, ltfat_int W, double
     for (ltfat_int ii = 0; ii < M2; ii++)
         p->fc[ii] = fc[ii];
   
-    p->N = N;
     p->logtol = log(tol);
     p->tol = tol;
     p->M = M;
@@ -254,7 +253,6 @@ PHASERET_NAME(rtpghifbupdate_execute_common)(PHASERET_NAME(rtpghifbupdate_plan)*
 {
     LTFAT_NAME(heap)* h = p->h;
     ltfat_int M2 = p->M / 2 + 1;
-    ltfat_int N = p->N;
     ltfat_int quickbreak = M2;
     const LTFAT_REAL oneover2 = (LTFAT_REAL) ( 1.0 / 2.0 );
 
