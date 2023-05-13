@@ -88,8 +88,7 @@ tgrad = a(1)*(tgrad + repmat(fc', 1,size(fgrad,2))) * pi;%scale to samples
 for n=1:N
     idx = mod( n-1-1:n-1, N ) + 1;
     nprev = mod( n-2, N ) + 1;
-    newphase(:,n) = comp_rtpghifbupdate(logs(:,idx),fc, tgrad(:,idx),fgrad(:,n),newphase(:,nprev),tol,(numel(fc)-1)*2);
-    %newphase(:,n) = comp_rtpghifbupdate(abss(:,idx),info.fc,tgrad2(:, idx), fgrad2(:,n), newphase(:,nprev),tol,(numel(fc)-1)*2);
+    newphase(:,n) = comp_rtpghifbupdate(abss(:,idx),fc, tgrad(:,idx),fgrad(:,n),newphase(:,nprev),tol,numel(fc));
     
     c(:,n)=abss(:,n).*exp(1i*newphase(:,n));
 end

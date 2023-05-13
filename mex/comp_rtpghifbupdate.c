@@ -46,10 +46,9 @@ mexFunction(int nlhs, mxArray* plhs[],
     double* prevphase = mxGetData(prhs[4]);
     double tol = mxGetScalar(prhs[5]);
     mwSignedIndex M = (mwSignedIndex) mxGetScalar(prhs[6]);
-    mwSignedIndex M2 = M / 2 + 1;
     
 
-    plhs[0] = mxCreateDoubleMatrix(M2, 1, mxREAL);
+    plhs[0] = mxCreateDoubleMatrix(M, 1, mxREAL);
     double* phase = mxGetData(plhs[0]);
     
 

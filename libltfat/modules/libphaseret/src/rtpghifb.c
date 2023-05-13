@@ -34,13 +34,14 @@ error:
 }
 
 PHASERET_API int
-PHASERET_NAME(rtpghifb_init)(ltfat_int W, double* fc, ltfat_int a, ltfat_int M, ltfat_int N,
+PHASERET_NAME(rtpghifb_init)(ltfat_int W, double* fc, ltfat_int a, ltfat_int M,
                            double gamma, double tol, int do_causal,
                            PHASERET_NAME(rtpghifb_state)** pout)
 {
     int status = LTFATERR_SUCCESS;
 
-    ltfat_int M2 = M / 2 + 1;
+
+    ltfat_int M2 = M;
     PHASERET_NAME(rtpghifb_state)* p = NULL;
 
     CHECK(LTFATERR_BADARG, !isnan(gamma) && gamma > 0,
@@ -80,7 +81,8 @@ PHASERET_NAME(rtpghifb_reset)(PHASERET_NAME(rtpghifb_state)* p,
     int status = LTFATERR_SUCCESS;
     ltfat_int M2, W;
     CHECKNULL(p);
-    M2 = p->M / 2 + 1;
+    //M2 = p->M / 2 + 1;
+    M2 = p->M;
     W = p->W;
 
     memset(p->slog, 0,  3 * M2 * W * sizeof * p->slog);
@@ -108,7 +110,8 @@ PHASERET_NAME(rtpghifb_execute)(PHASERET_NAME(rtpghifb_state)* p,
 {
     // n, n-1, n-2 frames
     // s is n-th
-    ltfat_int M2 = p->M / 2 + 1;
+    //ltfat_int M2 = p->M / 2 + 1;
+    ltfat_int M2 = p->M;
     ltfat_int W = p->W;
     int status = LTFATERR_SUCCESS;
     CHECKNULL(p); CHECKNULL(s); CHECKNULL(c);
@@ -176,27 +179,32 @@ PHASERET_NAME(rtpghifbupdate_init)(ltfat_int M, ltfat_int W, double* fc, double 
 {
     int status = LTFATERR_SUCCESS;
 
-    ltfat_int M2 = M / 2 + 1;
+    //ltfat_int M2 = M / 2 + 1;
     PHASERET_NAME(rtpghifbupdate_plan)* p = NULL;
     CHECKMEM( p = (PHASERET_NAME(rtpghifbupdate_plan)*) ltfat_calloc(1, sizeof * p));
-    CHECKMEM( p->donemask = (int*) ltfat_calloc(M2, sizeof * p->donemask));
-
-    p->randphaseLen = 10 * M2 * W;
+    //CHECKMEM( p->donemask = (int*) ltfat_calloc(M2, sizeof * p->donemask));
+    CHECKMEM( p->donemask = (int*) ltfat_calloc(M, sizeof * p->donemask));
+    
+    //p->randphaseLen = 10 * M2 * W;
+    p->randphaseLen = 10 * M * W;
     CHECKMEM( p->randphase = LTFAT_NAME_REAL(malloc)(p->randphaseLen));
 
     /* Do this somewhere else */
     for (ltfat_int ii = 0; ii < p->randphaseLen; ii++)
         p->randphase[ii] = (LTFAT_REAL)( 2.0 * M_PI * ((double)rand()) / (RAND_MAX));
       
-    CHECKMEM( p->fc = LTFAT_NAME_REAL(malloc)(M2));
-    for (ltfat_int ii = 0; ii < M2; ii++)
+    //CHECKMEM( p->fc = LTFAT_NAME_REAL(malloc)(M2));
+    CHECKMEM( p->fc = LTFAT_NAME_REAL(malloc)(M));
+    //for (ltfat_int ii = 0; ii < M2; ii++)
+    for (ltfat_int ii = 0; ii < M; ii++)
         p->fc[ii] = fc[ii];
   
     p->logtol = log(tol);
     p->tol = tol;
     p->M = M;
     p->randphaseId = 0;
-    p->h = LTFAT_NAME(heap_init)(2 * M2, NULL);
+    //p->h = LTFAT_NAME(heap_init)(2 * M2, NULL);
+    p->h = LTFAT_NAME(heap_init)(2 * M, NULL);
 
     *pout = p;
     return status;
@@ -214,7 +222,8 @@ PHASERET_NAME(rtpghifbupdate_execute_withmask)(PHASERET_NAME(rtpghifbupdate_plan
                                              const LTFAT_REAL startphase[],
                                              const int mask[], LTFAT_REAL phase[])
 {
-    ltfat_int M2 = p->M / 2 + 1;
+    //ltfat_int M2 = p->M / 2 + 1;
+    ltfat_int M2 = p->M;
     memcpy(p->donemask, mask, M2 * sizeof * p->donemask);
 
     return PHASERET_NAME(rtpghifbupdate_execute_common)(p, slog, fc, tgrad, fgrad, startphase, phase);
@@ -236,7 +245,8 @@ PHASERET_NAME(rtpghifbupdate_execute)(PHASERET_NAME(rtpghifbupdate_plan)* p,
                                     const LTFAT_REAL startphase[],
                                     LTFAT_REAL phase[])
 {
-    ltfat_int M2 = p->M / 2 + 1;
+    //ltfat_int M2 = p->M / 2 + 1;
+    ltfat_int M2 = p->M;
     memset(p->donemask, 0, M2 * sizeof * p->donemask);
     return PHASERET_NAME(rtpghifbupdate_execute_common)(p, slog, fc, tgrad, fgrad, startphase, phase);
 }
@@ -252,32 +262,37 @@ PHASERET_NAME(rtpghifbupdate_execute_common)(PHASERET_NAME(rtpghifbupdate_plan)*
                                              LTFAT_REAL phase[])
 {
     LTFAT_NAME(heap)* h = p->h;
-    ltfat_int M2 = p->M / 2 + 1;
-    ltfat_int quickbreak = M2;
+    //ltfat_int M2 = p->M / 2 + 1;
+    //ltfat_int quickbreak = M2;
+    ltfat_int quickbreak = p->M;
     const LTFAT_REAL oneover2 = (LTFAT_REAL) ( 1.0 / 2.0 );
 
     // We only need to compute M2 values, so perform quick exit
     // if we have them, but the heap is not yet empty.
     // (deleting hrom heap involves many operations)
     int* donemask = p->donemask;
-    const LTFAT_REAL* slog2 = slog + M2;
+    //const LTFAT_REAL* slog2 = slog + M2;
+    const LTFAT_REAL* slog2 = slog + p->M;
 
     // Find max and the absolute thrreshold
     LTFAT_REAL logabstol = slog[0];
     //LTFAT_REAL logabstol = 0;
-    for (ltfat_int m = 1; m < 2 * M2; m++)
+    //for (ltfat_int m = 1; m < 2 * M2; m++)
+    for (ltfat_int m = 1; m < 2 * p->M; m++)
         if (slog[m] > logabstol)
             logabstol = slog[m];
 
     logabstol += (LTFAT_REAL) p->logtol;
     LTFAT_NAME(heap_reset)(h, slog);
 
-    for (ltfat_int m = 0; m < M2; m++)
+    //for (ltfat_int m = 0; m < M2; m++)
+    for (ltfat_int m = 0; m < p->M; m++)
     {
         if ( donemask[m] > 0 )
         {
             // We already know this one
-            LTFAT_NAME(heap_insert)(h, m + M2);
+            //LTFAT_NAME(heap_insert)(h, m + M2);
+            LTFAT_NAME(heap_insert)(h, m + p->M);
             quickbreak--;
         }
         else
@@ -299,12 +314,15 @@ PHASERET_NAME(rtpghifbupdate_execute_common)(PHASERET_NAME(rtpghifbupdate_plan)*
     
     while ( (quickbreak > 0) && ( w = LTFAT_NAME(heap_delete)(h) ) >= 0 )
     {
-        if ( w >= M2 )
+        //if ( w >= M2 )
+        if ( w >= p->M )
         {
             // Next frame
-            ltfat_int wprev = w - M2;
+            //ltfat_int wprev = w - M2;
+            ltfat_int wprev = w - p->M;
 
-            if ( wprev != M2 - 1 && !donemask[wprev + 1] )
+            //if ( wprev != M2 - 1 && !donemask[wprev + 1] )
+            if ( wprev != p->M - 1 && !donemask[wprev + 1] )
             {
                 //frequency step upwards
                 LTFAT_REAL step = fc[(wprev+1)] - fc[wprev];
@@ -340,7 +358,8 @@ PHASERET_NAME(rtpghifbupdate_execute_common)(PHASERET_NAME(rtpghifbupdate_plan)*
             // Current frame
             if ( !donemask[w] )
             {
-                ltfat_int wnext = w + M2;
+                //ltfat_int wnext = w + M2;
+                ltfat_int wnext = w + p->M;
                 phase[w] = startphase[w] + (tgrad[w] + tgrad[wnext]) * oneover2;
                 donemask[w] = 1;
 
@@ -351,7 +370,8 @@ PHASERET_NAME(rtpghifbupdate_execute_common)(PHASERET_NAME(rtpghifbupdate_plan)*
     }
 
     // Fill in values below tol
-    for (ltfat_int ii = 0; ii < M2; ii++)
+    //for (ltfat_int ii = 0; ii < M2; ii++)
+    for (ltfat_int ii = 0; ii < p->M; ii++)
     {
         if (donemask[ii] < 0)
         {
@@ -389,12 +409,13 @@ PHASERET_NAME(rtpghifboffline)(const LTFAT_REAL* s, double* fc, ltfat_int L,
                              LTFAT_COMPLEX* c)
 {
     ltfat_int N = L / a;
-    ltfat_int M2 = M / 2 + 1;
+    //ltfat_int M2 = M / 2 + 1;
+    ltfat_int M2 = M;
     PHASERET_NAME(rtpghifb_state)* p = NULL;
     int status = LTFATERR_SUCCESS;
     CHECKNULL(s); CHECKNULL(c);
 
-    CHECKSTATUS( PHASERET_NAME(rtpghifb_init)(1, fc, a, M, N, gamma, tol, do_causal, &p));
+    CHECKSTATUS( PHASERET_NAME(rtpghifb_init)(1, fc, a, M, gamma, tol, do_causal, &p));
 
     if (do_causal)
     {
@@ -441,7 +462,8 @@ PHASERET_NAME(rtpghifbfgrad)(const LTFAT_REAL* logs, ltfat_int a, ltfat_int M,
                            double gamma,
                            int do_causal, LTFAT_REAL* fgrad)
 {
-    ltfat_int M2 = M / 2 + 1;
+    //ltfat_int M2 = M / 2 + 1;
+    ltfat_int M2 = M;
 
     const LTFAT_REAL fgradmul = (const LTFAT_REAL)( -gamma / (2.0 * a * M));
     const LTFAT_REAL* scol0 = logs;
@@ -466,7 +488,8 @@ PHASERET_NAME(rtpghifbtgrad)(const LTFAT_REAL* logs, ltfat_int a, ltfat_int M,
                            double gamma,
                            LTFAT_REAL* tgrad)
 {
-    ltfat_int M2 = M / 2 + 1;
+    //ltfat_int M2 = M / 2 + 1;
+    ltfat_int M2 = M;
 
     const LTFAT_REAL tgradmul = (const LTFAT_REAL)( (a * M) / (gamma * 2.0));
     const LTFAT_REAL tgradplus = (const LTFAT_REAL)( 2.0 * M_PI * a / ((double)M) );

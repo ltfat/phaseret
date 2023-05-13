@@ -65,7 +65,7 @@ typedef struct PHASERET_NAME(rtpghifbupdate_plan) PHASERET_NAME(rtpghifbupdate_p
  * \see phaseret_firwin2gamma
  */
 PHASERET_API int
-PHASERET_NAME(rtpghifb_init)(ltfat_int W, double* fc, ltfat_int a, ltfat_int M,ltfat_int N,
+PHASERET_NAME(rtpghifb_init)(ltfat_int W, double* fc, ltfat_int a, ltfat_int M,
                            double gamma, double tol, int do_causal,
                            PHASERET_NAME(rtpghifb_state)** p);
 
