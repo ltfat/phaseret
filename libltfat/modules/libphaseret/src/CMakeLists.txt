@@ -3,7 +3,7 @@ include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../include)
 
 SET(sources
     gla.c legla.c pghi.c rtisila.c rtpghi.c spsi.c utils.c
-    gsrtisila.c gsrtisilapghi.c)
+    gsrtisila.c gsrtisilapghi.c rtpghifb.c)
 
 SET(sources_typeconstant
     legla_typeconstant.c pghi_typeconstant.c)
