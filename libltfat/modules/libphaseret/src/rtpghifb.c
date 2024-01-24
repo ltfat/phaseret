@@ -223,19 +223,19 @@ PHASERET_NAME(rtpghifbupdate_execute_withmask)(PHASERET_NAME(rtpghifbupdate_plan
                                              const int mask[], LTFAT_REAL phase[])
 {
     //ltfat_int M2 = p->M / 2 + 1;
-    ltfat_int M2 = p->M;
-    memcpy(p->donemask, mask, M2 * sizeof * p->donemask);
+    ltfat_int M = p->M;
+    memcpy(p->donemask, mask, M * sizeof * p->donemask);
 
     return PHASERET_NAME(rtpghifbupdate_execute_common)(p, slog, fc, tgrad, fgrad, startphase, phase);
 }
 
-// slog: M2 x 2
-// tgrad: M2 x 2
-// fgrad: M2 x 1
-// startphase: M2 x 1
-// phase: M2 x 1
-// donemask: M2 x 1
-// heap must be able to hold 2*M2 values
+// slog: M x 2
+// tgrad: M x 2
+// fgrad: M x 1
+// startphase: M x 1
+// phase: M x 1
+// donemask: M x 1
+// heap must be able to hold 2*M values
 PHASERET_API int
 PHASERET_NAME(rtpghifbupdate_execute)(PHASERET_NAME(rtpghifbupdate_plan)* p,
                                     const LTFAT_REAL slog[],
@@ -246,8 +246,8 @@ PHASERET_NAME(rtpghifbupdate_execute)(PHASERET_NAME(rtpghifbupdate_plan)* p,
                                     LTFAT_REAL phase[])
 {
     //ltfat_int M2 = p->M / 2 + 1;
-    ltfat_int M2 = p->M;
-    memset(p->donemask, 0, M2 * sizeof * p->donemask);
+    ltfat_int M = p->M;
+    memset(p->donemask, 0, M * sizeof * p->donemask);
     return PHASERET_NAME(rtpghifbupdate_execute_common)(p, slog, fc, tgrad, fgrad, startphase, phase);
 }
 
@@ -267,9 +267,9 @@ PHASERET_NAME(rtpghifbupdate_execute_common)(PHASERET_NAME(rtpghifbupdate_plan)*
     ltfat_int quickbreak = p->M;
     const LTFAT_REAL oneover2 = (LTFAT_REAL) ( 1.0 / 2.0 );
 
-    // We only need to compute M2 values, so perform quick exit
+    // We only need to compute M values, so perform quick exit
     // if we have them, but the heap is not yet empty.
-    // (deleting hrom heap involves many operations)
+    // (deleting from heap involves many operations)
     int* donemask = p->donemask;
     //const LTFAT_REAL* slog2 = slog + M2;
     const LTFAT_REAL* slog2 = slog + p->M;
@@ -326,7 +326,7 @@ PHASERET_NAME(rtpghifbupdate_execute_common)(PHASERET_NAME(rtpghifbupdate_plan)*
             {
                 //frequency step upwards
                 LTFAT_REAL step = fc[(wprev+1)] - fc[wprev];
-                printf("f-step up: %f\n", step);
+                //printf("f-step up: %f\n", step);
 
                 if (step < 0)
                     step += 2;
@@ -342,7 +342,7 @@ PHASERET_NAME(rtpghifbupdate_execute_common)(PHASERET_NAME(rtpghifbupdate_plan)*
             {
                 //frequency step downwards
                 LTFAT_REAL step = fc[(wprev-1)] - fc[wprev];
-                printf("f-step down: %f\n", step);
+                //printf("f-step down: %f\n", step);
                 if (step > 0)
                     step -= 2;
                 

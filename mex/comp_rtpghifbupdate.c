@@ -1,9 +1,9 @@
 /** \addtogroup mex
  *  \{
  *  \file
- *  \brief MEX file interface for spsi()
+ *  \brief MEX file interface for rtpghifb()
  *
- *  **This is a computaional routine. The input arguments are not checked for correctness!!**
+ *  **This is a computational routine. The input arguments are not checked for correctness!!**
  *
  *  Matlab calling convention:
  *  --------------------------
@@ -12,17 +12,17 @@
  *
  *  Input arg.   | Description
  *  ------------ | -------------------------------------------------------------
- *  slog         | M2 x 2 real matrix, tarhet magnitude
- *  fc           | M2 x 1 real
- *  tgrad        | M2 x 2 real
- *  fgrad        | M2 x 1 real
- *  prevphase    | M2 x 1 real
+ *  slog         | M x 2 real matrix, tarhet magnitude
+ *  fc           | M x 1 real
+ *  tgrad        | M x 2 real
+ *  fgrad        | M x 1 real
+ *  prevphase    | M x 1 real
  *  tol          | scalar 
  *  M            | Number of channels (FFT length)
  *
  *  Output arg.  | Description
  *  -----------  | -------------------------------------------------------------
- *  phase        | M2 x 1 real
+ *  phase        | M x 1 real
  *
  *  \author Clara Hollomey
  *  \date 12.05.2023
