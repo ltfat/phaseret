@@ -21,7 +21,9 @@ function [fout, info] = phasevocoder(f,stretch,varargin)
 %   
 %   If the additional flag `shift` is specified, pitch.shifting is 
 %   performed instead, e.g., `fout=phasevocoder(f,stretch,'shift')`. Here, 
-%   *stretch* is interpreted as the desired pitch-shift in semitones. 
+%   *stretch* is interpreted as the desired pitch-shift in semitones. For 
+%   shifting downwards, instead of fractions, negative values should be
+%   used.
 %   Pitch-shifting is obtained by time-stretching the input with factor 
 %   `2^{stretch/12}`, followed by re-sampling to the input signal length. 
 %   Resampling is achieved by using |dctresample|. 
