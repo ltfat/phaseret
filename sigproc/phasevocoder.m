@@ -75,7 +75,7 @@ function [fout, info] = phasevocoder(f,stretch,varargin)
 %
 %   `phasevocoder` allows to specify the manner in which the required phase 
 %   derivatives are obtained. Options: 'phase', 'dgt', 'abs'. See
-%   |gabphasederivs| for more information. When the 'phase' method is
+%   |gabphasederiv| for more information. When the 'phase' method is
 %   selected, it is possible to specify the used finite difference scheme:
 %   'forward', 'backward' (default), or 'centered'.
 % 
@@ -124,7 +124,7 @@ if flags.do_shift
     stretch = 2^(stretch/12);
 end
 
-if stretch <= 0 
+if flags.do_stretch && stretch <= 0 
     error(['%s: Stretch factor must be larger than zero. Stretch factor given: %0.3g'],...
               upper(mfilename),stretch);
 elseif stretch > 8 || stretch < 1/8
@@ -201,11 +201,11 @@ if flags.do_rtpghi || flags.do_pv || flags.do_phaselocked
     % GABPHASEDERIV for more information. 
     if flags.do_dgt
         
-        phased = gabphasederiv({'t','f'},'dgt',f,g_ana,a_ana,kv.M,'timeinv');
+        phased = gabphasederivreal({'t','f'},'dgt',f,g_ana,a_ana,kv.M,'timeinv');
         
         % Sanitize and scale phase derivatives for further processing
         phased = ...
-            cellfun(@(pEl) postpad(postpad(pEl,M2),newN,0,2),phased,'UniformOutput',0);
+            cellfun(@(pEl) postpad(postpad(pEl,M2),N,0,2),phased,'UniformOutput',0);
         [tgrad,fgrad] = deal(phased{:});
         tgrad = tgrad*2*pi/L;
         fgrad = fgrad*2*pi/L;
@@ -238,7 +238,7 @@ if flags.do_rtpghi || flags.do_pv || flags.do_phaselocked
         
         % Sanitize and scale phase derivatives for further processing
         phased = ...
-            cellfun(@(pEl) postpad(postpad(pEl,M2),newN,0,2),phased,'UniformOutput',0);
+            cellfun(@(pEl) postpad(postpad(pEl,M2),N,0,2),phased,'UniformOutput',0);
         [tgrad,fgrad] = deal(phased{:});
         tgrad = tgrad*2*pi/L;
         fgrad = fgrad*2*pi/L;
@@ -248,7 +248,6 @@ if flags.do_rtpghi || flags.do_pv || flags.do_phaselocked
     % Process the DGT coefficients to realize the time stretching / 
     % compression.
     if flags.do_rtpghi % Phase Vocoder Done Right
-        
         % RTPGHI accounts for scaling the phase derivatives according to
         % the synthesis parameters
         chat = rtpghi(s,{tgrad, fgrad},a_syn,kv.M,'timeinv');
@@ -320,4 +319,4 @@ switch method
 end
 
 
-end 
+end
