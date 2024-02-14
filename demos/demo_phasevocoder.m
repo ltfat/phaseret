@@ -38,6 +38,7 @@ insig = sum(insig(1:Ls,:),2)/size(insig,2); % Merge signal channels
 
 %% Vocoder-related parameters
 stretches = [1/4,1/3,1/2,2/3,3/2,2,3,4]; % Desired stretch factors
+shifts = zeros(size(stretches));
 algorithms = {'pv','rtpghi'};
 
 % For vocoders using the full phase gradient, it is recommended that 
@@ -78,14 +79,16 @@ for kk = 1:numel(stretches)
             % outsigs_shifted{kk,jj} = dctresample(outsigs_stretched{kk,jj},Ls); 
             %
             % or directly by calling `phasevocoder` with the 'shift' flag:
-            
-            outsigs_shifted{kk,jj} = phasevocoder(insig,12*log2(stretches(kk)),gl,M,'shift',wintype,'a_syn',a_syn,algorithms{jj});
+            shifts(kk) = stretches(kk);
+            outsigs_shifted{kk,jj} = phasevocoder(insig,shifts(kk),gl,M,'shift',wintype,'a_syn',a_syn,algorithms{jj});
         else
             outsigs_stretched{kk,jj} = phasevocoder(insig,stretches(kk),gl,M,wintype,'a_ana',a_ana,algorithms{jj});
             %
             % outsigs_shifted{kk,jj} = dctresample(outsigs_stretched{kk,jj},Ls);    
-            %
-            outsigs_shifted{kk,jj} = phasevocoder(insig,12*log2(stretches(kk)),gl,M,'shift',wintype,'a_ana',a_ana,algorithms{jj});
+            if stretches(kk) < 1
+                shifts(kk) = -1/stretches(kk);
+            end
+            outsigs_shifted{kk,jj} = phasevocoder(insig,shifts(kk),gl,M,'shift',wintype,'a_ana',a_ana,algorithms{jj});
         end
     end
 end
@@ -103,7 +106,7 @@ stretchstring = [];
 pitchstring = [];
 for kk = 1:numel(stretches)
     stretchstring = strcat(stretchstring,[' ',num2str(kk),': ',num2str(stretches(kk),'%0.3f'),',']);
-    pitchstring = strcat(pitchstring,[' ',num2str(kk),': ',num2str(12*log2(stretches(kk)),'%0.3f'),',']);
+    pitchstring = strcat(pitchstring,[' ',num2str(kk),': ',num2str(shifts(kk),'%0.3f'),',']);
 end
 stretchstring = stretchstring(1:end-1);
 pitchstring = pitchstring(1:end-1);
