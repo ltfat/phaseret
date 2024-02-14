@@ -24,7 +24,7 @@ function [c,newphase,tgrad,fgrad]=rtpghi(s,gamma,a,M,varargin)
 %   and the algorithm attempts to recover *c*. Parameter *gamma* is window 
 %   *g* specific and it can be computed using |pghi_findgamma|.
 %
-%   This function works entirely simiral to |pghi| except it is using
+%   This function works entirely similar to |pghi| except it is using
 %   the real-time version of the algorithm. Please see help of |pghi| 
 %   (resp. |constructphasereal| from LTFAT) for more details.
 %
